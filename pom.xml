@@ -111,6 +111,11 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.sarxos</groupId>
+            <artifactId>webcam-capture</artifactId>
+            <version>0.3.12</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -133,7 +138,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.example.javafx_project/com.example.javafx_project.HelloApplication
+                            <mainClass>com.example.javafx_project/com.example.javafx_project.Main
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
@@ -141,6 +146,10 @@
                             <noManPages>true</noManPages>
                             <stripDebug>true</stripDebug>
                             <noHeaderFiles>true</noHeaderFiles>
+                            <jvmArgs>
+                                <jvmArg>--add-exports=java.desktop/java.awt=ALL-UNNAMED</jvmArg>
+                                <jvmArg>--add-exports=java.desktop/java.awt.datatransfer=ALL-UNNAMED</jvmArg>
+                            </jvmArgs>
                         </configuration>
                     </execution>
                 </executions>
