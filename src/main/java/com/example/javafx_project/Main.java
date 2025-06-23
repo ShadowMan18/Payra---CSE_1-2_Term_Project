@@ -17,16 +17,16 @@ import javafx.application.Platform;
 import java.io.IOException;
 
 public class Main extends Application {
-    private final int screenWidth = (int)(Screen.getWidth() - 5);
-    private final int screenHeight = (int)(Screen.getHeight() - 35);
+    public static final int screenWidth = Screen.getWidth() - 5;
+    public static final int screenHeight = Screen.getHeight() - 35;
     public static Stage stage;
 
     @Override
     public void start(Stage stage) throws IOException {
         this.stage = stage;
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("hello-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Home.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), screenWidth, screenHeight);
-        stage.setTitle("Hello!");
+        stage.setTitle("Main");
         stage.setScene(scene);
         stage.show();
     }

@@ -6,13 +6,13 @@ public class Screen
 {
     private static final GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
     private static final Rectangle bounds = g.getMaximumWindowBounds();
-    private static final double width = bounds.width;
-    private static final double height = bounds.height;
-    public static double getWidth()
+    private static final int width = bounds.width;
+    private static final int height = bounds.height;
+    public static int getWidth()
     {
         return width;
     }
-    public static double getHeight()
+    public static int getHeight()
     {
         return height;
     }
