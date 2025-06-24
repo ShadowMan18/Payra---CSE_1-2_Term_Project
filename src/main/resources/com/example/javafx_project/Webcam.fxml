@@ -11,6 +11,6 @@
     </padding>
 
     <Label fx:id="welcomeText" />
-    <Button text="Take a shot!" onAction="#onTakeAShotButtonClick" />
-    <Button text="Stop" onAction="#onStopButtonClick" />
+   <Button mnemonicParsing="false" onAction="#onTakeAShotButtonClick" text="Take a shot!" />
+    <Button onAction="#onStopButtonClick" prefWidth="47.0" text="Stop" />
 </VBox>

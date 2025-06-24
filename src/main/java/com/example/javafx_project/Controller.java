@@ -16,11 +16,13 @@ public class Controller {
     @FXML
     protected void onStartButtonClick() {
         WebcamCapture.startWebcam(Main.stage);
+        MicrophoneCapture.startMicrophone();
     }
 
     @FXML
     public void onStopButtonClick(ActionEvent actionEvent) {
         WebcamCapture.stopWebcam();
+        MicrophoneCapture.stopMicrophone();
         Home.viewHome();
     }
 
