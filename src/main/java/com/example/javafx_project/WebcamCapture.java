@@ -20,9 +20,6 @@ import java.awt.Graphics2D;
 
 public class WebcamCapture {
     private static Webcam webcam;
-    private static WebcamPanel webcamPanel;
-    private static SwingNode swingNode;
-    private static StackPane webcamPane;
 
     public static void startWebcam(Stage stage)
     {
@@ -36,13 +33,13 @@ public class WebcamCapture {
         webcam.setViewSize(new Dimension(640, 480));
         webcam.open();
 
-        webcamPanel = new WebcamPanel(webcam);
+        WebcamPanel webcamPanel = new WebcamPanel(webcam);
         webcamPanel.setFPSDisplayed(true);
         webcamPanel.setMirrored(true);
 
-        swingNode = new SwingNode();
+        SwingNode swingNode = new SwingNode();
         SwingUtilities.invokeLater(() -> swingNode.setContent(webcamPanel));
-        webcamPane = new StackPane();
+        StackPane webcamPane = new StackPane();
         webcamPane.getChildren().add(swingNode);
         FXMLLoader fxmlLoader = new FXMLLoader(WebcamCapture.class.getResource("Webcam.fxml"));
         try{

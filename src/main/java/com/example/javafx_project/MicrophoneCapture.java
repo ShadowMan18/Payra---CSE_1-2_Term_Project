@@ -4,11 +4,7 @@ import javax.sound.sampled.*;
 import java.io.*;
 
 public class MicrophoneCapture {
-    private static AudioFormat format;
-    private static DataLine.Info info;
     private static TargetDataLine microphone;
-    private static AudioInputStream audioStream;
-    private static File wavFile;
 
     private static AudioFormat getAudioFormat() {
         float sampleRate = 16000.0f; // 16 kHz
@@ -20,20 +16,20 @@ public class MicrophoneCapture {
     }
 
     public static void startMicrophone() {
-        format = getAudioFormat();
-        info = new DataLine.Info(TargetDataLine.class, format);
+        AudioFormat format = getAudioFormat();
+        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
         try
         {
             if (!AudioSystem.isLineSupported(info)) {
                 System.err.println("Line not supported");
                 return;
             }
-            microphone = (TargetDataLine) AudioSystem.getLine(info);
+            TargetDataLine microphone = (TargetDataLine) AudioSystem.getLine(info);
             microphone.open(format);
             microphone.start();
             System.out.println("Recording... Press Ctrl+C to stop.");
-            audioStream = new AudioInputStream(microphone);
-            wavFile = new File("recording.wav");
+            AudioInputStream audioStream = new AudioInputStream(microphone);
+            File wavFile = new File("recording.wav");
             Thread recordingThread = new Thread(() -> {
                 try
                 {
