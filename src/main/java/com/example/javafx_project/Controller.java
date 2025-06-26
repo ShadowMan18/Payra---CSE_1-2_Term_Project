@@ -10,7 +10,7 @@ public class Controller {
 
     @FXML
     public void onGoButtonClick(ActionEvent actionEvent) {
-        Home.viewHome();
+        HomePage.viewHome();
     }
 
     @FXML
@@ -23,7 +23,7 @@ public class Controller {
     public void onStopButtonClick(ActionEvent actionEvent) {
         WebcamCapture.stopWebcam();
         MicrophoneCapture.stopMicrophone();
-        Home.viewHome();
+        HomePage.viewHome();
     }
 
     public void onTakeAShotButtonClick(ActionEvent actionEvent) {

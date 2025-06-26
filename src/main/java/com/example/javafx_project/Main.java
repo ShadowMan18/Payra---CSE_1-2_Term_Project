@@ -26,7 +26,7 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         this.stage = stage;
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Home.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("HomePage.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), screenWidth, screenHeight);
         stage.setTitle("Main");
         stage.setScene(scene);
@@ -47,7 +47,7 @@ public class Main extends Application {
 //    @Override
 //    public void start(Stage stage) throws IOException {
 //        this.stage = stage;
-//        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Home.fxml"));
+//        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("HomePage.fxml"));
 //        Scene scene = new Scene(fxmlLoader.load(), screenWidth, screenHeight);
 //        stage.setTitle("Main");
 //        stage.setScene(scene);
