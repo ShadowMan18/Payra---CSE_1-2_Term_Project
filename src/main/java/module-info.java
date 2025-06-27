@@ -14,6 +14,6 @@ module com.example.javafx_project {
     requires webcam.capture;
     requires java.desktop;
 
-    opens com.example.javafx_project to javafx.fxml;
-    exports com.example.javafx_project;
+    opens codes to javafx.fxml;
+    exports codes;
 }

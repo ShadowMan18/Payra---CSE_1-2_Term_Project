@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="356.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.HomePageController">
+   <children>
+      <Button layoutX="274.0" layoutY="122.0" mnemonicParsing="false" onAction="#onNewsFeedButtonClick" text="Feed" />
+      <Button layoutX="274.0" layoutY="185.0" mnemonicParsing="false" onAction="#onChatButtonClick" text="Chat" />
+      <ImageView fitHeight="150.0" fitWidth="200.0" layoutX="52.0" layoutY="93.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../Idea_Compilation/HomePage_Interface.png" />
+         </image>
+      </ImageView>
+   </children>
+</AnchorPane>
