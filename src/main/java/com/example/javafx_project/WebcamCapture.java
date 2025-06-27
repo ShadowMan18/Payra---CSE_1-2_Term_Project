@@ -4,8 +4,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -16,10 +14,11 @@ import com.github.sarxos.webcam.WebcamPanel;
 import javafx.embed.swing.SwingNode;
 import javafx.scene.layout.StackPane;
 import javafx.application.Platform;
-import java.awt.Graphics2D;
 
 public class WebcamCapture {
     private static Webcam webcam;
+
+    public WebcamCapture(){}
 
     public static void startWebcam(Stage stage)
     {

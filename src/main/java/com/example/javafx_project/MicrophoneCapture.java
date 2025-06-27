@@ -6,6 +6,8 @@ import java.io.*;
 public class MicrophoneCapture {
     private static TargetDataLine microphone;
 
+    public MicrophoneCapture(){}
+
     private static AudioFormat getAudioFormat() {
         float sampleRate = 16000.0f; // 16 kHz
         int sampleSizeInBits = 16;

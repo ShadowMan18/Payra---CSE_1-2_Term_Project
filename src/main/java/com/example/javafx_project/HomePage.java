@@ -2,25 +2,27 @@ package com.example.javafx_project;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class HomePage {
-    public static void viewHome()
-    {
-        try
-        {
-            FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("HomePage.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), Main.screenWidth, Main.screenHeight);
-            Main.stage.setTitle("Home");
-            Main.stage.setScene(scene);
-            Main.stage.show();
-        }
-        catch(IOException e)
-        {
-            System.err.println("Couldn't load homepage");
-        }
+    private final int screenWidth = Screen.getWidth() - 5;
+    private final int screenHeight = Screen.getHeight() - 35;
+
+    public HomePage(){}
+
+    public void startHomePageView(Client client, Stage stage) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("HomePage.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), screenWidth, screenHeight);
+        HomePageController homePageController = fxmlLoader.getController();
+        homePageController.setHomePageController(client, stage);
+        stage.setTitle("Home");
+        stage.setScene(scene);
+        stage.show();
     }
+
+    public void stopHomePageView(){}
 }
 
 

@@ -5,12 +5,12 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
 public class Controller {
+    // Test controllers
     @FXML
     private Label welcomeText;
 
     @FXML
     public void onGoButtonClick(ActionEvent actionEvent) {
-        HomePage.viewHome();
     }
 
     @FXML
@@ -23,10 +23,10 @@ public class Controller {
     public void onStopButtonClick(ActionEvent actionEvent) {
         WebcamCapture.stopWebcam();
         MicrophoneCapture.stopMicrophone();
-        HomePage.viewHome();
     }
 
     public void onTakeAShotButtonClick(ActionEvent actionEvent) {
         WebcamCapture.captureImage();
     }
+
 }
