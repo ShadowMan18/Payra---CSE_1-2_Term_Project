@@ -7,7 +7,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
-    static Vector<Client> currentClients;
+    static Vector<Client> currentClients = new Vector<>();
 
     //Maps are better at handling this
     //String is for now we'll make it clients later
