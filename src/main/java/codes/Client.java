@@ -67,7 +67,7 @@ public class Client {
             throw new RuntimeException(e);
         }
 
-//        Server.currentClients.add(this);
+        Server.currentClients.add(this);
     }
 
     // Getters

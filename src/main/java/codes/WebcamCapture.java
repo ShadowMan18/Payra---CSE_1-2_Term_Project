@@ -43,7 +43,7 @@ public class WebcamCapture {
         FXMLLoader fxmlLoader = new FXMLLoader(WebcamCapture.class.getResource("Webcam.fxml"));
         try{
             webcamPane.getChildren().add(fxmlLoader.load());
-            Scene scene = new Scene(webcamPane, Main.screenWidth, Main.screenHeight);
+            Scene scene = new Scene(webcamPane, Screen.SCREENWIDTH, Screen.SCREENHEIGHT);
             stage.setTitle("JavaFX Webcam Viewer");
             stage.setScene(scene);
             stage.show();

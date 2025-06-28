@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
 
-<AnchorPane prefHeight="336.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.SignupPageController">
+<StackPane fx:id="SignupPageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.SignupPageController">
    <children>
-      <Button layoutX="274.0" layoutY="156.0" mnemonicParsing="false" onAction="#onSignupButtonClick" text="Sign Up" />
+      <Group fx:id="SignupPageView">
+         <ImageView pickOnBounds="true">
+            <image>
+               <Image url="@../images/SignupPage.png" />
+            </image>
+         </ImageView>
+         <TextField fx:id="SignupPageFirstNameField" layoutX="706.0" layoutY="156.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <TextField fx:id="SignupPageLastNameField" layoutX="706.0" layoutY="249.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <TextField fx:id="SignupPageEmailField" layoutX="706.0" layoutY="341.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <TextField fx:id="SignupPageSetPasswordField" layoutX="706.0" layoutY="434.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <TextField fx:id="SignupPageConfirmPasswordField" layoutX="706.0" layoutY="527.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <TextField fx:id="SignupPageQuestionField" layoutX="706.0" layoutY="619.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <TextField fx:id="SignupPageAnswerField" layoutX="706.0" layoutY="714.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
+         <Button layoutX="695.0" layoutY="801.0" mnemonicParsing="false" onAction="#onSignupButtonClick" opacity="0.0" prefHeight="55.0" prefWidth="320.0" />
+      </Group>
    </children>
-</AnchorPane>
+</StackPane>
