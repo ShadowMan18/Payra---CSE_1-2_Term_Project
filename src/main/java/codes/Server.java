@@ -4,9 +4,14 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     static Vector<Client> currentClients;
+
+    //Maps are better at handling this
+    //String is for now we'll make it clients later
+    public static ConcurrentHashMap<Client, ServerThread> activeUsers = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         ServerSocket serverSocket;
@@ -26,7 +31,7 @@ public class Server {
                 throw new RuntimeException(e);
             }
 
-            new ServerThread(clientSocket);
+            new Thread(new ServerThread(clientSocket)).start();
         }
     }
 }

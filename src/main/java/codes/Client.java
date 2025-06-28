@@ -40,6 +40,8 @@ public class Client {
 
     public Client() {
         System.out.println("Client created");
+
+
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
         this.signupPage = new SignupPage();
@@ -49,26 +51,66 @@ public class Client {
         this.profilePage = new ProfilePage();
         this.notificationPage = new NotificationPage();
 
+
         try {
             this.socket = new Socket("127.0.0.1", 4349);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
             this.output = new ObjectOutputStream(socket.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
             this.input = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        clients.add(this);
 
-//        Server.currentClients.add(this);
+
+
+//       Server.currentClients.add(this);
     }
+
+
+
+    // Send message to server
+    public void send(String msg) {
+        try {
+            output.writeObject(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Read message from server
+    public String receive() {
+        try {
+            return (String) input.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Close the connection
+    public void close() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Client)) return false;
+        return userName.equals(((Client) obj).getUserName());
+    }
+
+    @Override
+    public int hashCode() {
+        return userName.hashCode();
+    }
+
+
 
     // Getters
 
