@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.Vector;
 
 public class Server {
-    static Vector<Client> currentClients;
+    static Vector<Client> currentClients = new Vector<>();
 
     public static void main(String[] args) {
         ServerSocket serverSocket;
