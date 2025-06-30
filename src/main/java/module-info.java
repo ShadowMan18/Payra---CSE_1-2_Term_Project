@@ -13,6 +13,7 @@ module com.example.javafx_project {
     requires javafx.swing;
     requires webcam.capture;
     requires java.desktop;
+    requires com.fasterxml.jackson.annotation;
 
     opens codes to javafx.fxml;
     exports codes;

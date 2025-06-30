@@ -51,7 +51,7 @@ public class SignupPageController {
     }
 
     @FXML
-    public void onSignupButtonClick(ActionEvent mouseEvent) throws IOException {
+    public void onSignupButtonClick(ActionEvent mouseEvent) {
         firstName = SignupPageFirstNameField.getText();
         lastName = SignupPageLastNameField.getText();
         email = SignupPageEmailField.getText();
@@ -59,6 +59,7 @@ public class SignupPageController {
         password2 = SignupPageConfirmPasswordField.getText();
         question = SignupPageQuestionField.getText();
         answer = SignupPageAnswerField.getText();
+
         System.out.println(firstName);
         System.out.println(lastName);
         System.out.println(email);
@@ -66,6 +67,23 @@ public class SignupPageController {
         System.out.println(password2);
         System.out.println(question);
         System.out.println(answer);
-        client.getLoginPage().startLoginPageView(client, stage);
+
+        client.setFirstName(firstName);
+        client.setLastName(lastName);
+        client.setEmail(email);
+        client.setPassword(password1);
+
+        try {
+            client.getServerOutput().writeObject("1_"+email);
+            client.getServerOutput().flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            client.getLoginPage().startLoginPageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

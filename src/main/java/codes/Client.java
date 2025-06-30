@@ -4,18 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Vector;
+import java.util.Scanner;
 
 public class Client {
-    // All clients
-
-    static Vector<Client> clients;
-
     // Client information
 
     private String firstName;
     private String lastName;
-    private String userName;
     private String email;
     private String password;
 
@@ -32,14 +27,18 @@ public class Client {
 
     // Client network
 
-    private final Socket socket;
-    private final ObjectOutputStream output;
-    private final ObjectInputStream input;
+    private final Socket serverSocket;
+    private final ObjectOutputStream serverOutput;
+    private final ObjectInputStream serverInput;
+    private Socket chatSocket;
+    private ObjectOutputStream chatOutput;
+    private ObjectInputStream chatInput;
+    private boolean loginStatus;
+    private boolean inChat = false;
 
     // Constructor
 
     public Client() {
-        System.out.println("Client created");
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
         this.signupPage = new SignupPage();
@@ -50,24 +49,71 @@ public class Client {
         this.notificationPage = new NotificationPage();
 
         try {
-            this.socket = new Socket("127.0.0.1", 4349);
+            this.serverSocket = new Socket("127.0.0.1", 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            this.output = new ObjectOutputStream(socket.getOutputStream());
+            this.serverOutput = new ObjectOutputStream(serverSocket.getOutputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            this.input = new ObjectInputStream(socket.getInputStream());
+            this.serverInput = new ObjectInputStream(serverSocket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        Server.currentClients.add(this);
+        this.loginStatus = false;
+
+        Thread Writer = new Thread(() -> {
+            Scanner scanner = new Scanner(System.in);
+            while (true) {
+                String message = scanner.nextLine();
+
+                if (inChat) {
+                    try {
+                        chatOutput.writeObject(message);
+                        chatOutput.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else {
+                    try {
+                        serverOutput.writeObject(message);
+                        serverOutput.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+
+        Thread serverReader = new Thread(() -> {
+            while (true) {
+                String message;
+
+                try {
+                    message = (String) (serverInput.readObject());
+                } catch (IOException | ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (message.startsWith("Connect:")) {
+                    int port = Integer.parseInt(message.substring("Connect:".length()));
+                    connectToChatServer(port);
+                    inChat = true;
+                } else {
+                    System.out.println("Received: " + message);
+                }
+            }
+        });
+
+        Writer.start();
+        serverReader.start();
     }
 
     // Getters
@@ -78,10 +124,6 @@ public class Client {
 
     public String getLastName() {
         return lastName;
-    }
-
-    public String getUserName() {
-        return userName;
     }
 
     public String getEmail() {
@@ -125,16 +167,26 @@ public class Client {
     }
 
     public Socket getSocket() {
-        return socket;
+        return serverSocket;
     }
 
-    public ObjectOutputStream getOutput() {
-        return output;
+    public ObjectOutputStream getServerOutput() {
+        return serverOutput;
     }
 
-    public ObjectInputStream getInput() {
-        return input;
+    public ObjectInputStream getServerInput() {
+        return serverInput;
     }
+
+    public ObjectOutputStream getChatOutput() {
+        return chatOutput;
+    }
+
+    public ObjectInputStream getChatInput() {
+        return chatInput;
+    }
+
+    public boolean getLoginStatus() { return loginStatus; }
 
     // Setters
 
@@ -146,15 +198,70 @@ public class Client {
         this.lastName = lastName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public void setEmail(String email) {
         this.email = email;
     }
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setLoginStatus(boolean status)
+    {
+        this.loginStatus = status;
+    }
+
+    // Public methods
+
+    public void connectToChatServer(int port) {
+        try {
+            chatSocket = new Socket("127.0.0.1", port);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("Connected to: " + port);
+
+        try {
+            chatOutput = new ObjectOutputStream(chatSocket.getOutputStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            chatInput = new ObjectInputStream(chatSocket.getInputStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+//        Thread chatWriter = new Thread(() -> {
+//            while (true) {
+//                String message = scanner.nextLine();
+//
+//                try {
+//                    chatOutput.writeObject(message);
+//                    chatOutput.flush();
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//        });
+
+        Thread chatReader = new Thread(() -> {
+            while (true) {
+                String message;
+
+                try {
+                    message = (String) (chatInput.readObject());
+                } catch (IOException | ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+
+                System.out.println("Received from client: " + message);
+            }
+        });
+
+//        chatWriter.start();
+        chatReader.start();
     }
 }

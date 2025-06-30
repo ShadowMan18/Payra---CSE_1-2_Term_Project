@@ -34,12 +34,25 @@ public class LoginPageController {
     }
 
     @FXML
-    public void onLoginButtonClick(ActionEvent actionEvent) throws IOException {
+    public void onLoginButtonClick(ActionEvent actionEvent) {
         email = LoginPageEmailField.getText();
         password = LoginPagePasswordField.getText();
+
         System.out.println(email);
         System.out.println(password);
-        client.getHomePage().startHomePageView(client, stage);
+
+        try {
+            client.getServerOutput().writeObject("2_" + email);
+            client.getServerOutput().flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            client.getHomePage().startHomePageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
