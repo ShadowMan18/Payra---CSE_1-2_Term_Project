@@ -1,0 +1,20 @@
+Forgot Password:
+The question has to be written with scene Builder
+For symmetry purposes, question should be written 9 px away from the blank box. Font: Glacial indifference. Size: 19. 
+Colour: #0f2e4d
+Password shall be updated if Question is answered correctly.
+
+
+SignUpPage:
+All the box sizes are same. But the font size has been reduced. Recovery question has been changed.
+The whole thing is shifted towards right to keep symmetry with Login Page
+
+LoginPage:
+Font size reduced
+"Email" changed to "Email Address"
+
+
+HomePage:
+Tried to make it less ugly
+
+

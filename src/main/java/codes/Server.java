@@ -6,11 +6,16 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     static Vector<String> clients = new Vector<>();
     static Map<String, ServerThread> currentClients = new HashMap<>();
     static int port = 1025;
+
+    //Maps are better at handling this
+    //String is for now we'll make it clients later
+    public static ConcurrentHashMap<Client, ServerThread> activeUsers = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         ServerSocket serverSocket;
@@ -30,7 +35,7 @@ public class Server {
                 throw new RuntimeException(e);
             }
 
-            new ServerThread(clientSocket);
+            new Thread(new ServerThread(clientSocket)).start();
         }
     }
 }
