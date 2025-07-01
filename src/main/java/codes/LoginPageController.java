@@ -4,6 +4,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -31,22 +33,13 @@ public class LoginPageController {
         LoginPageLayout.setPrefHeight(Screen.SCREENHEIGHT);
         LoginPageView.scaleXProperty().bind(LoginPageLayout.widthProperty().divide(1600));
         LoginPageView.scaleYProperty().bind(LoginPageLayout.heightProperty().divide(900));
+        LoginPageLayout.setFocusTraversable(true);
+        LoginPageLayout.requestFocus();
     }
 
     @FXML
     public void onLoginButtonClick(ActionEvent actionEvent) {
-        email = LoginPageEmailField.getText();
-        password = LoginPagePasswordField.getText();
-
-        System.out.println(email);
-        System.out.println(password);
-
-        try {
-            client.getServerOutput().writeObject("2_" + email);
-            client.getServerOutput().flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        login();
 
         try {
             client.getHomePage().startHomePageView(client, stage);
@@ -62,6 +55,34 @@ public class LoginPageController {
 
     @FXML
     public void onForgotPasswordButtonClick(ActionEvent mouseEvent) {
+    }
+
+    public void onEnterKeyPress(KeyEvent keyEvent) {
+        if (keyEvent.getCode() == KeyCode.ENTER) {
+            login();
+            LoginPageLayout.setFocusTraversable(false);
+
+            try {
+                client.getHomePage().startHomePageView(client, stage);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void login() {
+        email = LoginPageEmailField.getText();
+        password = LoginPagePasswordField.getText();
+
+        System.out.println(email);
+        System.out.println(password);
+
+        try {
+            client.getServerOutput().writeObject("2_" + email);
+            client.getServerOutput().flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 

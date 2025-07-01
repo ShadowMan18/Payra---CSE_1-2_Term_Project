@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.Vector;
 
 public class Client {
     // Client information
@@ -30,11 +31,11 @@ public class Client {
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
-    private Socket chatSocket;
-    private ObjectOutputStream chatOutput;
-    private ObjectInputStream chatInput;
+    private Vector<Socket> chatSocket;
+    private Vector<ObjectOutputStream> chatOutput;
+    private Vector<ObjectInputStream> chatInput;
     private boolean loginStatus;
-    private boolean inChat = false;
+    private boolean inChat;
 
     // Constructor
 
@@ -66,7 +67,12 @@ public class Client {
             throw new RuntimeException(e);
         }
 
+        this.chatSocket = new Vector<>();
+        this.chatOutput = new Vector<>();
+        this.chatInput = new Vector<>();
+
         this.loginStatus = false;
+        this.inChat = false;
 
         Thread Writer = new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
@@ -75,8 +81,10 @@ public class Client {
 
                 if (inChat) {
                     try {
-                        chatOutput.writeObject(message);
-                        chatOutput.flush();
+                        String[] splittedMessage = message.split(",");
+                        int clientIndex = Integer.parseInt(splittedMessage[0]);
+                        chatOutput.get(clientIndex).writeObject(message);
+                        chatOutput.get(clientIndex).flush();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -178,12 +186,12 @@ public class Client {
         return serverInput;
     }
 
-    public ObjectOutputStream getChatOutput() {
-        return chatOutput;
+    public ObjectOutputStream getChatOutput(int index) {
+        return chatOutput.get(index);
     }
 
-    public ObjectInputStream getChatInput() {
-        return chatInput;
+    public ObjectInputStream getChatInput(int index) {
+        return chatInput.get(index);
     }
 
     public boolean getLoginStatus() { return loginStatus; }
@@ -214,8 +222,13 @@ public class Client {
     // Public methods
 
     public void connectToChatServer(int port) {
+        Socket socket;
+        ObjectOutputStream output;
+        ObjectInputStream input;
+
         try {
-            chatSocket = new Socket("127.0.0.1", port);
+            socket = new Socket("127.0.0.1", port);
+            chatSocket.add(socket);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -223,13 +236,15 @@ public class Client {
         System.out.println("Connected to: " + port);
 
         try {
-            chatOutput = new ObjectOutputStream(chatSocket.getOutputStream());
+            output = new ObjectOutputStream(socket.getOutputStream());
+            chatOutput.add(output);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            chatInput = new ObjectInputStream(chatSocket.getInputStream());
+            input = new ObjectInputStream(socket.getInputStream());
+            chatInput.add(input);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -252,7 +267,7 @@ public class Client {
                 String message;
 
                 try {
-                    message = (String) (chatInput.readObject());
+                    message = (String) (input.readObject());
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }

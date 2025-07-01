@@ -1,5 +1,6 @@
 package codes;
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -20,6 +21,12 @@ public class LoginPage {
         stage.getIcons().add(icon);
         stage.setTitle("Login");
         stage.setScene(scene);
+
+        stage.setOnCloseRequest(event ->{
+            Platform.exit();
+            System.exit(0);
+        });
+
         stage.show();
     }
 

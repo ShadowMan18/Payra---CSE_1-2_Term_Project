@@ -1,5 +1,6 @@
 package codes;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -26,6 +27,12 @@ public class IntroPage {
         stage.getIcons().add(icon);
         stage.setTitle("Intro");
         stage.setScene(scene);
+
+        stage.setOnCloseRequest(event ->{
+            Platform.exit();
+            System.exit(0);
+        });
+
         stage.show();
     }
 

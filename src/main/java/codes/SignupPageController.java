@@ -4,6 +4,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -48,10 +50,36 @@ public class SignupPageController {
         SignupPageLayout.setPrefHeight(Screen.SCREENHEIGHT);
         SignupPageView.scaleXProperty().bind(SignupPageLayout.widthProperty().divide(1600));
         SignupPageView.scaleYProperty().bind(SignupPageLayout.heightProperty().divide(900));
+        SignupPageLayout.setFocusTraversable(true);
+        SignupPageLayout.requestFocus();
     }
 
     @FXML
     public void onSignupButtonClick(ActionEvent mouseEvent) {
+        signup();
+
+        try {
+            client.getLoginPage().startLoginPageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @FXML
+    public void onEnterKeyPress(KeyEvent keyEvent) {
+        if (keyEvent.getCode() == KeyCode.ENTER) {
+            signup();
+            SignupPageLayout.setFocusTraversable(false);
+
+            try {
+                client.getLoginPage().startLoginPageView(client, stage);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void signup() {
         firstName = SignupPageFirstNameField.getText();
         lastName = SignupPageLastNameField.getText();
         email = SignupPageEmailField.getText();
@@ -76,12 +104,6 @@ public class SignupPageController {
         try {
             client.getServerOutput().writeObject("1_"+email);
             client.getServerOutput().flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            client.getLoginPage().startLoginPageView(client, stage);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
