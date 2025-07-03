@@ -15,7 +15,7 @@ public class Controller {
 
     @FXML
     protected void onStartButtonClick() {
-        WebcamCapture.startWebcam(Main.stage);
+//        WebcamCapture.startWebcam(Main.stage);
         MicrophoneCapture.startMicrophone();
     }
 

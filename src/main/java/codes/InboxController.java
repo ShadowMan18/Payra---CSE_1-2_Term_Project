@@ -3,6 +3,9 @@ package codes;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -13,7 +16,15 @@ public class InboxController {
     public StackPane InboxLayout;
     @FXML
     public Group InboxView;
-    
+    @FXML
+    public TextField Recipient;
+    @FXML
+    public TextArea Chat;
+    @FXML
+    public TextArea Message;
+    @FXML
+    public Label User;
+
     Client client;
     Stage stage;
 
@@ -43,5 +54,23 @@ public class InboxController {
 
     public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
         client.getProfilePage().startProfilePageView(client, stage);
+    }
+
+    public String getRecipientId() {
+        String recipientId = Recipient.getText();
+        recipientId = recipientId.substring(0, recipientId.length() - "@gmail.com".length());
+
+        Recipient.clear();
+
+        return recipientId;
+    }
+
+    public String getMessage() {
+        String message = Message.getText();
+
+        Message.clear();
+
+        message = message.substring(0, message.length() - 1);
+        return message;
     }
 }

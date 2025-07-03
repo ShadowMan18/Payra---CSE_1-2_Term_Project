@@ -9,6 +9,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class SignupPageController {
@@ -99,11 +102,49 @@ public class SignupPageController {
         client.setFirstName(firstName);
         client.setLastName(lastName);
         client.setEmail(email);
+        client.setId(email.substring(0, email.length() - "@gmail.com".length()));
         client.setPassword(password1);
 
+
+        File clientDirectory = new File("database/clients/" + client.getId());
+        clientDirectory.mkdir();
+
+        File info = new File("database/clients/" + client.getId() +"/info.txt");
+
         try {
-            client.getServerOutput().writeObject("1_"+email);
-            client.getServerOutput().flush();
+            info.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        File friends = new File("database/clients/" + client.getId() +"/friends.txt");
+
+        try {
+            friends.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        File uploads = new File("database/clients/" + client.getId() +"/uploads");
+        uploads.mkdir();
+
+        File chats = new File("database/clients/" + client.getId() +"/chats");
+        chats.mkdir();
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + client.getId() +"/info.txt"))) {
+            writer.write(String.valueOf(client));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/client_list.txt", true))) {
+            writer.write(email + "\n");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            client.getServerOutput().writeObject("signup:" + email);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

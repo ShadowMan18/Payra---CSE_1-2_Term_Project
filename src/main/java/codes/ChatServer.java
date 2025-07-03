@@ -78,8 +78,6 @@ class ChatServer implements Runnable {
                     throw new RuntimeException(e);
                 }
 
-                System.out.println((String) message);
-
                 try {
                     output2.writeObject(message);
                     output2.flush();
@@ -96,8 +94,6 @@ class ChatServer implements Runnable {
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
-
-                System.out.println((String) message);
 
                 try {
                     output1.writeObject(message);

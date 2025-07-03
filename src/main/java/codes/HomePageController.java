@@ -3,18 +3,20 @@ package codes;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class HomePageController {
     @FXML
     public StackPane HomePageLayout;
     @FXML
     public Group HomePageView;
-    
+
     Client client;
     Stage stage;
 
@@ -34,9 +36,6 @@ public class HomePageController {
 
     @FXML
     public void onChatButtonClick(ActionEvent actionEvent) throws IOException {
-        String recipientId = "49";
-        client.getServerOutput().writeObject("3_" + recipientId);
-        client.getServerOutput().flush();
         client.getInbox().startInboxView(client, stage);
     }
 }

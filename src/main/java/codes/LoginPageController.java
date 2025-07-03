@@ -78,7 +78,7 @@ public class LoginPageController {
         System.out.println(password);
 
         try {
-            client.getServerOutput().writeObject("2_" + email);
+            client.getServerOutput().writeObject("login:" + email.substring(0, email.length() - "@gmail.com".length()));
             client.getServerOutput().flush();
         } catch (IOException e) {
             throw new RuntimeException(e);

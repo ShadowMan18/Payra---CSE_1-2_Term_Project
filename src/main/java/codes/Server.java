@@ -1,6 +1,7 @@
 package codes;
 
-import java.io.IOException;
+import javax.annotation.processing.Filer;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -13,6 +14,28 @@ public class Server {
     static int port = 1025;
 
     public static void main(String[] args) {
+        BufferedReader reader;
+
+        try {
+             reader = new BufferedReader(new FileReader("database/client_list.txt"));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        while (true) {
+            String client;
+
+            try {
+                 client = reader.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (client == null) break;
+
+            clients.add(client);
+        }
+
         ServerSocket serverSocket;
         Socket clientSocket;
 

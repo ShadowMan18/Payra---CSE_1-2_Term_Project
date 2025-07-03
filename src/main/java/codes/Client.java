@@ -13,6 +13,7 @@ public class Client {
     private String firstName;
     private String lastName;
     private String email;
+    private String id;
     private String password;
 
     // Client pages
@@ -34,6 +35,7 @@ public class Client {
     private Vector<Socket> chatSocket;
     private Vector<ObjectOutputStream> chatOutput;
     private Vector<ObjectInputStream> chatInput;
+    private Vector<String> connectedId;
     private boolean loginStatus;
     private boolean inChat;
 
@@ -70,6 +72,7 @@ public class Client {
         this.chatSocket = new Vector<>();
         this.chatOutput = new Vector<>();
         this.chatInput = new Vector<>();
+        this.connectedId = new Vector<>();
 
         this.loginStatus = false;
         this.inChat = false;
@@ -110,9 +113,11 @@ public class Client {
                     throw new RuntimeException(e);
                 }
 
-                if (message.startsWith("Connect:")) {
-                    int port = Integer.parseInt(message.substring("Connect:".length()));
+                if (message.startsWith("connect:")) {
+                    String[] connectionInfo = message.substring("connect:".length()).split(",");
+                    int port = Integer.parseInt(connectionInfo[0]);
                     connectToChatServer(port);
+                    connectedId.add(connectionInfo[1]);
                     inChat = true;
                 } else {
                     System.out.println("Received: " + message);
@@ -136,6 +141,10 @@ public class Client {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getPassword() {
@@ -194,6 +203,10 @@ public class Client {
         return chatInput.get(index);
     }
 
+    public int getIdIndex(String id) {
+        return connectedId.indexOf(id);
+    }
+
     public boolean getLoginStatus() { return loginStatus; }
 
     // Setters
@@ -210,6 +223,10 @@ public class Client {
         this.email = email;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -219,7 +236,16 @@ public class Client {
         this.loginStatus = status;
     }
 
+    @Override
+    public String toString() {
+        return firstName + "," + lastName + "," + email + "," + password;
+    }
+
     // Public methods
+
+    public boolean isConnected(String id) {
+        return connectedId.contains(id);
+    }
 
     public void connectToChatServer(int port) {
         Socket socket;

@@ -1,9 +1,6 @@
 package codes;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class ServerThread implements Runnable{
@@ -49,23 +46,24 @@ public class ServerThread implements Runnable{
                 throw new RuntimeException(e);
             }
 
-            if (fromClient instanceof String string && string.substring(0,2).equals("1_"))
+            if (fromClient instanceof String string && string.startsWith("signup:"))
             {
-                Server.clients.add((String) fromClient);
+                Server.clients.add(((String) fromClient).substring("signup".length()));
                 System.out.println(Server.clients.size());
             }
 
-            if (fromClient instanceof String string && string.substring(0,2).equals("2_"))
+            if (fromClient instanceof String string && string.startsWith("login:"))
             {
-                this.id = string.substring(2);
+                this.id = string.substring("login:".length());
                 Server.currentClients.put(id, this);
                 System.out.println(Server.currentClients.size());
             }
 
-            if (fromClient instanceof String string && string.substring(0,2).equals("3_"))
+            if (fromClient instanceof String string && string.startsWith("connect_to:"))
             {
+                String recipientId = string.substring("connect_to:".length());
                 ServerThread sender = Server.currentClients.get(id);
-                ServerThread recipient = Server.currentClients.get(string.substring(2));
+                ServerThread recipient = Server.currentClients.get(recipientId);
 
                 if (recipient == null){
                     System.out.println("Recipient is not active.");
@@ -74,18 +72,51 @@ public class ServerThread implements Runnable{
                 new ChatServer(Server.port);
 
                 try {
-                    sender.output.writeObject("Connect:"+Server.port);
+                    sender.output.writeObject("connect:" + Server.port + "," + recipientId);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
                 try {
-                    recipient.output.writeObject("Connect:"+Server.port);
+                    recipient.output.writeObject("connect:" + Server.port + "," + id);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
                 Server.port++;
+
+                File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
+                File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);
+
+                if (!chat1.exists()) {
+                    chat1.mkdir();
+
+                    File texts = new File("database/clients/" + id + "/chats/" + recipientId + "/texts.txt");
+                    File media = new File("database/clients/" + id + "/chats/" + recipientId + "/media");
+
+                    try {
+                        texts.createNewFile();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    media.mkdir();
+                }
+
+                if (!chat2.exists()) {
+                    chat2.mkdir();
+
+                    File texts = new File("database/clients/" + recipientId + "/chats/" + id + "/texts.txt");
+                    File media = new File("database/clients/" + recipientId + "/chats/" + id + "/media");
+
+                    try {
+                        texts.createNewFile();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    media.mkdir();
+                }
             }
         }
     }
