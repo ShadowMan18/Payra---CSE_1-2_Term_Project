@@ -1,6 +1,5 @@
 package codes;
 
-import javax.annotation.processing.Filer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,6 +13,8 @@ public class Server {
     static int port = 1025;
 
     public static void main(String[] args) {
+        // Storing the clients' id in "clients" Vector from clients.txt file
+
         BufferedReader reader;
 
         try {
@@ -36,6 +37,8 @@ public class Server {
             clients.add(client);
         }
 
+        // Initiating the server
+
         ServerSocket serverSocket;
         Socket clientSocket;
 
@@ -45,6 +48,8 @@ public class Server {
             throw new RuntimeException(e);
         }
 
+        // Accepting clients
+
         while(true)
         {
             try {
@@ -52,6 +57,8 @@ public class Server {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+            // Creating new server thread for the client
 
             new ServerThread(clientSocket);
         }

@@ -5,7 +5,6 @@ import java.net.Socket;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
-    private final Socket clientSocket;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
     private String id;
@@ -14,7 +13,8 @@ public class ServerThread implements Runnable{
 
     public ServerThread(Socket clientSocket) {
         serverThread = new Thread(this);
-        this.clientSocket = clientSocket;
+
+        // Initiating the output and input stream to communicate with the client
 
         try {
             this.output = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -33,6 +33,8 @@ public class ServerThread implements Runnable{
 
     @Override
     public void run() {
+        // Receiving instructions from the client and sending feedbacks
+
         while(true)
         {
             Object fromClient = null;

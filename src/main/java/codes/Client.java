@@ -52,7 +52,7 @@ public class Client {
         this.notificationPage = new NotificationPage();
 
         try {
-            this.serverSocket = new Socket("127.0.0.1", 1024);
+            this.serverSocket = new Socket("192.168.1.104", 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
