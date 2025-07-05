@@ -2,6 +2,7 @@ package codes;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
@@ -48,9 +49,55 @@ public class ServerThread implements Runnable{
                 throw new RuntimeException(e);
             }
 
+            if (fromClient instanceof String string && string.startsWith("m:"))
+            {
+                System.out.println((String) fromClient);
+            }
+
             if (fromClient instanceof String string && string.startsWith("signup:"))
             {
-                Server.clients.add(((String) fromClient).substring("signup".length()));
+                String clientInfo = string.substring("signup:".length());
+
+                this.id = clientInfo.split(",")[0];
+                Server.clients.add(id);
+
+                File clientDirectory = new File("database/clients/" + id);
+                clientDirectory.mkdir();
+
+                File info = new File("database/clients/" + id +"/info.txt");
+
+                try {
+                    info.createNewFile();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                File friends = new File("database/clients/" + id +"/friends.txt");
+
+                try {
+                    friends.createNewFile();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                File uploads = new File("database/clients/" + id +"/uploads");
+                uploads.mkdir();
+
+                File chats = new File("database/clients/" + id +"/chats");
+                chats.mkdir();
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + id +"/info.txt"))) {
+                    writer.write(clientInfo);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/client_list.txt", true))) {
+                    writer.write(id + "\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 System.out.println(Server.clients.size());
             }
 

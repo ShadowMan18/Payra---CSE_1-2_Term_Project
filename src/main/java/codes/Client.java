@@ -238,7 +238,7 @@ public class Client {
 
     @Override
     public String toString() {
-        return firstName + "," + lastName + "," + email + "," + password;
+        return id + "," + firstName + "," + lastName + "," + password;
     }
 
     // Public methods
