@@ -1,25 +1,26 @@
 package codes;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import javafx.application.Platform;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 class ChatServer implements Runnable {
     private ServerSocket serverSocket;
-    private Socket clientSocket1;
-    private Socket clientSocket2;
+    private Socket clientSocket;
     private Thread chatThread;
-    ObjectOutputStream output1;
-    ObjectInputStream input1;
-    ObjectOutputStream output2;
-    ObjectInputStream input2;
+    private ObjectOutputStream output;
+    private ObjectInputStream input;
+    private String senderId;
+    private String recipientId;
 
-    Object message;
+    private Object message;
 
-    public ChatServer(int port) {
+    public ChatServer(int port, String senderId, String recipientId) {
         chatThread = new Thread(this);
+        this.senderId = senderId;
+        this.recipientId = recipientId;
 
         try {
             serverSocket = new ServerSocket(port);
@@ -35,37 +36,19 @@ class ChatServer implements Runnable {
     @Override
     public void run() {
         try {
-            clientSocket1 = serverSocket.accept();
+            clientSocket = serverSocket.accept();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            clientSocket2 = serverSocket.accept();
+            output = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            output1 = new ObjectOutputStream(clientSocket1.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            input1 = new ObjectInputStream(clientSocket1.getInputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            output2 = new ObjectOutputStream(clientSocket2.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            input2 = new ObjectInputStream(clientSocket2.getInputStream());
+            input = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -73,14 +56,19 @@ class ChatServer implements Runnable {
         new Thread(() -> {
             while (true){
                 try {
-                    message = input1.readObject();
+                    message = input.readObject();
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    output2.writeObject(message);
-                    output2.flush();
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + senderId + "/chats/" + recipientId + "/texts.txt", true))) {
+                    writer.write(senderId + ":" + message + "\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + recipientId + "/chats/" + senderId + "/texts.txt", true))) {
+                    writer.write(senderId + ":" + message + "\n");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -88,18 +76,29 @@ class ChatServer implements Runnable {
         }).start();
 
         new Thread(() -> {
-            while(true) {
+            BufferedReader reader;
+
+            try {
+                reader = new BufferedReader(new FileReader("database/clients/" + senderId + "/chats/" + recipientId +"/texts.txt"));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
+            while (true) {
+                Object message;
+
                 try {
-                    message = input2.readObject();
-                } catch (IOException | ClassNotFoundException e) {
+                    message = reader.readLine();
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    output1.writeObject(message);
-                    output1.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (message != null) {
+                    try {
+                        output.writeObject(message);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }).start();

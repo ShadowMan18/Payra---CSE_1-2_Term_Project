@@ -108,31 +108,31 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.currentClients.size());
             }
 
-            if (fromClient instanceof String string && string.startsWith("connect_to:"))
+            if (fromClient instanceof String string && string.startsWith("chat_with:"))
             {
-                String recipientId = string.substring("connect_to:".length());
-                ServerThread sender = Server.currentClients.get(id);
-                ServerThread recipient = Server.currentClients.get(recipientId);
-
-                if (recipient == null){
-                    System.out.println("Recipient is not active.");
-                }
-
-                new ChatServer(Server.port);
-
-                try {
-                    sender.output.writeObject("connect:" + Server.port + "," + recipientId);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try {
-                    recipient.output.writeObject("connect:" + Server.port + "," + id);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                Server.port++;
+                String recipientId = string.substring("chat_with:".length());
+//                ServerThread sender = Server.currentClients.get(id);
+//                ServerThread recipient = Server.currentClients.get(recipientId);
+//
+//                if (recipient == null){
+//                    System.out.println("Recipient is not active.");
+//                }
+//
+//                new ChatServer(Server.port);
+//
+//                try {
+//                    sender.output.writeObject("connect:" + Server.port + "," + recipientId);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//
+//                try {
+//                    recipient.output.writeObject("connect:" + Server.port + "," + id);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//
+//                Server.port++;
 
                 File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
                 File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);
@@ -165,6 +165,23 @@ public class ServerThread implements Runnable{
                     }
 
                     media.mkdir();
+                }
+
+                int port = 0;
+
+                for(int i = 0; i < 45000; i++) {
+                    if (Server.port[i] == 0) {
+                        port = i + 1025;
+                        Server.port[i] = 1;
+                    }
+                }
+
+                new ChatServer(port, id, recipientId);
+
+                try {
+                    output.writeObject("connect_to:" + port);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }

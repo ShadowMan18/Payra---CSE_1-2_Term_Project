@@ -43,20 +43,17 @@ public class Inbox {
             if (event1.getCode() == KeyCode.ENTER) {
                 String recipientId = inboxController.getRecipientId();
 
-                if (!client.isConnected(recipientId)) {
-                    try {
-                        client.getServerOutput().writeObject("connect_to:" + recipientId);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    try {
-                        client.getServerOutput().flush();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                try {
+                    client.getServerOutput().writeObject("chat_with:" + recipientId);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
 
+                try {
+                    client.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
                 inboxController.Chat = new TextArea();
                 inboxController.Chat.setEditable(false);
@@ -66,66 +63,45 @@ public class Inbox {
                 inboxController.Chat.setPrefWidth(300);
                 inboxController.Chat.setPrefHeight(300);
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                BufferedReader reader;
-
-                try {
-                    reader = new BufferedReader(new FileReader("database/clients/" + client.getId() + "/chats/" + recipientId +"/texts.txt"));
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-
-                new Thread(() -> {
-                    while (true) {
-                        String message;
-
-                        try {
-                            message = reader.readLine();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        if (message != null) {
-                            Platform.runLater(() -> inboxController.Chat.appendText(message + "\n"));
-                        }
-                    }
-                }).start();
-
                 inboxController.Message = new TextArea();
                 inboxController.Message.setLayoutX(800);
                 inboxController.Message.setLayoutY(500);
                 inboxController.Message.setPrefWidth(300);
                 inboxController.Message.setPrefHeight(300);
 
-                inboxController.Message.setOnKeyPressed(event2 -> {
-                    if (event2.getCode() == KeyCode.ENTER) {
-                        String message = inboxController.getMessage();
-                        int index = client.getIdIndex(recipientId);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                new Thread(() -> {
+                    while (true) {
+                        Object message;
 
                         try {
-                            client.getChatOutput(index).writeObject(message);
-
-                            try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + client.getId() + "/chats/" + recipientId + "/texts.txt", true))) {
-                                writer.write(client.getId() + ":" + message + "\n");
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-
-                            try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + recipientId + "/chats/" + client.getId() + "/texts.txt", true))) {
-                                writer.write(client.getId() + ":" + message + "\n");
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        } catch (IOException e) {
+                            message = client.getChatInput().readObject();
+                        } catch (IOException | ClassNotFoundException e) {
                             throw new RuntimeException(e);
                         }
+
+                        Platform.runLater(() -> inboxController.Chat.appendText((String) message + "\n"));
                     }
-                });
+                }).start();
+
+                new Thread(() -> {
+                    inboxController.Message.setOnKeyPressed(event2 -> {
+                        if (event2.getCode() == KeyCode.ENTER) {
+                            Object message = inboxController.getMessage();
+
+                            try {
+                                client.getChatOutput().writeObject(message);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    });
+                }).start();
 
                 inboxController.InboxView.getChildren().add(inboxController.Chat);
                 inboxController.InboxView.getChildren().add(inboxController.Message);

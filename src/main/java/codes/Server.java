@@ -10,7 +10,7 @@ import java.util.Vector;
 public class Server {
     static Vector<String> clients = new Vector<>();
     static Map<String, ServerThread> currentClients = new HashMap<>();
-    static int port = 1025;
+    static int[] port = new int[45000];
 
     public static void main(String[] args) {
         // Storing the clients' id in "clients" Vector from clients.txt file
