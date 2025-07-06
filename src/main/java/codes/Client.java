@@ -236,6 +236,7 @@ public class Client {
         this.loginStatus = status;
     }
 
+
     @Override
     public String toString() {
         return firstName + "," + lastName + "," + email + "," + password;
