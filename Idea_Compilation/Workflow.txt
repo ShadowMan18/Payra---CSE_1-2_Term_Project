@@ -1,0 +1,39 @@
+Workflow
+========
+
+SERVER:
+
+fetches the clients from client.txt after starting → accepts a new client → creates a designated unique server thread for the client
+
+SERVER THREAD:
+
+creates communication channel with the client → receives instructions from the client and performs accordingly (sign up, log in, chatting) → creates necessary files in the server side for the client and stores client’s data → creates chat server for the client (when chatting)
+
+
+LOG IN PAGE & LOG IN PAGE CONTROLLER:
+
+creates login page → redirect to sign up page/forgot password page →  takes information from the client → verifies information → sends log in command to the server
+
+
+SIGN UP PAGE & SIGN UP PAGE CONTROLLER:
+
+creates the sign up page → takes information from the client → verifies information → sends sign up command to the server 
+
+
+HOME PAGE & HOME PAGE CONTROLLER:
+
+creates home page → redirect to news feed/inbox
+
+
+INBOX & INBOX CONTROLLER:
+
+creates inbox → takes receiver id → sends chat command to the server with receiver id → starts chat reader thread that receives message from the chat server and shows in the chat box → starts message sender thread that receives message from the client and sends to the chat server 
+
+
+CHAT SERVER:
+
+creates a new server with port, sender and receiver id → connects the client → starts a message writer thread that receives message from the sender and writes it in the chat files of both the sender and receiver → starts a chat conveyor thread that reads chats from the chat file and sends to the client
+
+
+
+

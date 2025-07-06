@@ -45,7 +45,6 @@ public class SignupPageController {
     private String question;
     private String answer;
 
-
     public void setSignupPageController(Client client, Stage stage) {
         this.client = client;
         this.stage = stage;
@@ -59,7 +58,10 @@ public class SignupPageController {
 
     @FXML
     public void onSignupButtonClick(ActionEvent mouseEvent) {
+        // Proceeding to sign up
         signup();
+
+        // Loading login page
 
         try {
             client.getLoginPage().startLoginPageView(client, stage);
@@ -71,18 +73,27 @@ public class SignupPageController {
     @FXML
     public void onEnterKeyPress(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
-            signup();
+            // Proceeding to sign up
+
+            boolean isSignedUp = signup();
+
             SignupPageLayout.setFocusTraversable(false);
 
-            try {
-                client.getLoginPage().startLoginPageView(client, stage);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            // Loading login page
+
+            if (isSignedUp) {
+                try {
+                    client.getLoginPage().startLoginPageView(client, stage);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
 
-    public void signup() {
+    public boolean signup() {
+        // Taking inputs from the input fields
+
         firstName = SignupPageFirstNameField.getText();
         lastName = SignupPageLastNameField.getText();
         email = SignupPageEmailField.getText();
@@ -90,6 +101,14 @@ public class SignupPageController {
         password2 = SignupPageConfirmPasswordField.getText();
         question = SignupPageQuestionField.getText();
         answer = SignupPageAnswerField.getText();
+
+        boolean firstNameCheck = checkName(firstName);
+        boolean lastNameCheck = checkName(lastName);
+        boolean emailCheck = checkEmailAddress(email);
+        boolean password1Check = true;
+        boolean password2Check = true;
+        boolean questionCheck = true;
+        boolean answerCheck = true;
 
         System.out.println(firstName);
         System.out.println(lastName);
@@ -99,54 +118,110 @@ public class SignupPageController {
         System.out.println(question);
         System.out.println(answer);
 
+        // Setting client information to the client object
+
         client.setFirstName(firstName);
         client.setLastName(lastName);
         client.setEmail(email);
         client.setId(email.substring(0, email.length() - "@gmail.com".length()));
         client.setPassword(password1);
 
-
-        File clientDirectory = new File("database/clients/" + client.getId());
-        clientDirectory.mkdir();
-
-        File info = new File("database/clients/" + client.getId() +"/info.txt");
-
         try {
-            info.createNewFile();
+            client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        File friends = new File("database/clients/" + client.getId() +"/friends.txt");
+        return true;
 
-        try {
-            friends.createNewFile();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        File uploads = new File("database/clients/" + client.getId() +"/uploads");
-        uploads.mkdir();
-
-        File chats = new File("database/clients/" + client.getId() +"/chats");
-        chats.mkdir();
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + client.getId() +"/info.txt"))) {
-            writer.write(String.valueOf(client));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/client_list.txt", true))) {
-            writer.write(email + "\n");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            client.getServerOutput().writeObject("signup:" + email);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        if (firstNameCheck && lastNameCheck && emailCheck && password1Check && password2Check && questionCheck && answerCheck) {
+//            // Sending sign up command with client's information to the server
+//
+//            try {
+//                client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//            return true;
+//        }
+//        else {
+//            return false;
+//        }
     }
+
+    public boolean checkName(String name) {
+        for (int i = 0; i < name.length(); i++) {
+            if (!((name.charAt(i) >= 'A' && name.charAt(i) <= 'Z') || (name.charAt(i) >= 'a' && name.charAt(i) <= 'z') || name.charAt(i) == ' ' || name.charAt(i) == '.' || name.charAt(i) == '-')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean checkEmailAddress(String emailAddress) {
+        if (!emailAddress.endsWith("@gmail.com")) {
+            return false;
+        }
+        else {
+            String id = emailAddress.substring(emailAddress.length() - "@gmail.com".length());
+
+            if (id.length() < 6) {
+                return false;
+            }
+            else if (id.length() > 30) {
+                return false;
+            }
+            else if (!(id.charAt(0) >= 'a' && id.charAt(0) <= 'z')) {
+                return false;
+            }
+            else if (id.endsWith(".")) {
+                return false;
+            }
+            else {
+                for(int i = 0; i < id.length(); i++) {
+                    if (!((id.charAt(i) >= 'a' && id.charAt(i) <= 'z') || (id.charAt(i) >= '0' && id.charAt(i) <= '9') || id.charAt(i) == '.' || id.charAt(i) == '-' || id.charAt(i) == '_')) {
+                        return false;
+                    }
+                }
+            }
+
+            try {
+                client.getServerOutput().writeObject("check:" + id);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                if (client.getServerInput().readBoolean()) {
+                    return false;
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return true;
+    }
+
+//    public boolean passwordCheck(String password) {
+//        int upperCase = 0;
+//        int lowerCase = 0;
+//        int specialCharacter = 0;
+//        int digit = 0;
+//
+//        if (password.length() < 8) {
+//            return false;
+//        }
+//        else {
+//            for (int i = 0; i < password.length(); i++){
+//                if (password.charAt(i) >= 'A' && password.charAt(i) <= 'Z') {
+//                    upperCase++;
+//                }
+//                else if (password.charAt(i) >= 'a' && password.charAt(i) <= 'z') {
+//                    lowerCase++;
+//                }
+//                else if (password.charAt(i) == )
+//            }
+//        }
+//    }
 }

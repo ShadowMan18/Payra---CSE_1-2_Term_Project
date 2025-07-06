@@ -39,24 +39,34 @@ public class InboxController {
 
     @FXML
     public void onNewsFeedButtonClicked(ActionEvent mouseEvent) throws IOException {
+        // Loading news feed page
+
         client.getNewsFeed().startNewsFeedView(client, stage);
     }
 
     @FXML
     public void onHomeButtonClicked(ActionEvent mouseEvent) throws IOException {
+        // Loading home page
+
         client.getHomePage().startHomePageView(client, stage);
     }
 
     @FXML
     public void onNotificationButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading notification page
+
         client.getNotificationPage().startNotificationPageView(client, stage);
     }
 
     public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading profile page
+
         client.getProfilePage().startProfilePageView(client, stage);
     }
 
     public String getRecipientId() {
+        // Taking recipient id from the input field
+
         String recipientId = Recipient.getText();
         recipientId = recipientId.substring(0, recipientId.length() - "@gmail.com".length());
 
@@ -66,11 +76,13 @@ public class InboxController {
     }
 
     public String getMessage() {
+        // Taking message from the input field
+
         String message = Message.getText();
+        message = message.substring(0, message.length() - 1);
 
         Message.clear();
 
-        message = message.substring(0, message.length() - 1);
         return message;
     }
 }

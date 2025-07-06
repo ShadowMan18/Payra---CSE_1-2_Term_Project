@@ -39,7 +39,11 @@ public class LoginPageController {
 
     @FXML
     public void onLoginButtonClick(ActionEvent actionEvent) {
+        // Proceeding to log in
+
         login();
+
+        // Loading home page
 
         try {
             client.getHomePage().startHomePageView(client, stage);
@@ -50,17 +54,24 @@ public class LoginPageController {
 
     @FXML
     public void onCreateButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading sign up page
+
         client.getSignupPage().startSignupPageView(client, stage);
     }
 
     @FXML
     public void onForgotPasswordButtonClick(ActionEvent mouseEvent) {
+        // Laoding forgot password page
     }
 
     public void onEnterKeyPress(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
+            // Proceeding to log in
             login();
+
             LoginPageLayout.setFocusTraversable(false);
+
+            // Loading home page
 
             try {
                 client.getHomePage().startHomePageView(client, stage);
@@ -71,11 +82,15 @@ public class LoginPageController {
     }
 
     public void login() {
+        // Taking inputs from the input fields
+
         email = LoginPageEmailField.getText();
         password = LoginPagePasswordField.getText();
 
         System.out.println(email);
         System.out.println(password);
+
+        // Sending log in command with client's information to the server
 
         try {
             client.getServerOutput().writeObject("login:" + email.substring(0, email.length() - "@gmail.com".length()));

@@ -2,19 +2,20 @@ package codes;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
-    private final Socket clientSocket;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
     private String id;
 
-    // Constructor
+    // Creating server thread from the client
 
     public ServerThread(Socket clientSocket) {
         serverThread = new Thread(this);
-        this.clientSocket = clientSocket;
+
+        // Initiating the output and input stream to communicate with the client
 
         try {
             this.output = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -33,6 +34,8 @@ public class ServerThread implements Runnable{
 
     @Override
     public void run() {
+        // Receiving instructions from the client and sending feedbacks
+
         while(true)
         {
             Object fromClient = null;
@@ -46,11 +49,77 @@ public class ServerThread implements Runnable{
                 throw new RuntimeException(e);
             }
 
+//            if (fromClient instanceof String string && string.startsWith("m:"))
+//            {
+//                System.out.println((String) fromClient);
+//            }
+
+            // Checking if a client is present
+
+            if (fromClient instanceof String string && string.startsWith("check:")) {
+                String id = string.substring("check:".length());
+
+                try {
+                    output.writeBoolean(Server.clients.contains(id));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            // Signing up a client
+
             if (fromClient instanceof String string && string.startsWith("signup:"))
             {
-                Server.clients.add(((String) fromClient).substring("signup".length()));
+                String clientInfo = string.substring("signup:".length());
+
+                this.id = clientInfo.split(",")[0];
+                Server.clients.add(id);
+
+                // Creating files for the client in the database
+
+                File clientDirectory = new File("database/clients/" + id);
+                clientDirectory.mkdir();
+
+                File info = new File("database/clients/" + id +"/info.txt");
+
+                try {
+                    info.createNewFile();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                File friends = new File("database/clients/" + id +"/friends.txt");
+
+                try {
+                    friends.createNewFile();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                File uploads = new File("database/clients/" + id +"/uploads");
+                uploads.mkdir();
+
+                File chats = new File("database/clients/" + id +"/chats");
+                chats.mkdir();
+
+                // Storing client's data
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + id +"/info.txt"))) {
+                    writer.write(clientInfo);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/client_list.txt", true))) {
+                    writer.write(id + "\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 System.out.println(Server.clients.size());
             }
+
+            // Logging in a client
 
             if (fromClient instanceof String string && string.startsWith("login:"))
             {
@@ -59,31 +128,13 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.currentClients.size());
             }
 
-            if (fromClient instanceof String string && string.startsWith("connect_to:"))
+            // Enabling a client to chat with another client
+
+            if (fromClient instanceof String string && string.startsWith("chat_with:"))
             {
-                String recipientId = string.substring("connect_to:".length());
-                ServerThread sender = Server.currentClients.get(id);
-                ServerThread recipient = Server.currentClients.get(recipientId);
+                String recipientId = string.substring("chat_with:".length());
 
-                if (recipient == null){
-                    System.out.println("Recipient is not active.");
-                }
-
-                new ChatServer(Server.port);
-
-                try {
-                    sender.output.writeObject("connect:" + Server.port + "," + recipientId);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try {
-                    recipient.output.writeObject("connect:" + Server.port + "," + id);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                Server.port++;
+                // Creating chat files for both clients
 
                 File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
                 File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);
@@ -116,6 +167,26 @@ public class ServerThread implements Runnable{
                     }
 
                     media.mkdir();
+                }
+
+                // Creating new chat server for the client and sending the connection information to the client
+
+                int port = 0;
+
+                for(int i = 0; i < 45000; i++) {
+                    if (Server.port[i] == 0) {
+                        port = i + 1025;
+                        Server.port[i] = 1;
+                        break;
+                    }
+                }
+
+                new ChatServer(port, id, recipientId);
+
+                try {
+                    output.writeObject("connect_to:" + port);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }

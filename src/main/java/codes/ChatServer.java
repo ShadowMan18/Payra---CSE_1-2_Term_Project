@@ -1,25 +1,28 @@
 package codes;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import javafx.application.Platform;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 class ChatServer implements Runnable {
     private ServerSocket serverSocket;
-    private Socket clientSocket1;
-    private Socket clientSocket2;
+    private Socket clientSocket;
     private Thread chatThread;
-    ObjectOutputStream output1;
-    ObjectInputStream input1;
-    ObjectOutputStream output2;
-    ObjectInputStream input2;
+    private ObjectOutputStream output;
+    private ObjectInputStream input;
+    private String senderId;
+    private String receiverId;
 
-    Object message;
+    private Object message;
+    
+    // Initiating chat server with port, sender id and receiver id
 
-    public ChatServer(int port) {
+    public ChatServer(int port, String senderId, String receiverId) {
         chatThread = new Thread(this);
+        this.senderId = senderId;
+        this.receiverId = receiverId;
 
         try {
             serverSocket = new ServerSocket(port);
@@ -34,72 +37,81 @@ class ChatServer implements Runnable {
 
     @Override
     public void run() {
+        // Connecting the client
+
         try {
-            clientSocket1 = serverSocket.accept();
+            clientSocket = serverSocket.accept();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            clientSocket2 = serverSocket.accept();
+            output = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            output1 = new ObjectOutputStream(clientSocket1.getOutputStream());
+            input = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        try {
-            input1 = new ObjectInputStream(clientSocket1.getInputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            output2 = new ObjectOutputStream(clientSocket2.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            input2 = new ObjectInputStream(clientSocket2.getInputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        // Starting message writer thread (receives message from the client and writes it in the chat files of both the sender and receiver)
         new Thread(() -> {
             while (true){
+                // Receiving message
+
                 try {
-                    message = input1.readObject();
+                    message = input.readObject();
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    output2.writeObject(message);
-                    output2.flush();
+                // Writing message in sender's chat file with the receiver
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + senderId + "/chats/" + receiverId + "/texts.txt", true))) {
+                    writer.write(senderId + ":" + message + "\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                // Writes message in the receiver's chat file with the sender
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + receiverId + "/chats/" + senderId + "/texts.txt", true))) {
+                    writer.write(senderId + ":" + message + "\n");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
         }).start();
 
+        // Starting chat conveyor thread (reads chats from the chat file and sends it to the client)
+
         new Thread(() -> {
-            while(true) {
+            BufferedReader reader;
+
+            try {
+                reader = new BufferedReader(new FileReader("database/clients/" + senderId + "/chats/" + receiverId +"/texts.txt"));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
+            while (true) {
+                Object message;
+
                 try {
-                    message = input2.readObject();
-                } catch (IOException | ClassNotFoundException e) {
+                    message = reader.readLine();
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    output1.writeObject(message);
-                    output1.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (message != null) {
+                    try {
+                        output.writeObject(message);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }).start();

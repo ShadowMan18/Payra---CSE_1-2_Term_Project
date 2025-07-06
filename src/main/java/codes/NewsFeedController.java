@@ -32,20 +32,28 @@ public class NewsFeedController {
 
     @FXML
     public void onChatButtonClicked(ActionEvent mouseEvent) throws IOException {
+        // Loading inbox page
+
         client.getInbox().startInboxView(client, stage);
     }
 
     @FXML
     public void onHomeButtonClicked(ActionEvent mouseEvent) throws IOException {
+        // Loading home page
+
         client.getHomePage().startHomePageView(client, stage);
     }
 
     @FXML
     public void onNotificationButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading notification page
+
         client.getNotificationPage().startNotificationPageView(client, stage);
     }
 
     public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading profile page
+
         client.getProfilePage().startProfilePageView(client, stage);
     }
     @FXML
