@@ -16,7 +16,7 @@ public class Password {
                 int encrypted = (a * x + b) % 26;
                 result.append((char)(encrypted + base));
             } else {
-                result.append(ch); // Keep spaces/punctuation unchanged
+                result.append(ch);
             }
         }
         return result.toString();
@@ -33,7 +33,7 @@ public class Password {
                 int decrypted = (a_inv * (y - b + 26)) % 26;
                 result.append((char)(decrypted + base));
             } else {
-                result.append(ch); // Keep spaces/punctuation unchanged
+                result.append(ch);
             }
         }
         return result.toString();

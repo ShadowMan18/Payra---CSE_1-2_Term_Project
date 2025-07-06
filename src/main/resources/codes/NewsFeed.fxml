@@ -6,6 +6,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Font?>
 
 <StackPane fx:id="NewsFeedLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.NewsFeedController">
    <children>
@@ -28,6 +29,11 @@
                </ImageView>
             </content>
          </ScrollPane>
+         <Button layoutX="686.0" layoutY="172.0" mnemonicParsing="false" onAction="#onPostButtonClick" prefHeight="72.0" prefWidth="245.0" text="POST SOMETHING!">
+            <font>
+               <Font size="20.0" />
+            </font>
+         </Button>
       </Group>
    </children>
 </StackPane>
