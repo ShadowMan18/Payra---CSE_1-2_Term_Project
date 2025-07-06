@@ -45,7 +45,6 @@ public class SignupPageController {
     private String question;
     private String answer;
 
-
     public void setSignupPageController(Client client, Stage stage) {
         this.client = client;
         this.stage = stage;
@@ -59,7 +58,10 @@ public class SignupPageController {
 
     @FXML
     public void onSignupButtonClick(ActionEvent mouseEvent) {
+        // Proceeding to sign up
         signup();
+
+        // Loading login page
 
         try {
             client.getLoginPage().startLoginPageView(client, stage);
@@ -71,8 +73,13 @@ public class SignupPageController {
     @FXML
     public void onEnterKeyPress(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
+            // Proceeding to sign up
+
             signup();
+
             SignupPageLayout.setFocusTraversable(false);
+
+            // Loading login page
 
             try {
                 client.getLoginPage().startLoginPageView(client, stage);
@@ -83,6 +90,8 @@ public class SignupPageController {
     }
 
     public void signup() {
+        // Taking inputs from the input fields
+
         firstName = SignupPageFirstNameField.getText();
         lastName = SignupPageLastNameField.getText();
         email = SignupPageEmailField.getText();
@@ -99,11 +108,15 @@ public class SignupPageController {
         System.out.println(question);
         System.out.println(answer);
 
+        // Setting client information to the client object
+
         client.setFirstName(firstName);
         client.setLastName(lastName);
         client.setEmail(email);
         client.setId(email.substring(0, email.length() - "@gmail.com".length()));
         client.setPassword(password1);
+
+        // Sending sign up command with client's information to the server
 
         try {
             client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);

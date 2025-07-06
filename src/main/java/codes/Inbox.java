@@ -32,6 +32,8 @@ public class Inbox {
 
         inboxController.User.setText(client.getEmail());
 
+        // Creating input field for the recipient id
+
         inboxController.Recipient = new TextField();
         inboxController.Recipient.setLayoutX(100);
         inboxController.Recipient.setLayoutY(500);
@@ -41,7 +43,11 @@ public class Inbox {
 
         inboxController.Recipient.setOnKeyPressed(event1 -> {
             if (event1.getCode() == KeyCode.ENTER) {
+                // Taking the recipient id
+
                 String recipientId = inboxController.getRecipientId();
+
+                // Sending chat command with recipient id to the server
 
                 try {
                     client.getServerOutput().writeObject("chat_with:" + recipientId);
@@ -55,6 +61,8 @@ public class Inbox {
                     throw new RuntimeException(e);
                 }
 
+                // Creating text area for showing the chat
+
                 inboxController.Chat = new TextArea();
                 inboxController.Chat.setEditable(false);
                 inboxController.Chat.setText("Chat with " + recipientId + "\n\n");
@@ -62,6 +70,8 @@ public class Inbox {
                 inboxController.Chat.setLayoutY(150);
                 inboxController.Chat.setPrefWidth(300);
                 inboxController.Chat.setPrefHeight(300);
+
+                // Creating text area for writing message
 
                 inboxController.Message = new TextArea();
                 inboxController.Message.setLayoutX(800);
@@ -74,6 +84,8 @@ public class Inbox {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
+
+                // Starting chat reader thread (Receives message from the chat server and shows it in the chat box)
 
                 new Thread(() -> {
                     while (true) {
@@ -88,6 +100,8 @@ public class Inbox {
                         Platform.runLater(() -> inboxController.Chat.appendText((String) message + "\n"));
                     }
                 }).start();
+
+                // Starting message sender thread (Sends messages to the chat server)
 
                 new Thread(() -> {
                     inboxController.Message.setOnKeyPressed(event2 -> {

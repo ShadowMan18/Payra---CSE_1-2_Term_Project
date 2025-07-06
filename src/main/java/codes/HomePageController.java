@@ -31,11 +31,15 @@ public class HomePageController {
 
     @FXML
     public void onNewsFeedButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading news feed page
+
         client.getNewsFeed().startNewsFeedView(client, stage);
     }
 
     @FXML
     public void onChatButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading inbox page
+
         client.getInbox().startInboxView(client, stage);
     }
 }

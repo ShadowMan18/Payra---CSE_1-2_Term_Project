@@ -13,14 +13,16 @@ class ChatServer implements Runnable {
     private ObjectOutputStream output;
     private ObjectInputStream input;
     private String senderId;
-    private String recipientId;
+    private String receiverId;
 
     private Object message;
+    
+    // Initiating chat server with port, sender id and receiver id
 
-    public ChatServer(int port, String senderId, String recipientId) {
+    public ChatServer(int port, String senderId, String receiverId) {
         chatThread = new Thread(this);
         this.senderId = senderId;
-        this.recipientId = recipientId;
+        this.receiverId = receiverId;
 
         try {
             serverSocket = new ServerSocket(port);
@@ -35,6 +37,8 @@ class ChatServer implements Runnable {
 
     @Override
     public void run() {
+        // Connecting the client
+
         try {
             clientSocket = serverSocket.accept();
         } catch (IOException e) {
@@ -53,21 +57,28 @@ class ChatServer implements Runnable {
             throw new RuntimeException(e);
         }
 
+        // Starting message writer thread (receives message from the client and writes it in the chat files of both the sender and receiver)
         new Thread(() -> {
             while (true){
+                // Receiving message
+
                 try {
                     message = input.readObject();
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + senderId + "/chats/" + recipientId + "/texts.txt", true))) {
+                // Writing message in sender's chat file with the receiver
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + senderId + "/chats/" + receiverId + "/texts.txt", true))) {
                     writer.write(senderId + ":" + message + "\n");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + recipientId + "/chats/" + senderId + "/texts.txt", true))) {
+                // Writes message in the receiver's chat file with the sender
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + receiverId + "/chats/" + senderId + "/texts.txt", true))) {
                     writer.write(senderId + ":" + message + "\n");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -75,11 +86,13 @@ class ChatServer implements Runnable {
             }
         }).start();
 
+        // Starting chat conveyor thread (reads chats from the chat file and sends it to the client)
+
         new Thread(() -> {
             BufferedReader reader;
 
             try {
-                reader = new BufferedReader(new FileReader("database/clients/" + senderId + "/chats/" + recipientId +"/texts.txt"));
+                reader = new BufferedReader(new FileReader("database/clients/" + senderId + "/chats/" + receiverId +"/texts.txt"));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }

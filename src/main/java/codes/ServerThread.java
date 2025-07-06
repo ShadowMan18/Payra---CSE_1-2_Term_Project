@@ -49,10 +49,12 @@ public class ServerThread implements Runnable{
                 throw new RuntimeException(e);
             }
 
-            if (fromClient instanceof String string && string.startsWith("m:"))
-            {
-                System.out.println((String) fromClient);
-            }
+//            if (fromClient instanceof String string && string.startsWith("m:"))
+//            {
+//                System.out.println((String) fromClient);
+//            }
+
+            // Signing up a client
 
             if (fromClient instanceof String string && string.startsWith("signup:"))
             {
@@ -60,6 +62,8 @@ public class ServerThread implements Runnable{
 
                 this.id = clientInfo.split(",")[0];
                 Server.clients.add(id);
+
+                // Creating files for the client in the database
 
                 File clientDirectory = new File("database/clients/" + id);
                 clientDirectory.mkdir();
@@ -86,6 +90,8 @@ public class ServerThread implements Runnable{
                 File chats = new File("database/clients/" + id +"/chats");
                 chats.mkdir();
 
+                // Storing client's data
+
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + id +"/info.txt"))) {
                     writer.write(clientInfo);
                 } catch (IOException e) {
@@ -101,6 +107,8 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.clients.size());
             }
 
+            // Logging in a client
+
             if (fromClient instanceof String string && string.startsWith("login:"))
             {
                 this.id = string.substring("login:".length());
@@ -108,31 +116,13 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.currentClients.size());
             }
 
+            // Enabling a client to chat with another client
+
             if (fromClient instanceof String string && string.startsWith("chat_with:"))
             {
                 String recipientId = string.substring("chat_with:".length());
-//                ServerThread sender = Server.currentClients.get(id);
-//                ServerThread recipient = Server.currentClients.get(recipientId);
-//
-//                if (recipient == null){
-//                    System.out.println("Recipient is not active.");
-//                }
-//
-//                new ChatServer(Server.port);
-//
-//                try {
-//                    sender.output.writeObject("connect:" + Server.port + "," + recipientId);
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//
-//                try {
-//                    recipient.output.writeObject("connect:" + Server.port + "," + id);
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//
-//                Server.port++;
+
+                // Creating chat files for both clients
 
                 File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
                 File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);
@@ -167,12 +157,15 @@ public class ServerThread implements Runnable{
                     media.mkdir();
                 }
 
+                // Creating new chat server for the client and sending the connection information to the client
+
                 int port = 0;
 
                 for(int i = 0; i < 45000; i++) {
                     if (Server.port[i] == 0) {
                         port = i + 1025;
                         Server.port[i] = 1;
+                        break;
                     }
                 }
 
