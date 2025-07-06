@@ -54,6 +54,18 @@ public class ServerThread implements Runnable{
 //                System.out.println((String) fromClient);
 //            }
 
+            // Checking if a client is present
+
+            if (fromClient instanceof String string && string.startsWith("check:")) {
+                String id = string.substring("check:".length());
+
+                try {
+                    output.writeBoolean(Server.clients.contains(id));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Signing up a client
 
             if (fromClient instanceof String string && string.startsWith("signup:"))
