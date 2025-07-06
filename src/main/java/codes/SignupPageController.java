@@ -126,20 +126,28 @@ public class SignupPageController {
         client.setId(email.substring(0, email.length() - "@gmail.com".length()));
         client.setPassword(password1);
 
-        if (firstNameCheck && lastNameCheck && emailCheck && password1Check && password2Check && questionCheck && answerCheck) {
-            // Sending sign up command with client's information to the server
-
-            try {
-                client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            return true;
+        try {
+            client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        else {
-            return false;
-        }
+
+        return true;
+
+//        if (firstNameCheck && lastNameCheck && emailCheck && password1Check && password2Check && questionCheck && answerCheck) {
+//            // Sending sign up command with client's information to the server
+//
+//            try {
+//                client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//            return true;
+//        }
+//        else {
+//            return false;
+//        }
     }
 
     public boolean checkName(String name) {
@@ -195,17 +203,25 @@ public class SignupPageController {
         return true;
     }
 
-    public boolean passwordCheck(String password) {
-        int upperCase = 0;
-        int lowerCase = 0;
-        int specialCharacter = 0;
-        int digit = 0;
-
-        if (password.length() < 8) {
-            return false;
-        }
-        else {
-
-        }
-    }
+//    public boolean passwordCheck(String password) {
+//        int upperCase = 0;
+//        int lowerCase = 0;
+//        int specialCharacter = 0;
+//        int digit = 0;
+//
+//        if (password.length() < 8) {
+//            return false;
+//        }
+//        else {
+//            for (int i = 0; i < password.length(); i++){
+//                if (password.charAt(i) >= 'A' && password.charAt(i) <= 'Z') {
+//                    upperCase++;
+//                }
+//                else if (password.charAt(i) >= 'a' && password.charAt(i) <= 'z') {
+//                    lowerCase++;
+//                }
+//                else if (password.charAt(i) == )
+//            }
+//        }
+//    }
 }
