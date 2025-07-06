@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class HomePageController {
+public class ForgotPasswordPageController {
     @FXML
     public StackPane HomePageLayout;
     @FXML
@@ -18,7 +18,7 @@ public class HomePageController {
     Client client;
     Stage stage;
 
-    public void setHomePageController(Client client, Stage stage) {
+    public void setForgotPasswordPageController(Client client, Stage stage) {
         this.client = client;
         this.stage = stage;
         HomePageLayout.setPrefWidth(Screen.SCREENWIDTH);

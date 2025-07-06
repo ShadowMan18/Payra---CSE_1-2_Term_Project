@@ -58,6 +58,7 @@ class ChatServer implements Runnable {
         }
 
         // Starting message writer thread (receives message from the client and writes it in the chat files of both the sender and receiver)
+
         new Thread(() -> {
             while (true){
                 // Receiving message

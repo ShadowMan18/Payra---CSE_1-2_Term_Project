@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
 
 public class Client {
     // Client information
@@ -15,6 +16,10 @@ public class Client {
     private String email;
     private String id;
     private String password;
+    private String recoveryQuestion;
+    private String recoveryAnswer;
+    private boolean registered;
+    private CountDownLatch latch;
 
     // Client pages
 
@@ -102,20 +107,44 @@ public class Client {
 
         Thread serverReader = new Thread(() -> {
             while (true) {
-                String message;
+                Object fromServer;
 
                 try {
-                    message = (String) (serverInput.readObject());
+                    fromServer = serverInput.readObject();
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
 
-                if (message.startsWith("connect_to:")) {
-                    int port = Integer.parseInt(message.substring("connect_to:".length()));
+                if (fromServer instanceof Boolean b) {
+                    this.registered = b;
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else if (fromServer instanceof String string && string.startsWith("info:")) {
+                    String[] info = string.substring("info:".length()).split(",");
+                    this.id = info[0];
+                    this.email  = id + "@gmail.com";
+                    this.password = info[1];
+                    this.firstName = info[2];
+                    this.lastName = info[3];
+                    this.recoveryQuestion = info[4];
+                    this.recoveryAnswer = info[5];
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else if (fromServer instanceof String string && string.startsWith("connect_to:")) {
+                    int port = Integer.parseInt(string.substring("connect_to:".length()));
                     connectToChatServer(port);
                     inChat = true;
                 } else {
-                    System.out.println("Received: " + message);
+                    assert fromServer instanceof String;
+                    System.out.println("Received: " + (String) fromServer);
                 }
             }
         });
@@ -144,6 +173,18 @@ public class Client {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getRecoveryQuestion() {
+        return recoveryQuestion;
+    }
+
+    public String getRecoveryAnswer() {
+        return recoveryAnswer;
+    }
+
+    public boolean isRegistered() {
+        return registered;
     }
 
     public IntroPage getIntroPage() {
@@ -226,14 +267,26 @@ public class Client {
         this.password = password;
     }
 
+    public void setRecoveryQuestion(String recoveryQuestion) {
+        this.recoveryQuestion = recoveryQuestion;
+    }
+
+    public void setRecoveryAnswer(String recoveryAnswer) {
+        this.recoveryAnswer = recoveryAnswer;
+    }
+
     public void setLoginStatus(boolean status)
     {
         this.loginStatus = status;
     }
 
+    public void setLatch(CountDownLatch latch) {
+        this.latch = latch;
+    }
+
     @Override
     public String toString() {
-        return id + "," + firstName + "," + lastName + "," + password;
+        return id + "," + password + "," + firstName + "," + lastName;
     }
 
     // Public methods

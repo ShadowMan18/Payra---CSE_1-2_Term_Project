@@ -43,7 +43,7 @@ public class ServerThread implements Runnable{
             try {
                 fromClient = input.readObject();
             } catch (IOException e) {
-                System.out.println("Client connection lost.");
+//                System.out.println("Client connection lost.");
                 Server.currentClients.remove(id);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -58,9 +58,12 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("check:")) {
                 String id = string.substring("check:".length());
+                System.out.println(id);
 
                 try {
-                    output.writeBoolean(Server.clients.contains(id));
+                    System.out.println(Server.clients.contains(id));
+                    output.writeObject(Server.clients.contains(id));
+                    output.flush();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -68,8 +71,7 @@ public class ServerThread implements Runnable{
 
             // Signing up a client
 
-            if (fromClient instanceof String string && string.startsWith("signup:"))
-            {
+            if (fromClient instanceof String string && string.startsWith("signup:")) {
                 String clientInfo = string.substring("signup:".length());
 
                 this.id = clientInfo.split(",")[0];
@@ -104,7 +106,7 @@ public class ServerThread implements Runnable{
 
                 // Storing client's data
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + id +"/info.txt"))) {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + id + "/info.txt"))) {
                     writer.write(clientInfo);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -119,22 +121,35 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.clients.size());
             }
 
+            // Getting client's information
+
+            if (fromClient instanceof String string && string.startsWith("get_info:")) {
+                String id = string.substring("get_info:".length());
+                try (BufferedReader reader = new BufferedReader(new FileReader("database/clients/" + id + "/info.txt"))) {
+                    String clientInfo = reader.readLine();
+                    output.writeObject("info:" + clientInfo);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Logging in a client
 
-            if (fromClient instanceof String string && string.startsWith("login:"))
-            {
+            if (fromClient instanceof String string && string.startsWith("login:")) {
                 this.id = string.substring("login:".length());
+                System.out.println("from login in server:" + id);
                 Server.currentClients.put(id, this);
                 System.out.println(Server.currentClients.size());
             }
 
             // Enabling a client to chat with another client
 
-            if (fromClient instanceof String string && string.startsWith("chat_with:"))
-            {
+            if (fromClient instanceof String string && string.startsWith("chat_with:")) {
                 String recipientId = string.substring("chat_with:".length());
 
                 // Creating chat files for both clients
+
+                System.out.println(id + " " + recipientId + " from chat");
 
                 File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
                 File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);

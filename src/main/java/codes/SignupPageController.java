@@ -3,6 +3,7 @@ package codes;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -13,6 +14,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.zip.CheckedOutputStream;
 
 public class SignupPageController {
     @FXML
@@ -33,6 +36,20 @@ public class SignupPageController {
     private TextField SignupPageQuestionField;
     @FXML
     private TextField SignupPageAnswerField;
+    @FXML
+    private Label SignupPageFirstNameLabel;
+    @FXML
+    private Label SignupPageLastNameLabel;
+    @FXML
+    private Label SignupPageEmailLabel;
+    @FXML
+    private Label SignupPageSetPasswordLabel;
+    @FXML
+    private Label SignupPageConfirmPasswordLabel;
+    @FXML
+    private Label SignupPageQuestionLabel;
+    @FXML
+    private Label SignupPageAnswerLabel;
 
     private Client client;
     private Stage stage;
@@ -44,6 +61,8 @@ public class SignupPageController {
     private String password2;
     private String question;
     private String answer;
+
+    private CountDownLatch latch;
 
     public void setSignupPageController(Client client, Stage stage) {
         this.client = client;
@@ -102,13 +121,29 @@ public class SignupPageController {
         question = SignupPageQuestionField.getText();
         answer = SignupPageAnswerField.getText();
 
-        boolean firstNameCheck = checkName(firstName);
-        boolean lastNameCheck = checkName(lastName);
-        boolean emailCheck = checkEmailAddress(email);
-        boolean password1Check = true;
-        boolean password2Check = true;
+        boolean firstNameCheck = checkFirstName();
+        boolean lastNameCheck = checkLastName();
+        boolean emailCheck = checkEmailAddress();
+        boolean passwordCheck = checkPassword();
+        boolean passwordConfirmation = confirmPassword();
         boolean questionCheck = true;
         boolean answerCheck = true;
+        
+        if (question.isEmpty()) {
+            SignupPageQuestionLabel.setText("This field can't be empty");
+            questionCheck = false;
+        }
+        else {
+            SignupPageQuestionLabel.setText("");
+        }
+
+        if (answer.isEmpty()) {
+            SignupPageAnswerLabel.setText("This field can't be empty");
+            answerCheck = false;
+        }
+        else {
+            SignupPageAnswerLabel.setText("");
+        }
 
         System.out.println(firstName);
         System.out.println(lastName);
@@ -118,110 +153,179 @@ public class SignupPageController {
         System.out.println(question);
         System.out.println(answer);
 
-        // Setting client information to the client object
+        if (firstNameCheck && lastNameCheck && emailCheck && passwordCheck && passwordConfirmation && questionCheck && answerCheck) {
+            // Setting client information to the client object
 
-        client.setFirstName(firstName);
-        client.setLastName(lastName);
-        client.setEmail(email);
-        client.setId(email.substring(0, email.length() - "@gmail.com".length()));
-        client.setPassword(password1);
+            client.setFirstName(firstName);
+            client.setLastName(lastName);
+            client.setEmail(email);
+            client.setId(email.substring(0, email.length() - "@gmail.com".length()));
+            client.setPassword(password1);
+            client.setRecoveryQuestion(question);
+            client.setRecoveryAnswer(answer);
+            
+            // Sending sign up command with client's information to the server
 
-        try {
-            client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return true;
-
-//        if (firstNameCheck && lastNameCheck && emailCheck && password1Check && password2Check && questionCheck && answerCheck) {
-//            // Sending sign up command with client's information to the server
-//
-//            try {
-//                client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            return true;
-//        }
-//        else {
-//            return false;
-//        }
-    }
-
-    public boolean checkName(String name) {
-        for (int i = 0; i < name.length(); i++) {
-            if (!((name.charAt(i) >= 'A' && name.charAt(i) <= 'Z') || (name.charAt(i) >= 'a' && name.charAt(i) <= 'z') || name.charAt(i) == ' ' || name.charAt(i) == '.' || name.charAt(i) == '-')) {
-                return false;
+            try {
+                client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+
+            return true;
         }
-        return true;
+        else {
+            return false;
+        }
     }
 
-    public boolean checkEmailAddress(String emailAddress) {
-        if (!emailAddress.endsWith("@gmail.com")) {
+    public boolean checkFirstName() {
+        if (firstName.isEmpty()) {
+            SignupPageFirstNameLabel.setText("This field can't be empty");
             return false;
         }
         else {
-            String id = emailAddress.substring(emailAddress.length() - "@gmail.com".length());
+            for (int i = 0; i < firstName.length(); i++) {
+                if (!((firstName.charAt(i) >= 'A' && firstName.charAt(i) <= 'Z') || (firstName.charAt(i) >= 'a' && firstName.charAt(i) <= 'z') || firstName.charAt(i) == ' ' || firstName.charAt(i) == '.' || firstName.charAt(i) == '-')) {
+                    SignupPageFirstNameLabel.setText("Invalid name");
+                    return false;
+                }
+            }
+        }
+
+        SignupPageFirstNameLabel.setText("");
+        return true;
+    }
+
+    public boolean checkLastName() {
+        if (lastName.isEmpty()) {
+            SignupPageLastNameLabel.setText("This field can't be empty");
+            return false;
+        }
+        else {
+            for (int i = 0; i < lastName.length(); i++) {
+                if (!((lastName.charAt(i) >= 'A' && lastName.charAt(i) <= 'Z') || (lastName.charAt(i) >= 'a' && lastName.charAt(i) <= 'z') || lastName.charAt(i) == ' ' || lastName.charAt(i) == '.' || lastName.charAt(i) == '-')) {
+                    SignupPageLastNameLabel.setText("Invalid name");
+                    return false;
+                }
+            }
+        }
+
+        SignupPageLastNameLabel.setText("");
+        return true;
+    }
+
+    public boolean checkEmailAddress() {
+        if (email.isEmpty()) {
+            SignupPageEmailLabel.setText("This field can't be empty");
+            return false;
+        }
+        else if (!(email.length() > 10 && email.endsWith("@gmail.com"))) {
+            SignupPageEmailLabel.setText("Invalid email address");
+            return false;
+        }
+        else {
+            String id = email.substring(0, email.length() - "@gmail.com".length());
 
             if (id.length() < 6) {
+                SignupPageEmailLabel.setText("Username is too short");
                 return false;
             }
             else if (id.length() > 30) {
+                SignupPageEmailLabel.setText("Username is too long");
                 return false;
             }
             else if (!(id.charAt(0) >= 'a' && id.charAt(0) <= 'z')) {
-                return false;
-            }
-            else if (id.endsWith(".")) {
+                SignupPageEmailLabel.setText("Email address must start with a letter");
                 return false;
             }
             else {
                 for(int i = 0; i < id.length(); i++) {
                     if (!((id.charAt(i) >= 'a' && id.charAt(i) <= 'z') || (id.charAt(i) >= '0' && id.charAt(i) <= '9') || id.charAt(i) == '.' || id.charAt(i) == '-' || id.charAt(i) == '_')) {
+                        SignupPageEmailLabel.setText("Characters must be a~z, 0~9, . _ -");
                         return false;
                     }
                 }
             }
 
             try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
+
                 client.getServerOutput().writeObject("check:" + id);
-            } catch (IOException e) {
+                client.getServerOutput().flush();
+
+                latch.await();
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
-            try {
-                if (client.getServerInput().readBoolean()) {
-                    return false;
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            if (client.isRegistered()) {
+                SignupPageEmailLabel.setText("Email already registered");
+                return false;
             }
         }
+
+        SignupPageEmailLabel.setText("");
         return true;
     }
 
-//    public boolean passwordCheck(String password) {
-//        int upperCase = 0;
-//        int lowerCase = 0;
-//        int specialCharacter = 0;
-//        int digit = 0;
-//
-//        if (password.length() < 8) {
-//            return false;
-//        }
-//        else {
-//            for (int i = 0; i < password.length(); i++){
-//                if (password.charAt(i) >= 'A' && password.charAt(i) <= 'Z') {
-//                    upperCase++;
-//                }
-//                else if (password.charAt(i) >= 'a' && password.charAt(i) <= 'z') {
-//                    lowerCase++;
-//                }
-//                else if (password.charAt(i) == )
-//            }
-//        }
-//    }
+    public boolean checkPassword() {
+        int upperCase = 0;
+        int lowerCase = 0;
+        int specialCharacter = 0;
+        int digit = 0;
+        String specialCharacters = "!@#$%^&*_+-=(){}[]<>|\\/,.?:;\"'";
+
+        if (password1.isEmpty()) {
+            SignupPageSetPasswordLabel.setText("This field can't be empty");
+            return false;
+        }
+        else if (password1.length() < 8) {
+            SignupPageSetPasswordLabel.setText("Password must contain at least 8 characters");
+            return false;
+        }
+        else {
+            for (int i = 0; i < password1.length(); i++){
+                if (password1.charAt(i) >= 'A' && password1.charAt(i) <= 'Z') {
+                    upperCase++;
+                }
+                else if (password1.charAt(i) >= 'a' && password1.charAt(i) <= 'z') {
+                    lowerCase++;
+                }
+                else if (specialCharacters.contains(String.valueOf(password1.charAt(i)))) {
+                    specialCharacter++;
+                }
+                else if (password1.charAt(i) >= '0' && password1.charAt(i) <= '9') {
+                    digit++;
+                }
+                else {
+                    SignupPageSetPasswordLabel.setText("Characters must be A~Z, a~z, 0~9, !@#$%^&*_+-=(){}[]<>|\\/,.?:;\"'");
+                    return false;
+                }
+            }
+
+            if (upperCase == 0 || lowerCase == 0 || specialCharacter == 0 || digit ==0) {
+                SignupPageSetPasswordLabel.setText("Password must contain uppercase, lowercase, special character and digit");
+                return false;
+            }
+        }
+
+        SignupPageSetPasswordLabel.setText("");
+        return true;
+    }
+    
+    public boolean confirmPassword() {
+        if (password2.isEmpty()) {
+            SignupPageConfirmPasswordLabel.setText("This field can't be empty");
+            return false;
+        }
+        else if (!password2.equals(password1)) {
+            SignupPageConfirmPasswordLabel.setText("Password doesn't match");
+            return false;
+        }
+
+        SignupPageConfirmPasswordLabel.setText("");
+        return true;
+    }
 }
