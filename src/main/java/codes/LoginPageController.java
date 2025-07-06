@@ -54,11 +54,14 @@ public class LoginPageController {
 
     @FXML
     public void onCreateButtonClick(ActionEvent actionEvent) throws IOException {
+        // Loading sign up page
+
         client.getSignupPage().startSignupPageView(client, stage);
     }
 
     @FXML
     public void onForgotPasswordButtonClick(ActionEvent mouseEvent) {
+        // Laoding forgot password page
     }
 
     public void onEnterKeyPress(KeyEvent keyEvent) {

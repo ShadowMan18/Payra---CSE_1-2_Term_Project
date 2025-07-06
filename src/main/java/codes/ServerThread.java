@@ -10,7 +10,7 @@ public class ServerThread implements Runnable{
     private final ObjectInputStream input;
     private String id;
 
-    // Constructor
+    // Creating server thread from the client
 
     public ServerThread(Socket clientSocket) {
         serverThread = new Thread(this);
