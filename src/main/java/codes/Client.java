@@ -57,7 +57,7 @@ public class Client {
         this.notificationPage = new NotificationPage();
 
         try {
-            this.serverSocket = new Socket("192.168.1.104", 1024);
+            this.serverSocket = new Socket("192.168.252.229", 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -297,7 +297,7 @@ public class Client {
 
     public void connectToChatServer(int port) {
         try {
-            this.chatSocket = new Socket("192.168.1.104", port);
+            this.chatSocket = new Socket("192.168.252.229", port);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

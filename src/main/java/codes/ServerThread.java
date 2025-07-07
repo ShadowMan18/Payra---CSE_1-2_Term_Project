@@ -77,6 +77,8 @@ public class ServerThread implements Runnable{
                 this.id = clientInfo.split(",")[0];
                 Server.clients.add(id);
 
+                System.out.println(this.id + " signed up.");
+
                 // Creating files for the client in the database
 
                 File clientDirectory = new File("database/clients/" + id);
@@ -137,7 +139,7 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("login:")) {
                 this.id = string.substring("login:".length());
-                System.out.println("from login in server:" + id);
+                System.out.println(this.id + " logged in");
                 Server.currentClients.put(id, this);
                 System.out.println(Server.currentClients.size());
             }
@@ -149,7 +151,7 @@ public class ServerThread implements Runnable{
 
                 // Creating chat files for both clients
 
-                System.out.println(id + " " + recipientId + " from chat");
+                System.out.println("sender: " + id + " " + "receiver: " + recipientId);
 
                 File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
                 File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);
