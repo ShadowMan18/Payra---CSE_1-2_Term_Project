@@ -77,6 +77,7 @@ public class ServerThread implements Runnable{
                 this.id = clientInfo.split(",")[0];
                 Server.clients.add(id);
 
+                System.out.println(this.id+" signed up");
                 // Creating files for the client in the database
 
                 File clientDirectory = new File("database/clients/" + id);
