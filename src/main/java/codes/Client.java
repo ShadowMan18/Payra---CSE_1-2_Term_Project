@@ -57,7 +57,7 @@ public class Client {
         this.notificationPage = new NotificationPage();
 
         try {
-            this.serverSocket = new Socket("192.168.252.229", 1024);
+            this.serverSocket = new Socket("127.0.0.1", 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -127,9 +127,9 @@ public class Client {
                     String[] info = string.substring("info:".length()).split(",");
                     this.id = info[0];
                     this.email  = id + "@gmail.com";
-                    this.password = info[1];
-                    this.firstName = info[2];
-                    this.lastName = info[3];
+                    this.firstName = info[1];
+                    this.lastName = info[2];
+                    this.password = info[3];
                     this.recoveryQuestion = info[4];
                     this.recoveryAnswer = info[5];
 
@@ -297,7 +297,7 @@ public class Client {
 
     public void connectToChatServer(int port) {
         try {
-            this.chatSocket = new Socket("192.168.252.229", port);
+            this.chatSocket = new Socket("127.0.0.1", port);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

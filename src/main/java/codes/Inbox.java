@@ -89,16 +89,17 @@ public class Inbox {
 
                 new Thread(() -> {
                     while (true) {
-                        Object rawMessage;
+                        Object messageInfo;
 
                         try {
-                            rawMessage = client.getChatInput().readObject();
+                            messageInfo = client.getChatInput().readObject();
                         } catch (IOException | ClassNotFoundException e) {
                             throw new RuntimeException(e);
                         }
 
-                        String sender = ((String) rawMessage).split(":")[0];
-                        String message = ((String) rawMessage).substring(sender.length() + 1);
+                        String sender = ((String) messageInfo).split(",")[0];
+                        String timestamp = ((String) messageInfo).split(",")[1];
+                        String message = ((String) messageInfo).substring(sender.length() + timestamp.length() + 2);
 
                         if (sender.equals(client.getId())) {
                             Platform.runLater(() -> inboxController.Chat.appendText("                    " + sender + ": " + message + "\n\n"));

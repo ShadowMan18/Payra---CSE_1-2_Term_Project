@@ -2,6 +2,9 @@ package codes;
 
 import java.io.*;
 import java.net.Socket;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 
 public class ServerThread implements Runnable{
@@ -72,54 +75,29 @@ public class ServerThread implements Runnable{
             // Signing up a client
 
             if (fromClient instanceof String string && string.startsWith("signup:")) {
-                String clientInfo = string.substring("signup:".length());
+                String[] clientInfo = string.substring("signup:".length()).split(",");
 
-                this.id = clientInfo.split(",")[0];
+                this.id = clientInfo[0];
                 Server.clients.add(id);
 
+                PreparedStatement addUser;
+
+                try {
+                    addUser = Server.connection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer) VALUES (?, ?, ?, ?, ?, ?)");
+
+                    addUser.setString(1, clientInfo[0]);
+                    addUser.setString(2, clientInfo[2]);
+                    addUser.setString(3, clientInfo[3]);
+                    addUser.setString(4, clientInfo[1]);
+                    addUser.setString(5, clientInfo[4]);
+                    addUser.setString(6, clientInfo[5]);
+
+                    addUser.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
                 System.out.println(this.id + " signed up.");
-
-                // Creating files for the client in the database
-
-                File clientDirectory = new File("database/clients/" + id);
-                clientDirectory.mkdir();
-
-                File info = new File("database/clients/" + id +"/info.txt");
-
-                try {
-                    info.createNewFile();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                File friends = new File("database/clients/" + id +"/friends.txt");
-
-                try {
-                    friends.createNewFile();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                File uploads = new File("database/clients/" + id +"/uploads");
-                uploads.mkdir();
-
-                File chats = new File("database/clients/" + id +"/chats");
-                chats.mkdir();
-
-                // Storing client's data
-
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + id + "/info.txt"))) {
-                    writer.write(clientInfo);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/client_list.txt", true))) {
-                    writer.write(id + "\n");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
                 System.out.println(Server.clients.size());
             }
 
@@ -127,10 +105,18 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
                 String id = string.substring("get_info:".length());
-                try (BufferedReader reader = new BufferedReader(new FileReader("database/clients/" + id + "/info.txt"))) {
-                    String clientInfo = reader.readLine();
-                    output.writeObject("info:" + clientInfo);
-                } catch (IOException e) {
+
+                try {
+                    PreparedStatement getUserInfo = Server.connection.prepareStatement("SELECT * FROM Users WHERE UserId = ?");
+
+                    getUserInfo.setString(1, id);
+
+                    ResultSet queryResult = getUserInfo.executeQuery();
+
+                    if (queryResult.next()) {
+                        output.writeObject("info:" + queryResult.getString("UserId") + "," + queryResult.getString("First_Name") + "," + queryResult.getString("Last_Name") + "," + queryResult.getString("Password") + "," + queryResult.getString("Question") + "," + queryResult.getString("Answer"));
+                    }
+                } catch (SQLException | IOException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -148,43 +134,6 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("chat_with:")) {
                 String recipientId = string.substring("chat_with:".length());
-
-                // Creating chat files for both clients
-
-                System.out.println("sender: " + id + " " + "receiver: " + recipientId);
-
-                File chat1 = new File("database/clients/" + id + "/chats/" + recipientId);
-                File chat2 = new File("database/clients/" + recipientId + "/chats/" + id);
-
-                if (!chat1.exists()) {
-                    chat1.mkdir();
-
-                    File texts = new File("database/clients/" + id + "/chats/" + recipientId + "/texts.txt");
-                    File media = new File("database/clients/" + id + "/chats/" + recipientId + "/media");
-
-                    try {
-                        texts.createNewFile();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    media.mkdir();
-                }
-
-                if (!chat2.exists()) {
-                    chat2.mkdir();
-
-                    File texts = new File("database/clients/" + recipientId + "/chats/" + id + "/texts.txt");
-                    File media = new File("database/clients/" + recipientId + "/chats/" + id + "/media");
-
-                    try {
-                        texts.createNewFile();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    media.mkdir();
-                }
 
                 // Creating new chat server for the client and sending the connection information to the client
 

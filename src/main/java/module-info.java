@@ -15,6 +15,7 @@ module com.example.javafx_project {
     requires java.desktop;
     requires com.fasterxml.jackson.annotation;
     requires java.compiler;
+    requires java.sql;
 
     opens codes to javafx.fxml;
     exports codes;

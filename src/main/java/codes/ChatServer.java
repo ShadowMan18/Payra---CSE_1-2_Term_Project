@@ -5,6 +5,9 @@ import javafx.application.Platform;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 class ChatServer implements Runnable {
     private ServerSocket serverSocket;
@@ -14,6 +17,7 @@ class ChatServer implements Runnable {
     private ObjectInputStream input;
     private String senderId;
     private String receiverId;
+    private int lastSeenId = 0;
 
     private Object message;
     
@@ -69,19 +73,17 @@ class ChatServer implements Runnable {
                     throw new RuntimeException(e);
                 }
 
-                // Writing message in sender's chat file with the receiver
+                PreparedStatement addChat;
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + senderId + "/chats/" + receiverId + "/texts.txt", true))) {
-                    writer.write(senderId + ":" + message + "\n");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                try {
+                    addChat = Server.connection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)");
 
-                // Writes message in the receiver's chat file with the sender
+                    addChat.setString(1, senderId);
+                    addChat.setString(2, receiverId);
+                    addChat.setString(3, (String) message);
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("database/clients/" + receiverId + "/chats/" + senderId + "/texts.txt", true))) {
-                    writer.write(senderId + ":" + message + "\n");
-                } catch (IOException e) {
+                    addChat.executeUpdate();
+                } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -90,29 +92,33 @@ class ChatServer implements Runnable {
         // Starting chat conveyor thread (reads chats from the chat file and sends it to the client)
 
         new Thread(() -> {
-            BufferedReader reader;
-
-            try {
-                reader = new BufferedReader(new FileReader("database/clients/" + senderId + "/chats/" + receiverId +"/texts.txt"));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-
             while (true) {
-                Object message;
-
                 try {
-                    message = reader.readLine();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                    PreparedStatement fetchChats = Server.connection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC");
 
-                if (message != null) {
-                    try {
-                        output.writeObject(message);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    fetchChats.setString(1, senderId);
+                    fetchChats.setString(2, receiverId);
+                    fetchChats.setString(3, receiverId);
+                    fetchChats.setString(4, senderId);
+                    fetchChats.setInt(5, lastSeenId);
+
+                    ResultSet chats = fetchChats.executeQuery();
+
+                    while (chats.next()) {
+                        int id = chats.getInt("id");
+                        String sender = chats.getString("sender");
+                        String content = chats.getString("content");
+                        String timestamp = chats.getString("timestamp");
+
+                        String messageInfo = sender + "," + timestamp + "," + content;
+
+                        output.writeObject(messageInfo);
+                        lastSeenId = id;
                     }
+
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }).start();

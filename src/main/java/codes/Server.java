@@ -3,6 +3,7 @@ package codes;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -12,29 +13,95 @@ public class Server {
     static Map<String, ServerThread> currentClients = new HashMap<>();
     static int[] port = new int[45000];
 
-    public static void main(String[] args) {
-        // Storing the clients' id in "clients" Vector from clients.txt file
+    public static Connection connection;
 
-        BufferedReader reader;
+    public static void main(String[] args) {
+        // Creating database if it isn't created
 
         try {
-             reader = new BufferedReader(new FileReader("database/client_list.txt"));
-        } catch (FileNotFoundException e) {
+            connection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        while (true) {
-            String client;
+        Statement statement;
 
-            try {
-                 client = reader.readLine();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try {
+            statement = connection.createStatement();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS Users (
+                    UserId TEXT PRIMARY KEY,
+                    First_Name TEXT,
+                    Last_Name TEXT,
+                    Password TEXT,
+                    Question TEXT,
+                    Answer TEXT
+                )""");
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS Chats (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Sender TEXT,
+                    Receiver TEXT,
+                    Content TEXT,
+                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )""");
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS Posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Author TEXT,
+                    Content TEXT,
+                    Media TEXT,
+                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )""");
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS Comments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PostId INTEGER,
+                    Commenter TEXT,
+                    Comment TEXT,
+                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
+                    )""");
+
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS Reacts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PostId INTEGER,
+                    Reactor TEXT,
+                    ReactType TEXT CHECK(ReactType IN ('like','love','haha','wow','sad','angry')),
+                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
+                    )""");
+
+            System.out.println("Database created");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Storing the clients' id in "clients" Vector from clients.txt file
+
+        PreparedStatement loadClients;
+        ResultSet queryResult;
+
+        try {
+            loadClients = connection.prepareStatement("SELECT * FROM Users");
+
+            queryResult = loadClients.executeQuery();
+
+            while (queryResult.next()) {
+                String userId = queryResult.getString("UserId");
+                clients.add(userId);
             }
-
-            if (client == null) break;
-
-            clients.add(client);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
 
         // Initiating the server
