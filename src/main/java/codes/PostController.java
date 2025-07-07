@@ -57,7 +57,6 @@ public class PostController {
             }
         }
 
-        // Find the smallest missing number
         int postNum = 0;
         while (existingNumbers.contains(postNum)) {
             postNum++;
