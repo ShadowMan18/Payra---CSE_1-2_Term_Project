@@ -4,11 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Scanner;
-import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 
 public class Client {
@@ -37,6 +33,7 @@ public class Client {
 
     // Client network
 
+    private final String ipAddress = "255.255.252.0";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -58,7 +55,7 @@ public class Client {
         this.notificationPage = new NotificationPage();
 
         try {
-            this.serverSocket = new Socket("192.168.252.229", 1024);
+            this.serverSocket = new Socket(ipAddress, 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -279,7 +276,7 @@ public class Client {
 
     public void connectToChatServer(int port) {
         try {
-            this.chatSocket = new Socket("192.168.252.229", port);
+            this.chatSocket = new Socket(ipAddress, port);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
