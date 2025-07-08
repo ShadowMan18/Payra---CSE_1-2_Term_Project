@@ -13,7 +13,7 @@ public class Server {
     static Map<String, ServerThread> currentClients = new HashMap<>();
     static int[] port = new int[45000];
 
-    public static Connection connection;
+    public Connection connection;
 
     public static void main(String[] args) {
         // Creating database if it isn't created

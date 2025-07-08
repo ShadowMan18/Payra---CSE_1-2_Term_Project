@@ -2,15 +2,13 @@ package codes;
 
 import java.io.*;
 import java.net.Socket;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
+import java.sql.*;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
+    private final Connection databaseConnection;
     private String id;
 
     // Creating server thread from the client
@@ -29,6 +27,12 @@ public class ServerThread implements Runnable{
         try {
             this.input = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            databaseConnection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
@@ -83,7 +87,7 @@ public class ServerThread implements Runnable{
                 PreparedStatement addUser;
 
                 try {
-                    addUser = Server.connection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer) VALUES (?, ?, ?, ?, ?, ?)");
+                    addUser = databaseConnection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer) VALUES (?, ?, ?, ?, ?, ?)");
 
                     addUser.setString(1, clientInfo[0]);
                     addUser.setString(2, clientInfo[2]);
@@ -107,7 +111,7 @@ public class ServerThread implements Runnable{
                 String id = string.substring("get_info:".length());
 
                 try {
-                    PreparedStatement getUserInfo = Server.connection.prepareStatement("SELECT * FROM Users WHERE UserId = ?");
+                    PreparedStatement getUserInfo = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?");
 
                     getUserInfo.setString(1, id);
 

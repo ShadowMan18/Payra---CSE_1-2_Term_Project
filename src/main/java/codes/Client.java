@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
@@ -40,8 +43,6 @@ public class Client {
     private Socket chatSocket;
     private ObjectOutputStream chatOutput;
     private ObjectInputStream chatInput;
-    private Vector<String> connectedId;
-    private boolean loginStatus;
     private boolean inChat;
 
     // Constructor
@@ -57,7 +58,7 @@ public class Client {
         this.notificationPage = new NotificationPage();
 
         try {
-            this.serverSocket = new Socket("127.0.0.1", 1024);
+            this.serverSocket = new Socket("192.168.252.229", 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -73,10 +74,6 @@ public class Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        this.connectedId = new Vector<>();
-
-        this.loginStatus = false;
         this.inChat = false;
 
         Thread Writer = new Thread(() -> {
@@ -219,7 +216,7 @@ public class Client {
         return notificationPage;
     }
 
-    public Socket getSocket() {
+    public Socket getServerSocketSocket() {
         return serverSocket;
     }
 
@@ -238,12 +235,6 @@ public class Client {
     public ObjectInputStream getChatInput() {
         return chatInput;
     }
-
-    public int getIdIndex(String id) {
-        return connectedId.indexOf(id);
-    }
-
-    public boolean getLoginStatus() { return loginStatus; }
 
     // Setters
 
@@ -275,11 +266,6 @@ public class Client {
         this.recoveryAnswer = recoveryAnswer;
     }
 
-    public void setLoginStatus(boolean status)
-    {
-        this.loginStatus = status;
-    }
-
     public void setLatch(CountDownLatch latch) {
         this.latch = latch;
     }
@@ -291,13 +277,9 @@ public class Client {
 
     // Public methods
 
-    public boolean isConnected(String id) {
-        return connectedId.contains(id);
-    }
-
     public void connectToChatServer(int port) {
         try {
-            this.chatSocket = new Socket("127.0.0.1", port);
+            this.chatSocket = new Socket("192.168.252.229", port);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

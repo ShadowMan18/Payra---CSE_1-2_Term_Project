@@ -5,9 +5,7 @@ import javafx.application.Platform;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 class ChatServer implements Runnable {
     private ServerSocket serverSocket;
@@ -15,6 +13,7 @@ class ChatServer implements Runnable {
     private Thread chatThread;
     private ObjectOutputStream output;
     private ObjectInputStream input;
+    private final Connection databaseConnection;
     private String senderId;
     private String receiverId;
     private int lastSeenId = 0;
@@ -31,6 +30,12 @@ class ChatServer implements Runnable {
         try {
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            databaseConnection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
@@ -76,7 +81,7 @@ class ChatServer implements Runnable {
                 PreparedStatement addChat;
 
                 try {
-                    addChat = Server.connection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)");
+                    addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)");
 
                     addChat.setString(1, senderId);
                     addChat.setString(2, receiverId);
@@ -94,7 +99,7 @@ class ChatServer implements Runnable {
         new Thread(() -> {
             while (true) {
                 try {
-                    PreparedStatement fetchChats = Server.connection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC");
+                    PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC");
 
                     fetchChats.setString(1, senderId);
                     fetchChats.setString(2, receiverId);

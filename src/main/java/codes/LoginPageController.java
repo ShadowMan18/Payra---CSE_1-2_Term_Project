@@ -50,14 +50,16 @@ public class LoginPageController {
     public void onLoginButtonClick(ActionEvent actionEvent) {
         // Proceeding to log in
 
-        login();
+        boolean isLoggedIn = login();
 
         // Loading home page
 
-        try {
-            client.getHomePage().startHomePageView(client, stage);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (isLoggedIn) {
+            try {
+                client.getHomePage().startHomePageView(client, stage);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
