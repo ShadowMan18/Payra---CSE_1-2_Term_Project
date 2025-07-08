@@ -78,14 +78,16 @@ public class SignupPageController {
     @FXML
     public void onSignupButtonClick(ActionEvent mouseEvent) {
         // Proceeding to sign up
-        signup();
+        boolean isSignedUp = signup();
 
         // Loading login page
 
-        try {
-            client.getLoginPage().startLoginPageView(client, stage);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (isSignedUp) {
+            try {
+                client.getLoginPage().startLoginPageView(client, stage);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

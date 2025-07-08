@@ -13,10 +13,10 @@ public class Server {
     static Map<String, ServerThread> currentClients = new HashMap<>();
     static int[] port = new int[45000];
 
-    public Connection connection;
-
     public static void main(String[] args) {
         // Creating database if it isn't created
+
+        Connection connection;
 
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
