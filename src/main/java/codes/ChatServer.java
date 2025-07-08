@@ -35,6 +35,11 @@ class ChatServer implements Runnable {
 
         try {
             databaseConnection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+
+            try (Statement config = databaseConnection.createStatement()) {
+                config.execute("PRAGMA busy_timeout = 5000");
+                config.execute("PRAGMA journal_mode=WAL");
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -78,11 +83,7 @@ class ChatServer implements Runnable {
                     throw new RuntimeException(e);
                 }
 
-                PreparedStatement addChat;
-
-                try {
-                    addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)");
-
+                try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)")) {
                     addChat.setString(1, senderId);
                     addChat.setString(2, receiverId);
                     addChat.setString(3, (String) message);
@@ -98,27 +99,25 @@ class ChatServer implements Runnable {
 
         new Thread(() -> {
             while (true) {
-                try {
-                    PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC");
-
+                try (PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC")) {
                     fetchChats.setString(1, senderId);
                     fetchChats.setString(2, receiverId);
                     fetchChats.setString(3, receiverId);
                     fetchChats.setString(4, senderId);
                     fetchChats.setInt(5, lastSeenId);
 
-                    ResultSet chats = fetchChats.executeQuery();
+                    try (ResultSet chats = fetchChats.executeQuery()) {
+                        while (chats.next()) {
+                            int id = chats.getInt("id");
+                            String sender = chats.getString("sender");
+                            String content = chats.getString("content");
+                            String timestamp = chats.getString("timestamp");
 
-                    while (chats.next()) {
-                        int id = chats.getInt("id");
-                        String sender = chats.getString("sender");
-                        String content = chats.getString("content");
-                        String timestamp = chats.getString("timestamp");
+                            String messageInfo = sender + "," + timestamp + "," + content;
 
-                        String messageInfo = sender + "," + timestamp + "," + content;
-
-                        output.writeObject(messageInfo);
-                        lastSeenId = id;
+                            output.writeObject(messageInfo);
+                            lastSeenId = id;
+                        }
                     }
 
                     Thread.sleep(1000);

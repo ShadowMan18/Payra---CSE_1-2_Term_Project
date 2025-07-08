@@ -33,7 +33,7 @@ public class Client {
 
     // Client network
 
-    private final String ipAddress = "255.255.252.0";
+    private final String ipAddress = "192.168.68.57";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;

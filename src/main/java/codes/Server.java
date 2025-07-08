@@ -16,23 +16,19 @@ public class Server {
     public static void main(String[] args) {
         // Creating database if it isn't created
 
-        Connection connection;
+        Connection databaseConnection;
 
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+            databaseConnection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+            try (Statement config = databaseConnection.createStatement()) {
+                config.execute("PRAGMA busy_timeout = 5000");
+                config.execute("PRAGMA journal_mode=WAL");
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        Statement statement;
-
-        try {
-            statement = connection.createStatement();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
+        try (Statement statement = databaseConnection.createStatement()){
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS Users (
                     UserId TEXT PRIMARY KEY,
@@ -88,14 +84,10 @@ public class Server {
 
         // Storing the clients' id in "clients" Vector from clients.txt file
 
-        PreparedStatement loadClients;
-        ResultSet queryResult;
-
-        try {
-            loadClients = connection.prepareStatement("SELECT * FROM Users");
-
-            queryResult = loadClients.executeQuery();
-
+        try (
+                PreparedStatement loadClients = databaseConnection.prepareStatement("SELECT * FROM Users");
+                ResultSet queryResult = loadClients.executeQuery();
+        ) {
             while (queryResult.next()) {
                 String userId = queryResult.getString("UserId");
                 clients.add(userId);

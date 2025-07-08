@@ -32,6 +32,11 @@ public class ServerThread implements Runnable{
 
         try {
             databaseConnection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
+
+            try (Statement config = databaseConnection.createStatement()) {
+                config.execute("PRAGMA busy_timeout = 5000");
+                config.execute("PRAGMA journal_mode=WAL");
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -51,7 +56,9 @@ public class ServerThread implements Runnable{
                 fromClient = input.readObject();
             } catch (IOException e) {
 //                System.out.println("Client connection lost.");
-                Server.currentClients.remove(id);
+                if (id != null) {
+                    Server.currentClients.remove(id);
+                }
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -84,11 +91,7 @@ public class ServerThread implements Runnable{
                 this.id = clientInfo[0];
                 Server.clients.add(id);
 
-                PreparedStatement addUser;
-
-                try {
-                    addUser = databaseConnection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer) VALUES (?, ?, ?, ?, ?, ?)");
-
+                try (PreparedStatement addUser = databaseConnection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer) VALUES (?, ?, ?, ?, ?, ?)")) {
                     addUser.setString(1, clientInfo[0]);
                     addUser.setString(2, clientInfo[2]);
                     addUser.setString(3, clientInfo[3]);
@@ -110,15 +113,13 @@ public class ServerThread implements Runnable{
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
                 String id = string.substring("get_info:".length());
 
-                try {
-                    PreparedStatement getUserInfo = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?");
-
+                try (PreparedStatement getUserInfo = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?")) {
                     getUserInfo.setString(1, id);
 
-                    ResultSet queryResult = getUserInfo.executeQuery();
-
-                    if (queryResult.next()) {
-                        output.writeObject("info:" + queryResult.getString("UserId") + "," + queryResult.getString("First_Name") + "," + queryResult.getString("Last_Name") + "," + queryResult.getString("Password") + "," + queryResult.getString("Question") + "," + queryResult.getString("Answer"));
+                    try (ResultSet queryResult = getUserInfo.executeQuery()) {
+                        if (queryResult.next()) {
+                            output.writeObject("info:" + queryResult.getString("UserId") + "," + queryResult.getString("First_Name") + "," + queryResult.getString("Last_Name") + "," + queryResult.getString("Password") + "," + queryResult.getString("Question") + "," + queryResult.getString("Answer"));
+                        }
                     }
                 } catch (SQLException | IOException e) {
                     throw new RuntimeException(e);
