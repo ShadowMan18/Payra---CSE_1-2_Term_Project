@@ -1,5 +1,6 @@
 package codes;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
@@ -10,12 +11,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.zip.CheckedOutputStream;
 
 public class SignupPageController {
     @FXML
@@ -50,6 +47,8 @@ public class SignupPageController {
     private Label SignupPageQuestionLabel;
     @FXML
     private Label SignupPageAnswerLabel;
+    @FXML
+    private Label SignupConfirmationLabel;
 
     private Client client;
     private Stage stage;
@@ -98,7 +97,7 @@ public class SignupPageController {
 
             boolean isSignedUp = signup();
 
-            SignupPageLayout.setFocusTraversable(false);
+//            SignupPageLayout.setFocusTraversable(false);
 
             // Loading login page
 
@@ -147,14 +146,6 @@ public class SignupPageController {
             SignupPageAnswerLabel.setText("");
         }
 
-        System.out.println(firstName);
-        System.out.println(lastName);
-        System.out.println(email);
-        System.out.println(password1);
-        System.out.println(password2);
-        System.out.println(question);
-        System.out.println(answer);
-
         if (firstNameCheck && lastNameCheck && emailCheck && passwordCheck && passwordConfirmation && questionCheck && answerCheck) {
             // Setting client information to the client object
 
@@ -165,14 +156,47 @@ public class SignupPageController {
             client.setPassword(password1);
             client.setRecoveryQuestion(question);
             client.setRecoveryAnswer(answer);
+
+            System.out.println(firstName);
+            System.out.println(lastName);
+            System.out.println(email);
+            System.out.println(password1);
+            System.out.println(password2);
+            System.out.println(question);
+            System.out.println(answer);
             
             // Sending sign up command with client's information to the server
 
             try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
+
                 client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
-            } catch (IOException e) {
+                client.getServerOutput().flush();
+
+                latch.await();
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
+
+            if (!client.isRegistered()) {
+//                Platform.runLater(() -> {
+//                    SignupConfirmationLabel.setStyle("-fx-text-fill: #ff0000;");
+//                    SignupConfirmationLabel.setText("Couldn't sign up. Please try again.");
+//                });
+                return false;
+            }
+
+//            Platform.runLater(() -> {
+//                SignupConfirmationLabel.setStyle("-fx-text-fill: #00ff00;");
+//                SignupConfirmationLabel.setText("You are signed up successfully!");
+//            });
+
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
 
             return true;
         }

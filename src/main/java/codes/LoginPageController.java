@@ -1,5 +1,6 @@
 package codes;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
@@ -27,6 +28,8 @@ public class LoginPageController {
     private Label LoginPageEmailLabel;
     @FXML
     private Label LoginPagePasswordLabel;
+    @FXML
+    private Label LoginConfirmationLabel;
 
     private Client client;
     private Stage stage;
@@ -55,6 +58,17 @@ public class LoginPageController {
         // Loading home page
 
         if (isLoggedIn) {
+            Platform.runLater(() -> {
+                LoginConfirmationLabel.setStyle("-fx-text-fill: #00ff00;");
+                LoginConfirmationLabel.setText("You are logged in successfully!");
+            });
+
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+
             try {
                 client.getHomePage().startHomePageView(client, stage);
             } catch (IOException e) {
@@ -81,11 +95,22 @@ public class LoginPageController {
             
             boolean isLoggedIn = login();
 
-            LoginPageLayout.setFocusTraversable(false);
+//            LoginPageLayout.setFocusTraversable(false);
 
             // Loading home page
 
             if (isLoggedIn) {
+                Platform.runLater(() -> {
+                    LoginConfirmationLabel.setStyle("-fx-text-fill: #00ff00;");
+                    LoginConfirmationLabel.setText("You are logged in successfully!");
+                });
+
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+
                 try {
                     client.getHomePage().startHomePageView(client, stage);
                 } catch (IOException e) {
@@ -101,20 +126,33 @@ public class LoginPageController {
         email = LoginPageEmailField.getText();
         password = LoginPagePasswordField.getText();
 
-        System.out.println(email);
-        System.out.println(password);
-
         checkEmailAddress();
         boolean check = checkPassword();
 
         // Sending log in command with client's information to the server
 
         if (check) {
+            System.out.println(email);
+            System.out.println(password);
+
             try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
+
                 client.getServerOutput().writeObject("login:" + client.getId());
                 client.getServerOutput().flush();
-            } catch (IOException e) {
+
+                latch.await();
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
+            }
+
+            if (!client.isActive()) {
+                Platform.runLater(() -> {
+                    LoginConfirmationLabel.setStyle("-fx-text-fill: #ff0000;");
+                    LoginConfirmationLabel.setText("Couldn't log in. Please try again.");
+                });
+                return false;
             }
 
             return true;

@@ -76,11 +76,11 @@ public class Server {
                     Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
                     )""");
-
-            System.out.println("Database created");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
+        System.out.println("Database created");
 
         // Storing the clients' id in "clients" Vector from clients.txt file
 

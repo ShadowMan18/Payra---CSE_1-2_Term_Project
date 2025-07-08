@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 
 public class Client {
@@ -18,6 +17,8 @@ public class Client {
     private String recoveryQuestion;
     private String recoveryAnswer;
     private boolean registered;
+    private boolean active;
+    private String receiverId;
     private CountDownLatch latch;
 
     // Client pages
@@ -45,6 +46,9 @@ public class Client {
     // Constructor
 
     public Client() {
+        this.registered = false;
+        this.active = false;
+        this.receiverId = null;
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
         this.signupPage = new SignupPage();
@@ -71,35 +75,36 @@ public class Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
         this.inChat = false;
 
-        Thread Writer = new Thread(() -> {
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                String message = scanner.nextLine();
+//        Thread Writer = new Thread(() -> {
+//            Scanner scanner = new Scanner(System.in);
+//            while (true) {
+//                String message = scanner.nextLine();
+//
+//                if (inChat) {
+//                    try {
+//                        String[] splittedMessage = message.split(",");
+//                        int clientIndex = Integer.parseInt(splittedMessage[0]);
+//                        chatOutput.writeObject(message);
+//                        chatOutput.flush();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }
+//                else {
+//                    try {
+//                        serverOutput.writeObject(message);
+//                        serverOutput.flush();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }
+//            }
+//        });
 
-                if (inChat) {
-                    try {
-                        String[] splittedMessage = message.split(",");
-                        int clientIndex = Integer.parseInt(splittedMessage[0]);
-                        chatOutput.writeObject(message);
-                        chatOutput.flush();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                else {
-                    try {
-                        serverOutput.writeObject(message);
-                        serverOutput.flush();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        });
-
-        Thread serverReader = new Thread(() -> {
+        new Thread(() -> {
             while (true) {
                 Object fromServer;
 
@@ -111,6 +116,14 @@ public class Client {
 
                 if (fromServer instanceof Boolean b) {
                     this.registered = b;
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else if (fromServer instanceof String string && string.equals("signup_successful")) {
+                    this.registered = true;
 
                     if (latch != null) {
                         latch.countDown();
@@ -132,19 +145,35 @@ public class Client {
                         latch = null;
                     }
                 }
+                else if (fromServer instanceof String string && string.equals("login_successful")) {
+                    this.active = true;
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
                 else if (fromServer instanceof String string && string.startsWith("connect_to:")) {
-                    int port = Integer.parseInt(string.substring("connect_to:".length()));
+                    String[] connectionInfo = string.substring("connect_to:".length()).split(",");
+                    int port = Integer.parseInt(connectionInfo[0]);
+                    this.receiverId = connectionInfo[1];
                     connectToChatServer(port);
                     inChat = true;
-                } else {
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else {
                     assert fromServer instanceof String;
                     System.out.println("Received: " + (String) fromServer);
                 }
             }
-        });
+        }).start();
 
-        Writer.start();
-        serverReader.start();
+//        Writer.start();
+//        serverReader.start();
     }
 
     // Getters
@@ -179,6 +208,14 @@ public class Client {
 
     public boolean isRegistered() {
         return registered;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public String getReceiverId() {
+        return receiverId;
     }
 
     public IntroPage getIntroPage() {

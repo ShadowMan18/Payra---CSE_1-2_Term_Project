@@ -32,6 +32,11 @@
                <Font name="System Bold Italic" size="15.0" />
             </font>
          </Label>
+         <Label fx:id="LoginConfirmationLabel" layoutX="741.0" layoutY="510.0" prefHeight="37.0" prefWidth="472.0" textFill="RED" wrapText="true">
+            <font>
+               <Font name="System Bold Italic" size="10.0" />
+            </font>
+         </Label>
       </Group>
    </children>
 </StackPane>

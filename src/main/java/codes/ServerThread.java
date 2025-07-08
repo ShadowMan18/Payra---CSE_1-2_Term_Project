@@ -104,6 +104,12 @@ public class ServerThread implements Runnable{
                     throw new RuntimeException(e);
                 }
 
+                try {
+                    output.writeObject("signup_successful");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 System.out.println(this.id + " signed up.");
                 System.out.println(Server.clients.size());
             }
@@ -119,6 +125,7 @@ public class ServerThread implements Runnable{
                     try (ResultSet queryResult = getUserInfo.executeQuery()) {
                         if (queryResult.next()) {
                             output.writeObject("info:" + queryResult.getString("UserId") + "," + queryResult.getString("First_Name") + "," + queryResult.getString("Last_Name") + "," + queryResult.getString("Password") + "," + queryResult.getString("Question") + "," + queryResult.getString("Answer"));
+                            output.flush();
                         }
                     }
                 } catch (SQLException | IOException e) {
@@ -130,8 +137,15 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("login:")) {
                 this.id = string.substring("login:".length());
-                System.out.println(this.id + " logged in");
                 Server.currentClients.put(id, this);
+
+                try {
+                    output.writeObject("login_successful");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                System.out.println(this.id + " logged in");
                 System.out.println(Server.currentClients.size());
             }
 
@@ -155,7 +169,8 @@ public class ServerThread implements Runnable{
                 new ChatServer(port, id, recipientId);
 
                 try {
-                    output.writeObject("connect_to:" + port);
+                    output.writeObject("connect_to:" + port + "," + recipientId);
+                    output.flush();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

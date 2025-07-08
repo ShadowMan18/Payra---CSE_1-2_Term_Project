@@ -1,0 +1,86 @@
+jdk: https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html -> Windows x64 msi Installer	163.06 MB
+sdk: https://jdk.java.net/javafx21/ -> Windows / x64	zip (sha256)	48050037 -> Store in jdk foler
+
+🔹 1. Clone the Repo
+After accepting invite:
+in IntelliJ:
+Open IntelliJ → Get from Version Control
+
+
+Paste the repo URL and clone.
+
+
+
+🔹 2. Install Same JDK and JavaFX SDK
+To match your setup:
+✅ JDK 21
+ Download OpenJDK 21 from Oracle or Microsoft
+ (You used jdk-21, so use the same exact version path)
+
+https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html
+
+
+✅ JavaFX SDK 21.0.2
+ Download from: https://jdk.java.net/javafx21/
+
+
+
+Then:
+Extract JavaFX to: C:\Program Files\Java\javafx-sdk-21.0.2 (same as yours)
+
+
+Set environment variable PATH_TO_FX (optional but helpful)
+
+
+
+🔹 3. Open Project in IntelliJ
+Open the cloned project folder
+
+
+Let IntelliJ auto-import Maven (via pom.xml)
+
+
+If JavaFX libraries don't link automatically:
+
+
+Go to:
+ File → Project Structure → Libraries → + → Java
+ And add:
+
+ vbnet
+CopyEdit
+C:\Program Files\Java\javafx-sdk-21.0.2\lib
+
+
+
+🔹 4. Set Run Configuration
+They should:
+Go to Run → Edit Configurations
+
+
+Add Application
+
+
+Name: Main
+
+
+Main class: org.example.Main
+
+
+VM options:
+
+ cpp
+CopyEdit
+--module-path "C:\Program Files\Java\javafx-sdk-21.0.2\lib" --add-modules javafx.controls,javafx.fxml
+
+
+
+🔹 5. Build & Run
+Just hit the green run button ▶️
+ If everything is set right, the same JavaFX window will appear!
+
+☑️ Final Tip
+Tell them to commit and push using IntelliJ (Ctrl+K, then Ctrl+Shift+K) just like you.
+Let me know if you want a shell script or .bat file to auto-setup all this.
+
+

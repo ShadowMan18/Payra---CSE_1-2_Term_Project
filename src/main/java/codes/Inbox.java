@@ -10,12 +10,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import org.controlsfx.control.BreadCrumbBar;
 
-import java.awt.*;
 import java.io.*;
-import java.nio.file.attribute.UserPrincipal;
+import java.util.concurrent.CountDownLatch;
 
 public class Inbox {
     public Inbox(){}
@@ -40,6 +39,7 @@ public class Inbox {
         inboxController.Recipient.setPrefWidth(200);
         inboxController.Recipient.setPrefHeight(50);
         inboxController.Recipient.requestFocus();
+        inboxController.Recipient.setFont(new Font(20));
 
         inboxController.Recipient.setOnKeyPressed(event1 -> {
             if (event1.getCode() == KeyCode.ENTER) {
@@ -50,15 +50,20 @@ public class Inbox {
                 // Sending chat command with recipient id to the server
 
                 try {
+                    CountDownLatch latch = new CountDownLatch(1);
+                    client.setLatch(latch);
+
                     client.getServerOutput().writeObject("chat_with:" + recipientId);
-                } catch (IOException e) {
+                    client.getServerOutput().flush();
+
+                    latch.await();
+                } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    client.getServerOutput().flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (!recipientId.equals(client.getReceiverId())) {
+                    System.out.println("Unable to connect");
+                    return;
                 }
 
                 // Creating text area for showing the chat
@@ -68,22 +73,24 @@ public class Inbox {
                 inboxController.Chat.setText("Chat with " + recipientId + "\n\n");
                 inboxController.Chat.setLayoutX(800);
                 inboxController.Chat.setLayoutY(150);
-                inboxController.Chat.setPrefWidth(300);
-                inboxController.Chat.setPrefHeight(300);
+                inboxController.Chat.setPrefWidth(600);
+                inboxController.Chat.setPrefHeight(500);
+                inboxController.Chat.setFont(new Font(20));
 
                 // Creating text area for writing message
 
                 inboxController.Message = new TextArea();
                 inboxController.Message.setLayoutX(800);
-                inboxController.Message.setLayoutY(500);
-                inboxController.Message.setPrefWidth(300);
-                inboxController.Message.setPrefHeight(300);
+                inboxController.Message.setLayoutY(700);
+                inboxController.Message.setPrefWidth(600);
+                inboxController.Message.setPrefHeight(50);
+                inboxController.Message.setFont(new Font(20));
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 // Starting chat reader thread (Receives message from the chat server and shows it in the chat box)
 
