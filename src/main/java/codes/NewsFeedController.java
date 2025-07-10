@@ -6,7 +6,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -17,6 +19,8 @@ public class NewsFeedController {
     public StackPane NewsFeedLayout;
     @FXML
     public Group NewsFeedView;
+    @FXML
+    private VBox feedContainer;
     
     Client client;
     Stage stage;
@@ -73,6 +77,13 @@ public class NewsFeedController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void addPostToFeed(String post) {
+        Label label = new Label(post);
+        label.setWrapText(true);
+        label.setStyle("-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-background-radius: 5;");
+        feedContainer.getChildren().add(0, label);
     }
 
 

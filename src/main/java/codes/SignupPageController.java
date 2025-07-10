@@ -205,6 +205,9 @@ public class SignupPageController {
         }
     }
 
+
+
+
     public boolean checkFirstName() {
         if (firstName.isEmpty()) {
             SignupPageFirstNameLabel.setText("This field can't be empty");

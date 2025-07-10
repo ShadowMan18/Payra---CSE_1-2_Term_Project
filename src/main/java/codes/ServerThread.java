@@ -156,7 +156,7 @@ public class ServerThread implements Runnable{
 
                 // Creating new chat server for the client and sending the connection information to the client
 
-                int port = 0;
+                int port = 1;
 
                 for(int i = 0; i < 45000; i++) {
                     if (Server.port[i] == 0) {
@@ -175,6 +175,29 @@ public class ServerThread implements Runnable{
                     throw new RuntimeException(e);
                 }
             }
+
+            if (fromClient instanceof String string && string.startsWith("NewsFeed: ")){
+
+                int port = 0;
+
+                for(int i = 0; i < 45000; i++) {
+                    if (Server.port[i] == 0) {
+                        port = i + 1025;
+                        Server.port[i] = 1;
+                        break;
+                    }
+                }
+
+                new NewsFeedServer(port);
+
+                try {
+                    output.writeObject("NewsFeed connection:" + port);
+                    output.flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
         }
     }
 }
