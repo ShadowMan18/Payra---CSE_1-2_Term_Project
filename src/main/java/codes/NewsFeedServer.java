@@ -95,7 +95,7 @@ public class NewsFeedServer implements Runnable {
 
                 System.out.println("Clients connected and added to the array: " + Client.clientListSize());
 
-                out.writeObject("Welcome to the very very very very best Payra newsfeed!");
+                //out.writeObject("Welcome to the very very very very best Payra newsfeed!");
                 out.flush();
 
                 List<String> posts = new ArrayList<>();
