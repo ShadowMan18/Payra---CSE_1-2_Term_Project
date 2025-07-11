@@ -78,15 +78,68 @@ public class LoginPageController {
     }
 
     @FXML
-    public void onCreateButtonClick(ActionEvent actionEvent) throws IOException {
+    public void onCreateButtonClick(ActionEvent actionEvent) {
         // Loading sign up page
 
-        client.getSignupPage().startSignupPageView(client, stage);
+        try {
+            client.getSignupPage().startSignupPageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
     public void onForgotPasswordButtonClick(ActionEvent mouseEvent) {
-        // Laoding forgot password page
+        LoginPageEmailLabel.setText("");
+        LoginPagePasswordLabel.setText("");
+
+        email = LoginPageEmailField.getText().trim();
+
+        if (checkEmailAddress()) {
+            String id = email.substring(0, email.length() - "@gmail.com".length());
+
+            try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
+
+                client.getServerOutput().writeObject("check:" + id);
+                client.getServerOutput().flush();
+
+                latch.await();
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (!client.isRegistered()) {
+                LoginPageEmailLabel.setText("No account found");
+                return;
+            }
+
+            try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
+
+                client.getServerOutput().writeObject("get_info:" + id);
+                client.getServerOutput().flush();
+
+                latch.await();
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            return;
+        }
+
+        LoginPageEmailLabel.setText("");
+
+        // Loading forgot password page
+
+        try {
+            client.getForgotPasswordPage().startForgotPasswordPageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void onEnterKeyPress(KeyEvent keyEvent) {
@@ -123,8 +176,8 @@ public class LoginPageController {
     public boolean login() {
         // Taking inputs from the input fields
 
-        email = LoginPageEmailField.getText();
-        password = LoginPagePasswordField.getText();
+        email = LoginPageEmailField.getText().trim();
+        password = LoginPagePasswordField.getText().trim();
 
         checkEmailAddress();
         boolean check = checkPassword();
@@ -171,26 +224,6 @@ public class LoginPageController {
             LoginPageEmailLabel.setText("Invalid email address");
             return false;
         }
-        else {
-            String id = email.substring(0, email.length() - "@gmail.com".length());
-
-            try {
-                latch = new CountDownLatch(1);
-                client.setLatch(latch);
-
-                client.getServerOutput().writeObject("check:" + id);
-                client.getServerOutput().flush();
-
-                latch.await();
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            if (!client.isRegistered()) {
-                LoginPageEmailLabel.setText("No account found");
-                return false;
-            }
-        }
 
         LoginPageEmailLabel.setText("");
         return true;
@@ -204,6 +237,23 @@ public class LoginPageController {
         else {
             LoginPagePasswordLabel.setText("");
             if (checkEmailAddress()) {
+                try {
+                    latch = new CountDownLatch(1);
+                    client.setLatch(latch);
+
+                    client.getServerOutput().writeObject("check:" + email.substring(0, email.length() - "@gmail.com".length()));
+                    client.getServerOutput().flush();
+
+                    latch.await();
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (!client.isRegistered()) {
+                    LoginPageEmailLabel.setText("No account found");
+                    return false;
+                }
+
                 try {
                     latch = new CountDownLatch(1);
                     client.setLatch(latch);

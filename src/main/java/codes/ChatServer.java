@@ -116,6 +116,7 @@ class ChatServer implements Runnable {
                             String messageInfo = sender + "," + timestamp + "," + content;
 
                             output.writeObject(messageInfo);
+                            output.flush();
                             lastSeenId = id;
                         }
                     }

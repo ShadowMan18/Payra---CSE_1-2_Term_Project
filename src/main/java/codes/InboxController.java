@@ -1,15 +1,24 @@
 package codes;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class InboxController {
     @FXML
@@ -17,16 +26,29 @@ public class InboxController {
     @FXML
     public Group InboxView;
     @FXML
-    public TextField Recipient;
-    @FXML
-    public TextArea Chat;
-    @FXML
-    public TextArea Message;
-    @FXML
     public Label User;
+    @FXML
+    public TextField SearchBar;
+    @FXML
+    public ImageView ChatBox;
+    @FXML
+    public ImageView ReceiverProfilePicture;
+    @FXML
+    public Label ReceiverName;
+    @FXML
+    public TextField Message;
+    @FXML
+    public ScrollPane MessageScroller;
+    @FXML
+    public VBox MessageContainer;
 
-    Client client;
-    Stage stage;
+
+    private Client client;
+    private Stage stage;
+    private String receiverId;
+    private Image receiverProfilePicture;
+    private String lastSender;
+
 
     public void setInboxController(Client client, Stage stage) {
         this.client = client;
@@ -35,6 +57,9 @@ public class InboxController {
         InboxLayout.setPrefHeight(Screen.SCREENHEIGHT);
         InboxView.scaleXProperty().bind(InboxLayout.widthProperty().divide(1600));
         InboxView.scaleYProperty().bind(InboxLayout.heightProperty().divide(900));
+        MessageScroller.setFitToWidth(true);
+        MessageContainer.setFillWidth(true);
+        MessageContainer.setMinHeight(Region.USE_PREF_SIZE);
     }
 
     @FXML
@@ -64,25 +89,171 @@ public class InboxController {
         client.getProfilePage().startProfilePageView(client, stage);
     }
 
-    public String getRecipientId() {
+    public void onSearchButtonClicked(ActionEvent actionEvent) {
         // Taking recipient id from the input field
 
-        String recipientId = Recipient.getText();
-        recipientId = recipientId.substring(0, recipientId.length() - "@gmail.com".length());
+        receiverId = SearchBar.getText().trim();
+        receiverId = receiverId.substring(0, receiverId.length() - "@gmail.com".length());
 
-        Recipient.clear();
+        SearchBar.clear();
 
-        return recipientId;
+        // Sending chat command with recipient id to the server
+
+        try {
+            CountDownLatch latch = new CountDownLatch(1);
+            client.setLatch(latch);
+
+            client.getServerOutput().writeObject("chat_with:" + receiverId);
+            client.getServerOutput().flush();
+
+            latch.await();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!receiverId.equals(client.getReceiverId())) {
+            System.out.println("Unable to connect");
+            return;
+        }
+
+        Image chatBox = new Image(String.valueOf(getClass().getResource("/images/ChatBox.png")));
+        ChatBox.setImage(chatBox);
+
+        ReceiverName.setText(client.getReceiverName());
+
+        receiverProfilePicture = new Image(String.valueOf(getClass().getResource("/images/Payra.png")));
+        ReceiverProfilePicture.setImage(receiverProfilePicture);
+        Circle clip = new Circle(30, 30, 30);
+        ReceiverProfilePicture.setClip(clip);
+
+        // Starting chat reader thread (Receives message from the chat server and shows it in the chat box)
+
+        new Thread(() -> {
+            while (true) {
+                Object messageInfo;
+
+                try {
+                    messageInfo = client.getChatInput().readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String sender = ((String) messageInfo).split(",")[0];
+                String timestamp = ((String) messageInfo).split(",")[1];
+                String message = ((String) messageInfo).substring(sender.length() + timestamp.length() + 2);
+
+                Platform.runLater(() -> {
+                    addMessage(message, sender);
+                });
+            }
+        }).start();
     }
 
-    public String getMessage() {
-        // Taking message from the input field
+    void addMessage(String message, String sender) {
+        ImageView ProfilePicture = new ImageView(String.valueOf(getClass().getResource("/images/WhiteBackground.png")));
+        Label SenderLabel = new Label();
 
+        ProfilePicture.setFitWidth(40);
+        ProfilePicture.setFitHeight(40);
+        ProfilePicture.setSmooth(true);
+        Circle clip = new Circle(20, 20, 20);
+        ProfilePicture.setClip(clip);
+
+        SenderLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 10; -fx-text-fill: #000000");
+        HBox SenderBox = new HBox(SenderLabel);
+
+        Label MessageLabel = new Label(message);
+        MessageLabel.setMaxWidth(450);
+        MessageLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        MessageLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        MessageLabel.setWrapText(true);
+
+        if (sender.equals(client.getId())) {
+            if (!sender.equals(lastSender)) {
+                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #75baff; -fx-background-radius: 20 0 20 20;");
+            }
+            else {
+                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #75baff; -fx-background-radius: 20 20 20 20;");
+            }
+        }
+        else {
+            if (!sender.equals(lastSender)) {
+                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #b6b9c0; -fx-background-radius: 0 20 20 20;");
+            }
+            else {
+                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #b6b9c0; -fx-background-radius: 20 20 20 20;");
+            }
+        }
+
+        VBox TextContainer;
+
+        if (sender.equals(client.getId()) && !sender.equals(lastSender)) {
+            ProfilePicture.setImage(client.getProfilePicture());
+            SenderLabel.setText(client.getFirstName());
+            SenderBox.setAlignment(Pos.CENTER_RIGHT);
+            TextContainer = new VBox(SenderBox, MessageLabel);
+            lastSender = client.getId();
+        }
+        else if (sender.equals(receiverId) && !sender.equals(lastSender)) {
+            ProfilePicture.setImage(receiverProfilePicture);
+            SenderLabel.setText(client.getReceiverFirstName());
+            SenderBox.setAlignment(Pos.CENTER_LEFT);
+            TextContainer = new VBox(SenderBox, MessageLabel);
+            lastSender = receiverId;
+        }
+        else {
+            TextContainer = new VBox(MessageLabel);
+        }
+
+        TextContainer.setSpacing(5);
+
+        HBox MessageBubble;
+
+        if (sender.equals(client.getId())) {
+            MessageBubble = new HBox(TextContainer, ProfilePicture);
+        }
+        else {
+            MessageBubble = new HBox(ProfilePicture, TextContainer);
+        }
+
+        MessageBubble.setSpacing(10);
+
+        if (sender.equals(client.getId())) {
+            MessageContainer.setAlignment(Pos.CENTER_RIGHT);
+            MessageBubble.setAlignment(Pos.CENTER_RIGHT);
+        }
+        else {
+            MessageContainer.setAlignment(Pos.CENTER_LEFT);
+            MessageBubble.setAlignment(Pos.CENTER_LEFT);
+        }
+
+        MessageContainer.getChildren().add(MessageBubble);
+
+        Platform.runLater(() -> {
+            MessageContainer.layout();
+            MessageScroller.layout();
+            MessageScroller.setVvalue(1.0);
+        });
+    }
+
+    public void onSendButtonClicked(ActionEvent actionEvent) {
         String message = Message.getText();
-        message = message.substring(0, message.length() - 1);
-
         Message.clear();
 
-        return message;
+        try {
+            client.getChatOutput().writeObject(message);
+            client.getChatOutput().flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void onAttachButtonClicked(ActionEvent actionEvent) {
+    }
+
+    public void onAudioCallButtonClicked(ActionEvent actionEvent) {
+    }
+
+    public void onVideoCallButtonClicked(ActionEvent actionEvent) {
     }
 }

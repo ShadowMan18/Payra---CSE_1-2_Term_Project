@@ -4,8 +4,8 @@
 <?import javafx.scene.layout.*?>
 
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.ProfilePageController">
-   <children>
-      <Button layoutX="245.0" layoutY="63.0" mnemonicParsing="false" onAction="#onHomeButtonClick" prefHeight="30.0" prefWidth="110.0" text="HOME" />
-   </children>
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.12"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.ProfilePageController">
+   <Button layoutX="245.0" layoutY="63.0" mnemonicParsing="false" onAction="#onHomeButtonClick" prefHeight="30.0"
+           prefWidth="110.0" text="HOME"/>
 </AnchorPane>

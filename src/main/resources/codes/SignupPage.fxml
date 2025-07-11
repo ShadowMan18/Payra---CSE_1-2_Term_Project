@@ -10,61 +10,79 @@
 <?import javafx.scene.text.Font?>
 
 <StackPane fx:id="SignupPageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onKeyReleased="#onEnterKeyPress" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.SignupPageController">
-   <children>
-      <Group fx:id="SignupPageView">
-         <ImageView pickOnBounds="true">
-            <image>
-               <Image url="@../images/SignupPage.png" />
-            </image>
-         </ImageView>
-         <TextField fx:id="SignupPageFirstNameField" layoutX="748.0" layoutY="156.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <TextField fx:id="SignupPageLastNameField" layoutX="748.0" layoutY="249.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <TextField fx:id="SignupPageEmailField" layoutX="748.0" layoutY="341.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <TextField fx:id="SignupPageSetPasswordField" layoutX="748.0" layoutY="434.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <TextField fx:id="SignupPageConfirmPasswordField" layoutX="748.0" layoutY="527.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <TextField fx:id="SignupPageQuestionField" layoutX="748.0" layoutY="619.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <TextField fx:id="SignupPageAnswerField" layoutX="748.0" layoutY="714.0" prefHeight="23.0" prefWidth="457.0" style="-fx-background-color: tranparent; -fx-font-family: Glacial Indifference; -fx-font-size: 24; -fx-font-weight: bold;" />
-         <Button layoutX="741.0" layoutY="801.0" mnemonicParsing="false" onAction="#onSignupButtonClick" opacity="0.0" prefHeight="55.0" prefWidth="315.0" />
-         <Label fx:id="SignupPageFirstNameLabel" layoutX="1230.0" layoutY="156.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupPageLastNameLabel" layoutX="1230.0" layoutY="249.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupPageEmailLabel" layoutX="1230.0" layoutY="341.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupPageSetPasswordLabel" layoutX="1230.0" layoutY="434.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupPageConfirmPasswordLabel" layoutX="1230.0" layoutY="527.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupPageQuestionLabel" layoutX="1230.0" layoutY="619.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupPageAnswerLabel" layoutX="1230.0" layoutY="714.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="15.0" />
-            </font>
-         </Label>
-         <Label fx:id="SignupConfirmationLabel" layoutX="741.0" layoutY="764.0" prefHeight="37.0" prefWidth="472.0" textFill="RED" wrapText="true">
-            <font>
-               <Font name="System Bold Italic" size="10.0" />
-            </font>
-         </Label>
-      </Group>
-   </children>
+   <Group fx:id="SignupPageView">
+      <ImageView pickOnBounds="true">
+         <Image url="@../images/SignupPage.png" />
+      </ImageView>
+      <TextField fx:id="SignupPageFirstNameField" layoutX="748.0" layoutY="156.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <TextField fx:id="SignupPageLastNameField" layoutX="748.0" layoutY="249.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <TextField fx:id="SignupPageEmailField" layoutX="748.0" layoutY="341.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <TextField fx:id="SignupPageSetPasswordField" layoutX="748.0" layoutY="434.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <TextField fx:id="SignupPageConfirmPasswordField" layoutX="748.0" layoutY="527.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <TextField fx:id="SignupPageQuestionField" layoutX="748.0" layoutY="620.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <TextField fx:id="SignupPageAnswerField" layoutX="748.0" layoutY="715.0" prefHeight="49.0" prefWidth="457.0" style="-fx-background-color: transparent;">
+         <font>
+            <Font name="System Bold Italic" size="20.0" />
+         </font></TextField>
+      <Button layoutX="741.0" layoutY="801.0" mnemonicParsing="false" onAction="#onSignupButtonClick" opacity="0.0" prefHeight="55.0" prefWidth="315.0" />
+      <Button layoutX="32.0" layoutY="30.0" mnemonicParsing="false" onAction="#onBackButtonClick" opacity="0.0" prefHeight="64.0" prefWidth="64.0" />
+      <Label fx:id="SignupPageFirstNameLabel" layoutX="1230.0" layoutY="156.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupPageLastNameLabel" layoutX="1230.0" layoutY="249.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupPageEmailLabel" layoutX="1230.0" layoutY="341.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupPageSetPasswordLabel" layoutX="1230.0" layoutY="434.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupPageConfirmPasswordLabel" layoutX="1230.0" layoutY="527.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupPageQuestionLabel" layoutX="1230.0" layoutY="619.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupPageAnswerLabel" layoutX="1230.0" layoutY="714.0" prefHeight="50.0" prefWidth="350.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="SignupConfirmationLabel" layoutX="741.0" layoutY="764.0" prefHeight="37.0" prefWidth="472.0" textFill="RED" wrapText="true">
+         <font>
+            <Font name="System Bold Italic" size="10.0" />
+         </font>
+      </Label>
+   </Group>
 </StackPane>

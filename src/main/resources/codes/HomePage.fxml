@@ -8,16 +8,16 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="HomePageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.HomePageController">
-   <children>
-      <Group fx:id="HomePageView">
-         <ImageView pickOnBounds="true">
-            <image>
-               <Image url="@../images/HomePage.png" />
-            </image>
-         </ImageView>
-         <Button layoutX="212.0" layoutY="356.0" mnemonicParsing="false" onAction="#onNewsFeedButtonClick" opacity="0.0" prefHeight="425.0" prefWidth="365.0" />
-         <Button layoutX="1000.0" layoutY="356.0" mnemonicParsing="false" onAction="#onChatButtonClick" opacity="0.0" prefHeight="425.0" prefWidth="365.0" />
-      </Group>
-   </children>
+<StackPane fx:id="HomePageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+           xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="codes.HomePageController">
+   <Group fx:id="HomePageView">
+      <ImageView pickOnBounds="true">
+         <Image url="@../images/HomePage.png"/>
+      </ImageView>
+      <Button layoutX="212.0" layoutY="356.0" mnemonicParsing="false" onAction="#onNewsFeedButtonClick" opacity="0.0"
+              prefHeight="425.0" prefWidth="365.0"/>
+      <Button layoutX="1000.0" layoutY="356.0" mnemonicParsing="false" onAction="#onChatButtonClick" opacity="0.0"
+              prefHeight="425.0" prefWidth="365.0"/>
+   </Group>
 </StackPane>
