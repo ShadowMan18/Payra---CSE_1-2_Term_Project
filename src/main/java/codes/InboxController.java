@@ -9,6 +9,8 @@ import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -53,6 +55,9 @@ public class InboxController {
     public void setInboxController(Client client, Stage stage) {
         this.client = client;
         this.stage = stage;
+        client.setChatStatus(false);
+        Message.setOpacity(0);
+        Message.setDisable(true);
         InboxLayout.setPrefWidth(Screen.SCREENWIDTH);
         InboxLayout.setPrefHeight(Screen.SCREENHEIGHT);
         InboxView.scaleXProperty().bind(InboxLayout.widthProperty().divide(1600));
@@ -116,8 +121,12 @@ public class InboxController {
             return;
         }
 
+        client.setChatStatus(true);
+
         Image chatBox = new Image(String.valueOf(getClass().getResource("/images/ChatBox.png")));
         ChatBox.setImage(chatBox);
+        Message.setOpacity(1);
+        Message.setDisable(false);
 
         ReceiverName.setText(client.getReceiverName());
 
@@ -125,6 +134,7 @@ public class InboxController {
         ReceiverProfilePicture.setImage(receiverProfilePicture);
         Circle clip = new Circle(30, 30, 30);
         ReceiverProfilePicture.setClip(clip);
+
 
         // Starting chat reader thread (Receives message from the chat server and shows it in the chat box)
 
@@ -237,23 +247,48 @@ public class InboxController {
     }
 
     public void onSendButtonClicked(ActionEvent actionEvent) {
-        String message = Message.getText();
-        Message.clear();
+        sendMessage();
+    }
 
-        try {
-            client.getChatOutput().writeObject(message);
-            client.getChatOutput().flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public void onEnterKeyPressed(KeyEvent keyEvent) {
+        if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+            sendMessage();
         }
     }
 
     public void onAttachButtonClicked(ActionEvent actionEvent) {
+        if (client.getChatStatus()) {
+
+        }
     }
 
     public void onAudioCallButtonClicked(ActionEvent actionEvent) {
+        if (client.getChatStatus()) {
+
+        }
     }
 
     public void onVideoCallButtonClicked(ActionEvent actionEvent) {
+        if (client.getChatStatus()) {
+
+        }
+    }
+
+    public void sendMessage() {
+        if (client.getChatStatus()) {
+            String message = Message.getText();
+            Message.clear();
+
+            if (message.isEmpty()) {
+                return;
+            }
+
+            try {
+                client.getChatOutput().writeObject(message);
+                client.getChatOutput().flush();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

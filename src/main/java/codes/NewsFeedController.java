@@ -28,19 +28,19 @@ public class NewsFeedController {
     private CountDownLatch latch;
 
     public void setNewsFeedController(Client client, Stage stage) {
-            try {
-                latch = new CountDownLatch(1);
-                client.setLatch(latch);
+        try {
+            latch = new CountDownLatch(1);
+            client.setLatch(latch);
 
-                client.getServerOutput().writeObject("NewsFeed: open");
-                client.getServerOutput().flush();
+            client.getServerOutput().writeObject("NewsFeed: open");
+            client.getServerOutput().flush();
 
-                client.clientIsConnectedToNewsFeed();
+            client.clientIsConnectedToNewsFeed();
 
-                latch.await();
-            } catch (InterruptedException | IOException e) {
-                throw new RuntimeException(e);
-            }
+            latch.await();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
         this.client = client;
         this.stage = stage;
         NewsFeedLayout.setPrefWidth(Screen.SCREENWIDTH);

@@ -52,7 +52,7 @@ public class Client {
     private String receiverId;
     private String receiverName;
     private String receiverFirstName;
-    private boolean inChat;
+    private boolean chatStatus;
 
     // NewsFeed server network
 
@@ -61,7 +61,6 @@ public class Client {
     private ObjectOutputStream feedOutput;
     private NewsFeedController newsFeedController;
     private boolean connectedToNewsFeed;
-
 
 
     public void setNewsFeedController(NewsFeedController controller) {
@@ -100,6 +99,7 @@ public class Client {
         this.registered = false;
         this.active = false;
         this.receiverId = null;
+        this.connectedToNewsFeed=false;
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
         this.signupPage = new SignupPage();
@@ -109,9 +109,7 @@ public class Client {
         this.newsFeed = new NewsFeed();
         this.profilePage = new ProfilePage();
         this.notificationPage = new NotificationPage();
-        this.connectedToNewsFeed=false;
         System.out.println("Connection status is false");
-
 
         try {
             this.serverSocket = new Socket(ipAddress, 1024);
@@ -130,8 +128,6 @@ public class Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        this.inChat = false;
 
 //        Thread Writer = new Thread(() -> {
 //            Scanner scanner = new Scanner(System.in);
@@ -223,8 +219,6 @@ public class Client {
 
                     connectToChatServer(port);
 
-                    inChat = true;
-
                     if (latch != null) {
                         latch.countDown();
                         latch = null;
@@ -251,12 +245,9 @@ public class Client {
 //        serverReader.start();
     }
 
-
     public void clientIsConnectedToNewsFeed(){
         connectedToNewsFeed=true;
     }
-
-    // Getters
 
     public boolean isConnectedToNewsFeed(){
         return connectedToNewsFeed;
@@ -290,8 +281,6 @@ public class Client {
             e.printStackTrace();
         }
     }
-
-
 
     // Getters
 
@@ -345,6 +334,10 @@ public class Client {
 
     public String getReceiverFirstName() {
         return receiverFirstName;
+    }
+
+    public boolean getChatStatus() {
+        return chatStatus;
     }
 
     public IntroPage getIntroPage() {
@@ -437,9 +430,9 @@ public class Client {
         this.recoveryAnswer = recoveryAnswer;
     }
 
-    public void setProfilePicture(String url) {
-        this.profilePicture = new Image(String.valueOf(getClass().getResource(url)));
-    }
+    public void setProfilePicture(String url) { this.profilePicture = new Image(String.valueOf(getClass().getResource(url))); }
+
+    public void setChatStatus(boolean status) { chatStatus = status; }
 
     public void setLatch(CountDownLatch latch) {
         this.latch = latch;
@@ -517,18 +510,20 @@ public class Client {
             while (true) {
                 try {
                     String feedUpdate = (String) feedInput.readObject();
+                    System.out.println("Feed: " + feedUpdate);
+
                     Platform.runLater(() -> {
                         if (newsFeedController != null) {
                             newsFeedController.addPostToFeed(feedUpdate);
                         }
                     });
+
                 } catch (IOException | ClassNotFoundException e) {
                     System.out.println("Feed reading thread exiting for client " + this.id + ": " + e.getMessage());
-                    break;
+                    e.printStackTrace();
                 }
             }
         }).start();
-
     }
 
     public void sendPostToFeed(String content) {

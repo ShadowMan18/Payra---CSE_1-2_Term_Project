@@ -89,6 +89,7 @@ public class NewsFeedServer implements Runnable {
     public void shutdown() {
         running = false;
         try {
+            Server.port[port - 1025] = 0;
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();  // This will interrupt the accept()
             }
