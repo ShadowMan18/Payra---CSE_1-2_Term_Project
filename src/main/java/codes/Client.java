@@ -510,7 +510,7 @@ public class Client {
             while (true) {
                 try {
                     String feedUpdate = (String) feedInput.readObject();
-                    System.out.println("Feed: " + feedUpdate);
+                    //System.out.println("Feed: " + feedUpdate);
 
                     Platform.runLater(() -> {
                         if (newsFeedController != null) {
@@ -519,8 +519,9 @@ public class Client {
                     });
 
                 } catch (IOException | ClassNotFoundException e) {
-                    System.out.println("Feed reading thread exiting for client " + this.id + ": " + e.getMessage());
-                    e.printStackTrace();
+                    System.out.println("Feed reading thread exiting for client " + this.id );
+                    //e.printStackTrace();
+                    break;
                 }
             }
         }).start();

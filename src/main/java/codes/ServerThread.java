@@ -250,11 +250,11 @@ public class ServerThread implements Runnable{
             if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {
                 NewsFeedServer feedServer = Server.feedServers.remove(id);
                 if (feedServer != null) {
+                    int feedPort = feedServer.getPort();
                     feedServer.shutdown();
                     System.out.println("Shut down NewsFeedServer for client " + id);
+                    Server.port[feedPort - 1025] = 0;
                 }
-
-                Server.port[feedServer.getPort() - 1025] = 0;
             }
         }
     }
