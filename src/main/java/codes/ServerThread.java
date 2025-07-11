@@ -3,6 +3,9 @@ package codes;
 import java.io.*;
 import java.net.Socket;
 import java.sql.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
@@ -10,6 +13,8 @@ public class ServerThread implements Runnable{
     private final ObjectInputStream input;
     private final Connection databaseConnection;
     private String id;
+
+
 
     // Creating server thread from the client
 
@@ -215,7 +220,7 @@ public class ServerThread implements Runnable{
                 }
             }
 
-            if (fromClient instanceof String string && string.startsWith("NewsFeed: ")) {
+            if (fromClient instanceof String string && string.startsWith("NewsFeed: open")) {
 
                 int port = 0;
 
@@ -227,15 +232,31 @@ public class ServerThread implements Runnable{
                     }
                 }
 
-                new NewsFeedServer(port);
+                CountDownLatch fLatch = new CountDownLatch(1);
+                NewsFeedServer feedServer = new NewsFeedServer(port, fLatch);
+                Server.feedServers.put(id, feedServer);
 
                 try {
+                    fLatch.await();
                     output.writeObject("NewsFeed connection:" + port);
                     output.flush();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
+
+            if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {
+                NewsFeedServer feedServer = Server.feedServers.remove(id);
+                if (feedServer != null) {
+                    feedServer.shutdown();
+                    System.out.println("Shut down NewsFeedServer for client " + id);
+                }
+
+                Server.port[feedServer.getPort() - 1025] = 0;
+            }
+
 
         }
     }

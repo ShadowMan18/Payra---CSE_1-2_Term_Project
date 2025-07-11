@@ -7,11 +7,13 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     static Vector<String> clients = new Vector<>();
     static Map<String, ServerThread> currentClients = new HashMap<>();
-    static int[] port = new int[45000];
+    public static int[] port = new int[45000];
+    public static final Map<String, NewsFeedServer> feedServers = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         // Creating database if it isn't created

@@ -13,6 +13,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class NewsFeedController {
     @FXML
@@ -24,8 +25,22 @@ public class NewsFeedController {
 
     private Client client;
     private Stage stage;
+    private CountDownLatch latch;
 
     public void setNewsFeedController(Client client, Stage stage) {
+            try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
+
+                client.getServerOutput().writeObject("NewsFeed: open");
+                client.getServerOutput().flush();
+
+                client.clientIsConnectedToNewsFeed();
+
+                latch.await();
+            } catch (InterruptedException | IOException e) {
+                throw new RuntimeException(e);
+            }
         this.client = client;
         this.stage = stage;
         NewsFeedLayout.setPrefWidth(Screen.SCREENWIDTH);
@@ -37,27 +52,30 @@ public class NewsFeedController {
     @FXML
     public void onChatButtonClicked(ActionEvent mouseEvent) throws IOException {
         // Loading inbox page
-
+        System.out.println("Chat button clicked!");
+        client.disconnectFromFeedServer();
         client.getInbox().startInboxView(client, stage);
+        //client.
     }
 
     @FXML
     public void onHomeButtonClicked(ActionEvent mouseEvent) throws IOException {
         // Loading home page
-
+        System.out.println("Home button clicked!");
+        client.disconnectFromFeedServer();
         client.getHomePage().startHomePageView(client, stage);
     }
 
     @FXML
     public void onNotificationButtonClick(ActionEvent actionEvent) throws IOException {
         // Loading notification page
-
+        client.disconnectFromFeedServer();
         client.getNotificationPage().startNotificationPageView(client, stage);
     }
 
     public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
         // Loading profile page
-
+        client.disconnectFromFeedServer();
         client.getProfilePage().startProfilePageView(client, stage);
     }
     @FXML

@@ -60,6 +60,8 @@ public class Client {
     private ObjectInputStream feedInput;
     private ObjectOutputStream feedOutput;
     private NewsFeedController newsFeedController;
+    private boolean connectedToNewsFeed;
+
 
 
     public void setNewsFeedController(NewsFeedController controller) {
@@ -107,6 +109,9 @@ public class Client {
         this.newsFeed = new NewsFeed();
         this.profilePage = new ProfilePage();
         this.notificationPage = new NotificationPage();
+        this.connectedToNewsFeed=false;
+        System.out.println("Connection status is false");
+
 
         try {
             this.serverSocket = new Socket(ipAddress, 1024);
@@ -245,6 +250,48 @@ public class Client {
 //        Writer.start();
 //        serverReader.start();
     }
+
+
+    public void clientIsConnectedToNewsFeed(){
+        connectedToNewsFeed=true;
+    }
+
+    // Getters
+
+    public boolean isConnectedToNewsFeed(){
+        return connectedToNewsFeed;
+    }
+
+    public void disconnectFromFeedServer() {
+        System.out.println("disconnectFromFeedServer called");
+        System.out.println("connectedToNewsFeed = " + connectedToNewsFeed);
+        System.out.println("feedOutput = " + feedOutput);
+        if(!connectedToNewsFeed) return;
+        try {
+            serverOutput.writeObject("NewsFeed: close");
+            serverOutput.flush();
+            if (feedOutput != null){
+                Client.removeClient(feedOutput);
+                System.out.println(this.id+ ":left client list");
+                System.out.println("Size of client list "+Client.clientListSize());
+                feedOutput.close();
+            }
+            else{
+                System.out.println("feedOutput is NULL, skipping removal");
+            }
+            if (feedInput != null) feedInput.close();
+            if (feedSocket != null && !feedSocket.isClosed()) feedSocket.close();
+            System.out.println(this.id+": Disconnected from NewsFeed Server and gave up port");
+            connectedToNewsFeed=false;
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     // Getters
 
@@ -470,19 +517,18 @@ public class Client {
             while (true) {
                 try {
                     String feedUpdate = (String) feedInput.readObject();
-                    System.out.println("Feed: " + feedUpdate);
-
                     Platform.runLater(() -> {
                         if (newsFeedController != null) {
                             newsFeedController.addPostToFeed(feedUpdate);
                         }
                     });
-
                 } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                    System.out.println("Feed reading thread exiting for client " + this.id + ": " + e.getMessage());
+                    break;
                 }
             }
         }).start();
+
     }
 
     public void sendPostToFeed(String content) {

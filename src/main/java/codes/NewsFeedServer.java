@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,17 +27,22 @@ public class NewsFeedServer implements Runnable {
     private int lastSeenId = 0;
     private final int port;
     private final ExecutorService clientPool = Executors.newCachedThreadPool();
+    private volatile boolean running = true;
+    private final CountDownLatch serverReadyLatch;
 
-    public NewsFeedServer(int port) {
+    public NewsFeedServer(int port,CountDownLatch latch) {
         this.port = port;
         this.senderId=senderId;
         this.postThread=new Thread(this);
+        this.serverReadyLatch = latch;
 
         try {
             serverSocket = new ServerSocket(port);
             System.out.println("NewsFeedServer started on port: " + port);
+
+            serverReadyLatch.countDown();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Could not start server on port " + port, e);
         }
         try {
             databaseConnection = DriverManager.getConnection("jdbc:sqlite:src/database.db");
@@ -52,16 +58,45 @@ public class NewsFeedServer implements Runnable {
         postThread.start();
     }
 
+
+    public int getPort() { return port; }
+
     @Override
     public void run() {
-        while (true) {
-            try {
+        try {
+            while (running) {
                 Socket clientSocket = serverSocket.accept();
                 clientPool.submit(new FeedClientHandler(clientSocket));
+            }
+        } catch (IOException e) {
+            if (running) {
+                e.printStackTrace();
+            } else {
+                System.out.println("Server on port " + port + " stopped.");
+            }
+        } finally {
+            try {
+                if (serverSocket != null && !serverSocket.isClosed()) {
+                    serverSocket.close();
+                    System.out.println("ServerSocket closed on port " + port);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void shutdown() {
+        running = false;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();  // This will interrupt the accept()
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        clientPool.shutdownNow();
+        System.out.println("NewsFeedServer on port " + port + " has been shut down.");
     }
 
     private class FeedClientHandler implements Runnable {
@@ -72,6 +107,10 @@ public class NewsFeedServer implements Runnable {
 
         public FeedClientHandler(Socket socket) {
             this.socket = socket;
+        }
+
+        @Override
+        public void run() {
             try {
                 out = new ObjectOutputStream(socket.getOutputStream());
                 out.flush();
@@ -80,17 +119,9 @@ public class NewsFeedServer implements Runnable {
                 thisClientId = (String) in.readObject();
                 System.out.println("Connected client: " + thisClientId);
 
-            } catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException("Error initializing client handler", e);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
                 Client.addClient(out);
-
                 System.out.println("Clients connected and added to the array: " + Client.clientListSize());
+
 
                 //out.writeObject("Welcome to the very very very very best Payra newsfeed!");
                 out.flush();
@@ -141,8 +172,19 @@ public class NewsFeedServer implements Runnable {
                 }
 
             } catch (IOException | ClassNotFoundException e) {
+
                 Client.removeClient(out);
                 System.out.println("Client disconnected from feed.");
+            }finally {
+                try {
+                    if (out != null) Client.removeClient(out);
+                    if (in != null) in.close();
+                    if (out != null) out.close();
+                    if (socket != null && !socket.isClosed()) socket.close();
+                    System.out.println("Closed resources for client: " + thisClientId);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
