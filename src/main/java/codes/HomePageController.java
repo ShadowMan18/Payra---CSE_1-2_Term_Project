@@ -8,6 +8,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class HomePageController {
     @FXML
@@ -30,7 +31,10 @@ public class HomePageController {
     @FXML
     public void onNewsFeedButtonClick(ActionEvent actionEvent) throws IOException {
         // Loading news feed page
-
+        CountDownLatch latch = new CountDownLatch(1);
+        client.setLatch(latch);
+        client.getServerOutput().writeObject("NewsFeed: open");
+        client.getServerOutput().flush();
         client.getNewsFeed().startNewsFeedView(client, stage);
     }
 

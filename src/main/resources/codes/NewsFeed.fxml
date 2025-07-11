@@ -8,35 +8,43 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="NewsFeedLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-           xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="codes.NewsFeedController">
-   <Group fx:id="NewsFeedView">
-      <ImageView pickOnBounds="true">
-         <Image url="@../images/NewsFeed.png"/>
-      </ImageView>
-      <Button layoutX="96.0" mnemonicParsing="false" onAction="#onChatButtonClicked" opacity="0.0" prefHeight="115.0"
-              prefWidth="106.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT"/>
-      <Button layoutX="698.0" layoutY="37.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0"
-              prefHeight="53.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT"/>
-      <Button layoutX="821.0" layoutY="37.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0"
-              prefHeight="57.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT"/>
-      <Button layoutX="1462.0" layoutY="17.0" mnemonicParsing="false" onAction="#onProfileButtonClick" opacity="0.0"
-              prefHeight="83.0" prefWidth="61.0" text="Button" textFill="TRANSPARENT"/>
-      <ScrollPane hbarPolicy="NEVER" layoutY="115.0" prefHeight="426.0" prefWidth="707.0" vbarPolicy="NEVER">
-         <content>
-            <ImageView fitHeight="764.0" fitWidth="706.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@../images/Payra.png"/>
-               </image>
-            </ImageView>
-         </content>
-      </ScrollPane>
-      <Button layoutX="686.0" layoutY="172.0" mnemonicParsing="false" onAction="#onPostButtonClick" prefHeight="72.0"
-              prefWidth="245.0" text="POST SOMETHING!">
-         <font>
-            <Font size="20.0"/>
-         </font>
-      </Button>
-   </Group>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+<StackPane fx:id="NewsFeedLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.NewsFeedController">
+   <children>
+      <Group fx:id="NewsFeedView">
+         <ImageView pickOnBounds="true">
+            <image>
+               <Image url="@../images/NewsFeed.png" />
+            </image>
+         </ImageView>
+         <Button layoutX="96.0" mnemonicParsing="false" onAction="#onChatButtonClicked" opacity="0.0" prefHeight="115.0" prefWidth="106.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT" />
+         <Button layoutX="698.0" layoutY="37.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0" prefHeight="53.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
+         <Button layoutX="821.0" layoutY="37.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0" prefHeight="57.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
+         <Button layoutX="1462.0" layoutY="17.0" mnemonicParsing="false" onAction="#onProfileButtonClick" opacity="0.0" prefHeight="83.0" prefWidth="61.0" text="Button" textFill="TRANSPARENT" />
+<!--         <ScrollPane hbarPolicy="NEVER" layoutY="115.0" prefHeight="426.0" prefWidth="707.0" vbarPolicy="NEVER">-->
+<!--            <content>-->
+<!--               <VBox fx:id="feedContainer" spacing="10" />-->
+<!--            </content>-->
+
+<!--         </ScrollPane>-->
+
+         <ScrollPane fx:id="feedScrollPane" hbarPolicy="NEVER" layoutY="115.0" prefHeight="426.0" prefWidth="707.0" vbarPolicy="ALWAYS">
+            <content>
+               <VBox fx:id="feedContainer" spacing="10.0">
+                  <padding>
+                     <Insets top="10" right="10" bottom="10" left="10"/>
+                  </padding>
+               </VBox>
+            </content>
+         </ScrollPane>
+
+
+         <Button layoutX="686.0" layoutY="172.0" mnemonicParsing="false" onAction="#onPostButtonClick" prefHeight="72.0" prefWidth="245.0" text="POST SOMETHING!">
+            <font>
+               <Font size="20.0" />
+            </font>
+         </Button>
+      </Group>
+   </children>
 </StackPane>

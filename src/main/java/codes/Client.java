@@ -1,9 +1,12 @@
 package codes;
 
+import javafx.application.Platform;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
 public class Client {
@@ -33,8 +36,8 @@ public class Client {
     private final NotificationPage notificationPage;
 
     // Client network
-
-    private final String ipAddress = "192.168.68.57";
+    private final String ipAddress = "127.0.0.1";
+ //   private final String ipAddress = "192.168.252.50";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -42,6 +45,43 @@ public class Client {
     private ObjectOutputStream chatOutput;
     private ObjectInputStream chatInput;
     private boolean inChat;
+
+
+    //NewsFeed
+    private Socket feedSocket;
+    private ObjectInputStream feedInput;
+    private ObjectOutputStream feedOutput;
+    private NewsFeedController newsFeedController;
+
+
+    public void setNewsFeedController(NewsFeedController controller) {
+        this.newsFeedController = controller;
+    }
+
+    public static final CopyOnWriteArrayList<ObjectOutputStream> allClientOutputs = new CopyOnWriteArrayList<>();
+
+    // Optionally add helper methods:
+    public static void addClient(ObjectOutputStream out) {
+        allClientOutputs.add(out);
+    }
+
+    public static void removeClient(ObjectOutputStream out) {
+        allClientOutputs.remove(out);
+    }
+    public static int clientListSize(){
+        return allClientOutputs.size();
+    }
+
+    public static void broadcast(String message) {
+        for (ObjectOutputStream out : allClientOutputs) {
+            try {
+                out.writeObject(message);
+                out.flush();
+            } catch (Exception e) {
+                removeClient(out);
+            }
+        }
+    }
 
     // Constructor
 
@@ -165,6 +205,20 @@ public class Client {
                         latch = null;
                     }
                 }
+
+
+
+
+                else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
+                    int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
+                    connectToFeedServer(port);
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+
+
                 else {
                     assert fromServer instanceof String;
                     System.out.println("Received: " + (String) fromServer);
@@ -249,6 +303,9 @@ public class Client {
     public NotificationPage getNotificationPage() {
         return notificationPage;
     }
+
+
+    // Might be necessary
 
     public Socket getServerSocketSocket() {
         return serverSocket;
@@ -362,4 +419,54 @@ public class Client {
 ////        chatWriter.start();
 //        chatReader.start();
     }
+
+
+
+    public void connectToFeedServer(int port) {
+        try {
+            this.feedSocket = new Socket(ipAddress, port);
+            this.feedOutput = new ObjectOutputStream(feedSocket.getOutputStream());
+            this.feedOutput.flush();
+            this.feedInput = new ObjectInputStream(feedSocket.getInputStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("Connected to Feed Server on port: " + port);
+
+        try {
+            feedOutput.writeObject(this.id);
+            feedOutput.flush();
+            System.out.println("I have been connected to feed server.");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        new Thread(() -> {
+            while (true) {
+                try {
+                    String feedUpdate = (String) feedInput.readObject();
+                    System.out.println("Feed: " + feedUpdate);
+
+                    Platform.runLater(() -> {
+                        if (newsFeedController != null) {
+                            newsFeedController.addPostToFeed(feedUpdate);
+                        }
+                    });
+
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+    public void sendPostToFeed(String content) {
+        try {
+            feedOutput.writeObject(content);
+            feedOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
