@@ -39,7 +39,7 @@ public class Client {
 
     // Client server network
 
-    private final String ipAddress = "192.168.70.167";
+    private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
