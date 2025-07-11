@@ -21,9 +21,9 @@ public class NewsFeedController {
     public Group NewsFeedView;
     @FXML
     private VBox feedContainer;
-    
-    Client client;
-    Stage stage;
+
+    private Client client;
+    private Stage stage;
 
     public void setNewsFeedController(Client client, Stage stage) {
         this.client = client;

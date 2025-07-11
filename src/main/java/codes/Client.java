@@ -1,6 +1,7 @@
 package codes;
 
 import javafx.application.Platform;
+import javafx.scene.image.Image;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -19,9 +20,9 @@ public class Client {
     private String password;
     private String recoveryQuestion;
     private String recoveryAnswer;
+    private Image profilePicture;
     private boolean registered;
     private boolean active;
-    private String receiverId;
     private CountDownLatch latch;
 
     // Client pages
@@ -29,25 +30,32 @@ public class Client {
     private final IntroPage introPage;
     private final LoginPage loginPage;
     private final SignupPage signupPage;
+    private final ForgotPasswordPage forgotPasswordPage;
     private final HomePage homePage;
     private final Inbox inbox;
     private final NewsFeed newsFeed;
     private final ProfilePage profilePage;
     private final NotificationPage notificationPage;
 
-    // Client network
-    private final String ipAddress = "127.0.0.1";
- //   private final String ipAddress = "192.168.252.50";
+    // Client server network
+
+    private final String ipAddress = "192.168.70.167";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
+
+    // Chat server network
+
     private Socket chatSocket;
     private ObjectOutputStream chatOutput;
     private ObjectInputStream chatInput;
+    private String receiverId;
+    private String receiverName;
+    private String receiverFirstName;
     private boolean inChat;
 
+    // NewsFeed server network
 
-    //NewsFeed
     private Socket feedSocket;
     private ObjectInputStream feedInput;
     private ObjectOutputStream feedOutput;
@@ -86,12 +94,14 @@ public class Client {
     // Constructor
 
     public Client() {
+        this.profilePicture = new Image(String.valueOf(getClass().getResource("/images/Payra.png")));
         this.registered = false;
         this.active = false;
         this.receiverId = null;
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
         this.signupPage = new SignupPage();
+        this.forgotPasswordPage = new ForgotPasswordPage();
         this.homePage = new HomePage();
         this.inbox = new Inbox();
         this.newsFeed = new NewsFeed();
@@ -193,11 +203,21 @@ public class Client {
                         latch = null;
                     }
                 }
+                else if (fromServer instanceof String string && string.startsWith("updated")) {
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
                 else if (fromServer instanceof String string && string.startsWith("connect_to:")) {
                     String[] connectionInfo = string.substring("connect_to:".length()).split(",");
                     int port = Integer.parseInt(connectionInfo[0]);
                     this.receiverId = connectionInfo[1];
+                    this.receiverName = connectionInfo[2];
+                    this.receiverFirstName = connectionInfo[3];
+
                     connectToChatServer(port);
+
                     inChat = true;
 
                     if (latch != null) {
@@ -205,20 +225,16 @@ public class Client {
                         latch = null;
                     }
                 }
-
-
-
-
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
                     int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
+
                     connectToFeedServer(port);
+
                     if (latch != null) {
                         latch.countDown();
                         latch = null;
                     }
                 }
-
-
                 else {
                     assert fromServer instanceof String;
                     System.out.println("Received: " + (String) fromServer);
@@ -260,6 +276,10 @@ public class Client {
         return recoveryAnswer;
     }
 
+    public Image getProfilePicture() {
+        return profilePicture;
+    }
+
     public boolean isRegistered() {
         return registered;
     }
@@ -272,6 +292,14 @@ public class Client {
         return receiverId;
     }
 
+    public String getReceiverName() {
+        return receiverName;
+    }
+
+    public String getReceiverFirstName() {
+        return receiverFirstName;
+    }
+
     public IntroPage getIntroPage() {
         return introPage;
     }
@@ -282,6 +310,10 @@ public class Client {
 
     public SignupPage getSignupPage() {
         return signupPage;
+    }
+
+    public ForgotPasswordPage getForgotPasswordPage() {
+        return forgotPasswordPage;
     }
 
     public HomePage getHomePage() {
@@ -304,13 +336,6 @@ public class Client {
         return notificationPage;
     }
 
-
-    // Might be necessary
-
-    public Socket getServerSocketSocket() {
-        return serverSocket;
-    }
-
     public ObjectOutputStream getServerOutput() {
         return serverOutput;
     }
@@ -325,6 +350,14 @@ public class Client {
 
     public ObjectInputStream getChatInput() {
         return chatInput;
+    }
+
+    public ObjectOutputStream getFeedOutput() {
+        return feedOutput;
+    }
+
+    public ObjectInputStream getFeedInput() {
+        return feedInput;
     }
 
     // Setters
@@ -357,6 +390,10 @@ public class Client {
         this.recoveryAnswer = recoveryAnswer;
     }
 
+    public void setProfilePicture(String url) {
+        this.profilePicture = new Image(String.valueOf(getClass().getResource(url)));
+    }
+
     public void setLatch(CountDownLatch latch) {
         this.latch = latch;
     }
@@ -371,23 +408,13 @@ public class Client {
     public void connectToChatServer(int port) {
         try {
             this.chatSocket = new Socket(ipAddress, port);
+            this.chatOutput = new ObjectOutputStream(chatSocket.getOutputStream());
+            this.chatInput = new ObjectInputStream(chatSocket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         System.out.println("Connected to: " + port);
-
-        try {
-            this.chatOutput = new ObjectOutputStream(chatSocket.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            this.chatInput = new ObjectInputStream(chatSocket.getInputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
 //        Thread chatWriter = new Thread(() -> {
 //            while (true) {
@@ -420,13 +447,10 @@ public class Client {
 //        chatReader.start();
     }
 
-
-
     public void connectToFeedServer(int port) {
         try {
             this.feedSocket = new Socket(ipAddress, port);
             this.feedOutput = new ObjectOutputStream(feedSocket.getOutputStream());
-            this.feedOutput.flush();
             this.feedInput = new ObjectInputStream(feedSocket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -460,6 +484,7 @@ public class Client {
             }
         }).start();
     }
+
     public void sendPostToFeed(String content) {
         try {
             feedOutput.writeObject(content);
@@ -468,5 +493,4 @@ public class Client {
             e.printStackTrace();
         }
     }
-
 }

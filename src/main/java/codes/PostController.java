@@ -4,10 +4,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
-
 
 public class PostController {
 

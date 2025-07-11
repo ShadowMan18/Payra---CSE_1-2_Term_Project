@@ -91,6 +91,17 @@ public class SignupPageController {
     }
 
     @FXML
+    public void onBackButtonClick(ActionEvent actionEvent) {
+        // Loading login page
+
+        try {
+            client.getLoginPage().startLoginPageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @FXML
     public void onEnterKeyPress(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
             // Proceeding to sign up
@@ -114,13 +125,29 @@ public class SignupPageController {
     public boolean signup() {
         // Taking inputs from the input fields
 
-        firstName = SignupPageFirstNameField.getText();
-        lastName = SignupPageLastNameField.getText();
-        email = SignupPageEmailField.getText();
-        password1 = SignupPageSetPasswordField.getText();
-        password2 = SignupPageConfirmPasswordField.getText();
-        question = SignupPageQuestionField.getText();
-        answer = SignupPageAnswerField.getText();
+        firstName = SignupPageFirstNameField.getText().trim();
+        lastName = SignupPageLastNameField.getText().trim();
+        email = SignupPageEmailField.getText().trim();
+        password1 = SignupPageSetPasswordField.getText().trim();
+        password2 = SignupPageConfirmPasswordField.getText().trim();
+        question = SignupPageQuestionField.getText().trim();
+        answer = SignupPageAnswerField.getText().trim();
+
+        client.setFirstName(firstName);
+        client.setLastName(lastName);
+        client.setEmail(email);
+        client.setId(email.substring(0, email.length() - "@gmail.com".length()));
+        client.setPassword(password1);
+        client.setRecoveryQuestion(question);
+        client.setRecoveryAnswer(answer);
+
+        System.out.println(firstName);
+        System.out.println(lastName);
+        System.out.println(email);
+        System.out.println(password1);
+        System.out.println(password2);
+        System.out.println(question);
+        System.out.println(answer);
 
         boolean firstNameCheck = checkFirstName();
         boolean lastNameCheck = checkLastName();
@@ -147,23 +174,22 @@ public class SignupPageController {
         }
 
         if (firstNameCheck && lastNameCheck && emailCheck && passwordCheck && passwordConfirmation && questionCheck && answerCheck) {
-            // Setting client information to the client object
+            try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
 
-            client.setFirstName(firstName);
-            client.setLastName(lastName);
-            client.setEmail(email);
-            client.setId(email.substring(0, email.length() - "@gmail.com".length()));
-            client.setPassword(password1);
-            client.setRecoveryQuestion(question);
-            client.setRecoveryAnswer(answer);
+                client.getServerOutput().writeObject("check:" + email.substring(0, email.length() - "@gmail.com".length()));
+                client.getServerOutput().flush();
 
-            System.out.println(firstName);
-            System.out.println(lastName);
-            System.out.println(email);
-            System.out.println(password1);
-            System.out.println(password2);
-            System.out.println(question);
-            System.out.println(answer);
+                latch.await();
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (client.isRegistered()) {
+                SignupPageEmailLabel.setText("Email already registered");
+                return false;
+            }
             
             // Sending sign up command with client's information to the server
 
@@ -184,6 +210,7 @@ public class SignupPageController {
 //                    SignupConfirmationLabel.setStyle("-fx-text-fill: #ff0000;");
 //                    SignupConfirmationLabel.setText("Couldn't sign up. Please try again.");
 //                });
+                System.out.println("Couldn't register");
                 return false;
             }
 
@@ -198,15 +225,14 @@ public class SignupPageController {
 //                throw new RuntimeException(e);
 //            }
 
+            // Setting client information to the client object
+
             return true;
         }
         else {
             return false;
         }
     }
-
-
-
 
     public boolean checkFirstName() {
         if (firstName.isEmpty()) {
@@ -275,23 +301,6 @@ public class SignupPageController {
                         return false;
                     }
                 }
-            }
-
-            try {
-                latch = new CountDownLatch(1);
-                client.setLatch(latch);
-
-                client.getServerOutput().writeObject("check:" + id);
-                client.getServerOutput().flush();
-
-                latch.await();
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            if (client.isRegistered()) {
-                SignupPageEmailLabel.setText("Email already registered");
-                return false;
             }
         }
 

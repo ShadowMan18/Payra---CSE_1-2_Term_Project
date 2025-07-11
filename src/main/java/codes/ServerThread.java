@@ -48,8 +48,7 @@ public class ServerThread implements Runnable{
     public void run() {
         // Receiving instructions from the client and sending feedbacks
 
-        while(true)
-        {
+        while (true) {
             Object fromClient = null;
 
             try {
@@ -72,6 +71,7 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("check:")) {
                 String id = string.substring("check:".length());
+                this.id = id;
                 System.out.println(id);
 
                 try {
@@ -118,6 +118,7 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
                 String id = string.substring("get_info:".length());
+                this.id = id;
 
                 try (PreparedStatement getUserInfo = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?")) {
                     getUserInfo.setString(1, id);
@@ -149,16 +150,40 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.currentClients.size());
             }
 
+            // Updating client's information
+
+            if (fromClient instanceof String string && string.startsWith("update:")) {
+                String[] updateInfo = string.substring("update:".length()).split(",");
+
+                if (updateInfo[0].equals("password")) {
+                    try (PreparedStatement updatePassword = databaseConnection.prepareStatement("UPDATE Users SET Password = ? WHERE UserId = ?")) {
+                        updatePassword.setString(1, updateInfo[1]);
+                        updatePassword.setString(2, id);
+
+                        updatePassword.executeUpdate();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                try {
+                    output.writeObject("updated");
+                    output.flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Enabling a client to chat with another client
 
             if (fromClient instanceof String string && string.startsWith("chat_with:")) {
-                String recipientId = string.substring("chat_with:".length());
+                String receiverId = string.substring("chat_with:".length());
 
                 // Creating new chat server for the client and sending the connection information to the client
 
-                int port = 1;
+                int port = 0;
 
-                for(int i = 0; i < 45000; i++) {
+                for (int i = 0; i < 45000; i++) {
                     if (Server.port[i] == 0) {
                         port = i + 1025;
                         Server.port[i] = 1;
@@ -166,21 +191,35 @@ public class ServerThread implements Runnable{
                     }
                 }
 
-                new ChatServer(port, id, recipientId);
+                new ChatServer(port, id, receiverId);
+
+                String receiverName;
+                String receiverFirstName;
+
+                try (PreparedStatement getReceiverName = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?")) {
+                    getReceiverName.setString(1, receiverId);
+
+                    try (ResultSet queryResult = getReceiverName.executeQuery()) {
+                        receiverName = queryResult.getString("First_Name") + " " + queryResult.getString("Last_Name");
+                        receiverFirstName = queryResult.getString("First_Name");
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
 
                 try {
-                    output.writeObject("connect_to:" + port + "," + recipientId);
+                    output.writeObject("connect_to:" + port + "," + receiverId + "," + receiverName + "," + receiverFirstName);
                     output.flush();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
 
-            if (fromClient instanceof String string && string.startsWith("NewsFeed: ")){
+            if (fromClient instanceof String string && string.startsWith("NewsFeed: ")) {
 
                 int port = 0;
 
-                for(int i = 0; i < 45000; i++) {
+                for (int i = 0; i < 45000; i++) {
                     if (Server.port[i] == 0) {
                         port = i + 1025;
                         Server.port[i] = 1;
@@ -200,4 +239,5 @@ public class ServerThread implements Runnable{
 
         }
     }
+
 }
