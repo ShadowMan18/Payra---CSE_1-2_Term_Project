@@ -1,6 +1,7 @@
 package codes;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
 import java.util.Map;
@@ -9,17 +10,17 @@ import java.util.concurrent.CountDownLatch;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
+    private boolean running;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
     private final Connection databaseConnection;
     private String id;
 
-
-
     // Creating server thread from the client
 
     public ServerThread(Socket clientSocket) {
         serverThread = new Thread(this);
+        this.running = true;
 
         // Initiating the output and input stream to communicate with the client
 
@@ -53,18 +54,17 @@ public class ServerThread implements Runnable{
     public void run() {
         // Receiving instructions from the client and sending feedbacks
 
-        while (true) {
+        while (running) {
             Object fromClient = null;
 
             try {
                 fromClient = input.readObject();
-            } catch (IOException e) {
-//                System.out.println("Client connection lost.");
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Client connection lost.");
                 if (id != null) {
                     Server.currentClients.remove(id);
                 }
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
+                this.running = false;
             }
 
 //            if (fromClient instanceof String string && string.startsWith("m:"))
@@ -250,14 +250,12 @@ public class ServerThread implements Runnable{
             if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {
                 NewsFeedServer feedServer = Server.feedServers.remove(id);
                 if (feedServer != null) {
+                    int feedPort = feedServer.getPort();
                     feedServer.shutdown();
                     System.out.println("Shut down NewsFeedServer for client " + id);
+                    Server.port[feedPort - 1025] = 0;
                 }
-
-                Server.port[feedServer.getPort() - 1025] = 0;
             }
-
-
         }
     }
 
