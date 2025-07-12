@@ -1,10 +1,10 @@
 package codes;
 
-import javafx.application.Platform;
-
+import javax.swing.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.sql.*;
 
 class ChatServer implements Runnable {
@@ -14,20 +14,16 @@ class ChatServer implements Runnable {
     private Thread chatThread;
     private ObjectOutputStream output;
     private ObjectInputStream input;
-    private boolean running;
     private final Connection databaseConnection;
     private String senderId;
     private String receiverId;
     private int lastSeenId = 0;
 
-    private Object message;
-    
     // Initiating chat server with port, sender id and receiver id
 
     public ChatServer(int port, String senderId, String receiverId) {
         chatThread = new Thread(this);
         this.port = port;
-        this.running = true;
 
         this.senderId = senderId;
         this.receiverId = receiverId;
@@ -79,24 +75,58 @@ class ChatServer implements Runnable {
         // Starting message writer thread (receives message from the client and writes it in the chat files of both the sender and receiver)
 
         new Thread(() -> {
-            while (running){
+            while (true){
                 // Receiving message
 
+                MessagePacket message = null;
+                String filename;
+
                 try {
-                    message = input.readObject();
+                    message = (MessagePacket) input.readObject();
                 } catch (IOException | ClassNotFoundException e) {
                     System.out.println("Disconnected from chat server");
                     shutdown();
                 }
 
-                try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)")) {
+                System.out.println("received:" + message.getSender() + " " + message.getMessage() + " " + message.getFilename());
+
+                if (message.getFilename() != null) {
+                    filename = message.getFilename();
+
+                    File dir = new File("src/Media Database");
+
+                    if (!dir.exists()) {
+                        dir.mkdir();
+                    }
+
+                    File file = new File(dir, message.getFilename());
+
+                    try {
+                        FileOutputStream fos = new FileOutputStream(file);
+                        fos.write(message.getFiledata());
+                        fos.close();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else {
+                    filename = null;
+                }
+
+                try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content, Media) VALUES (?, ?, ?, ?)")) {
                     addChat.setString(1, senderId);
                     addChat.setString(2, receiverId);
-                    addChat.setString(3, (String) message);
+                    addChat.setString(3, message.getMessage());
+                    if (filename != null) {
+                        addChat.setString(4, filename);
+                    }
+                    else {
+                        addChat.setString(4, null);
+                    }
 
                     addChat.executeUpdate();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    break;
                 }
             }
         }).start();
@@ -104,7 +134,7 @@ class ChatServer implements Runnable {
         // Starting chat conveyor thread (reads chats from the chat file and sends it to the client)
 
         new Thread(() -> {
-            while (running) {
+            while (true) {
                 try (PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC")) {
                     fetchChats.setString(1, senderId);
                     fetchChats.setString(2, receiverId);
@@ -115,13 +145,11 @@ class ChatServer implements Runnable {
                     try (ResultSet chats = fetchChats.executeQuery()) {
                         while (chats.next()) {
                             int id = chats.getInt("id");
-                            String sender = chats.getString("sender");
-                            String content = chats.getString("content");
-                            String timestamp = chats.getString("timestamp");
+                            String sender = chats.getString("Sender");
+                            String content = chats.getString("Content");
+                            String timestamp = chats.getString("Timestamp");
 
-                            String messageInfo = sender + "," + timestamp + "," + content;
-
-                            output.writeObject(messageInfo);
+                            output.writeObject(new MessagePacket(sender, content, null, null));
                             output.flush();
                             lastSeenId = id;
                         }
@@ -136,11 +164,7 @@ class ChatServer implements Runnable {
     }
 
     public void shutdown() {
-        running = false;
-
         try {
-            Server.port[port - 1025] = 0;
-
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }
@@ -156,10 +180,12 @@ class ChatServer implements Runnable {
             if (input != null) {
                 input.close();
             }
+
+            Server.port[port - 1025] = 0;
+            System.out.println("ChatServer on port " + port + " has been shut down.");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("ChatServer on port " + port + " has been shut down.");
     }
 }
 

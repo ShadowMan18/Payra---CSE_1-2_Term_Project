@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 
 
 public class NewsFeedServer implements Runnable {
+    private int port;
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private Thread postThread;
@@ -25,15 +26,15 @@ public class NewsFeedServer implements Runnable {
     private String senderId;
     private String receiverId;
     private int lastSeenId = 0;
-    private final int port;
     private final ExecutorService clientPool = Executors.newCachedThreadPool();
     private volatile boolean running = true;
     private final CountDownLatch serverReadyLatch;
 
     public NewsFeedServer(int port,CountDownLatch latch) {
-        this.port = port;
-        this.senderId=senderId;
         this.postThread=new Thread(this);
+        this.port = port;
+
+        this.senderId=senderId;
         this.serverReadyLatch = latch;
 
         try {
@@ -92,6 +93,21 @@ public class NewsFeedServer implements Runnable {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();  // This will interrupt the accept()
             }
+
+            if (clientSocket != null && !clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+
+            if (output != null) {
+                output.close();
+            }
+
+            if (input != null) {
+                input.close();
+            }
+
+            Server.port[port - 1025] = 0;
+            System.out.println("Shut down NewsFeedServer at port " + port);
         } catch (IOException e) {
             e.printStackTrace();
         }

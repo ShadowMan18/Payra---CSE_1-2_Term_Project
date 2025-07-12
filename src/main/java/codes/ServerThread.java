@@ -10,9 +10,10 @@ import java.util.concurrent.CountDownLatch;
 
 public class ServerThread implements Runnable{
     private Thread serverThread;
-    private boolean running;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
+    private ChatServer chatServer;
+    private NewsFeedServer feedServer;
     private final Connection databaseConnection;
     private String id;
 
@@ -20,7 +21,6 @@ public class ServerThread implements Runnable{
 
     public ServerThread(Socket clientSocket) {
         serverThread = new Thread(this);
-        this.running = true;
 
         // Initiating the output and input stream to communicate with the client
 
@@ -54,7 +54,7 @@ public class ServerThread implements Runnable{
     public void run() {
         // Receiving instructions from the client and sending feedbacks
 
-        while (running) {
+        while (true) {
             Object fromClient = null;
 
             try {
@@ -64,7 +64,13 @@ public class ServerThread implements Runnable{
                 if (id != null) {
                     Server.currentClients.remove(id);
                 }
-                this.running = false;
+                if (chatServer != null) {
+                    chatServer.shutdown();
+                }
+                if (feedServer != null) {
+                    feedServer.shutdown();
+                }
+                break;
             }
 
 //            if (fromClient instanceof String string && string.startsWith("m:"))
@@ -196,7 +202,7 @@ public class ServerThread implements Runnable{
                     }
                 }
 
-                new ChatServer(port, id, receiverId);
+                chatServer = new ChatServer(port, id, receiverId);
 
                 String receiverName;
                 String receiverFirstName;
@@ -220,6 +226,13 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            if (fromClient instanceof String string && string.equals("close_chat")) {
+                if (chatServer != null) {
+                    chatServer.shutdown();
+                    System.out.println("Shut down chat server for client " + id);
+                }
+            }
+
             if (fromClient instanceof String string && string.startsWith("NewsFeed: open")) {
 
                 int port = 0;
@@ -233,7 +246,7 @@ public class ServerThread implements Runnable{
                 }
 
                 CountDownLatch fLatch = new CountDownLatch(1);
-                NewsFeedServer feedServer = new NewsFeedServer(port, fLatch);
+                feedServer = new NewsFeedServer(port, fLatch);
                 Server.feedServers.put(id, feedServer);
 
                 try {
@@ -248,12 +261,9 @@ public class ServerThread implements Runnable{
             }
 
             if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {
-                NewsFeedServer feedServer = Server.feedServers.remove(id);
+                Server.feedServers.remove(id);
                 if (feedServer != null) {
-                    int feedPort = feedServer.getPort();
                     feedServer.shutdown();
-                    System.out.println("Shut down NewsFeedServer for client " + id);
-                    Server.port[feedPort - 1025] = 0;
                 }
             }
         }

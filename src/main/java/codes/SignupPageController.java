@@ -133,22 +133,6 @@ public class SignupPageController {
         question = SignupPageQuestionField.getText().trim();
         answer = SignupPageAnswerField.getText().trim();
 
-        client.setFirstName(firstName);
-        client.setLastName(lastName);
-        client.setEmail(email);
-        client.setId(email.substring(0, email.length() - "@gmail.com".length()));
-        client.setPassword(password1);
-        client.setRecoveryQuestion(question);
-        client.setRecoveryAnswer(answer);
-
-        System.out.println(firstName);
-        System.out.println(lastName);
-        System.out.println(email);
-        System.out.println(password1);
-        System.out.println(password2);
-        System.out.println(question);
-        System.out.println(answer);
-
         boolean firstNameCheck = checkFirstName();
         boolean lastNameCheck = checkLastName();
         boolean emailCheck = checkEmailAddress();
@@ -172,6 +156,14 @@ public class SignupPageController {
         else {
             SignupPageAnswerLabel.setText("");
         }
+
+        client.setFirstName(firstName);
+        client.setLastName(lastName);
+        client.setEmail(email);
+        client.setId(email.substring(0, email.length() - "@gmail.com".length()));
+        client.setPassword(password1);
+        client.setRecoveryQuestion(question);
+        client.setRecoveryAnswer(answer);
 
         if (firstNameCheck && lastNameCheck && emailCheck && passwordCheck && passwordConfirmation && questionCheck && answerCheck) {
             try {
@@ -226,6 +218,14 @@ public class SignupPageController {
 //            }
 
             // Setting client information to the client object
+
+            System.out.println(firstName);
+            System.out.println(lastName);
+            System.out.println(email);
+            System.out.println(password1);
+            System.out.println(password2);
+            System.out.println(question);
+            System.out.println(answer);
 
             return true;
         }

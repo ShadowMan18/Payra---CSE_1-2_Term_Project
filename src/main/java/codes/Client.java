@@ -39,7 +39,7 @@ public class Client {
 
     // Client server network
 
-    private final String ipAddress = "127.0.0.1";
+    private final String ipAddress = "192.168.1.101";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -277,6 +277,34 @@ public class Client {
 
 
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void disconnectFromChatServer() {
+        System.out.println("Chat status = " + connectedToNewsFeed);
+        if(!chatStatus) return;
+
+        try {
+            serverOutput.writeObject("close_chat");
+            serverOutput.flush();
+
+            if (feedSocket != null && !feedSocket.isClosed()) {
+                feedSocket.close();
+            }
+
+            if (feedOutput != null) {
+                feedOutput.close();
+            }
+
+            if (feedInput != null) {
+                feedInput.close();
+            }
+
+            chatStatus = false;
+
+            System.out.println(this.id+": Disconnected from Chat Server and gave up port");
         } catch (IOException e) {
             e.printStackTrace();
         }

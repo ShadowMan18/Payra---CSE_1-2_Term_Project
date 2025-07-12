@@ -19,7 +19,11 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.CountDownLatch;
 
 public class InboxController {
@@ -50,6 +54,7 @@ public class InboxController {
     private String receiverId;
     private Image receiverProfilePicture;
     private String lastSender;
+    private String filePath;
 
 
     public void setInboxController(Client client, Stage stage) {
@@ -71,6 +76,9 @@ public class InboxController {
     public void onNewsFeedButtonClicked(ActionEvent mouseEvent) throws IOException {
         // Loading news feed page
 
+        client.getServerOutput().writeObject("close_chat");
+        client.getServerOutput().flush();
+
         client.getNewsFeed().startNewsFeedView(client, stage);
     }
 
@@ -78,12 +86,18 @@ public class InboxController {
     public void onHomeButtonClicked(ActionEvent mouseEvent) throws IOException {
         // Loading home page
 
+        client.getServerOutput().writeObject("close_chat");
+        client.getServerOutput().flush();
+
         client.getHomePage().startHomePageView(client, stage);
     }
 
     @FXML
     public void onNotificationButtonClick(ActionEvent actionEvent) throws IOException {
         // Loading notification page
+
+        client.getServerOutput().writeObject("close_chat");
+        client.getServerOutput().flush();
 
         client.getNotificationPage().startNotificationPageView(client, stage);
     }
@@ -140,17 +154,22 @@ public class InboxController {
 
         new Thread(() -> {
             while (true) {
-                Object messageInfo;
+                MessagePacket inMessage;
 
                 try {
-                    messageInfo = client.getChatInput().readObject();
+                    inMessage = (MessagePacket) client.getChatInput().readObject();
                 } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
 
-                String sender = ((String) messageInfo).split(",")[0];
-                String timestamp = ((String) messageInfo).split(",")[1];
-                String message = ((String) messageInfo).substring(sender.length() + timestamp.length() + 2);
+//                String sender = ((String) messageInfo).split(",")[0];
+//                String timestamp = ((String) messageInfo).split(",")[1];
+//                String message = ((String) messageInfo).substring(sender.length() + timestamp.length() + 2);
+
+                String sender = inMessage.getSender();
+//                String timestamp = ((String) messageInfo).split(",")[1];
+                String message = inMessage.getMessage();
+
 
                 Platform.runLater(() -> {
                     addMessage(message, sender);
@@ -258,7 +277,10 @@ public class InboxController {
 
     public void onAttachButtonClicked(ActionEvent actionEvent) {
         if (client.getChatStatus()) {
-
+            filePath = FileExplorer.openFileExplorer(stage);
+            System.out.println("File selected: " + filePath);
+            Message.setText(filePath);
+            Message.setEditable(false);
         }
     }
 
@@ -276,15 +298,36 @@ public class InboxController {
 
     public void sendMessage() {
         if (client.getChatStatus()) {
-            String message = Message.getText();
-            Message.clear();
+            String message = null;
+            String filename = null;
+            byte[] fileBytes = null;
 
-            if (message.isEmpty()) {
+            if (filePath == null) {
+                message = Message.getText().trim();
+                Message.clear();
+            }
+            else {
+                File file = new File(filePath);
+
+                try {
+                    filename = file.getName();
+                    fileBytes = Files.readAllBytes(file.toPath());
+                    System.out.println("read");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                filePath = null;
+                Message.clear();
+                Message.setEditable(true);
+            }
+
+            if (message == null && filename == null) {
                 return;
             }
 
             try {
-                client.getChatOutput().writeObject(message);
+                client.getChatOutput().writeObject(new MessagePacket(client.getId(), message, filename, fileBytes));
                 client.getChatOutput().flush();
             } catch (IOException e) {
                 throw new RuntimeException(e);

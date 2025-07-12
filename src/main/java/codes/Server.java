@@ -47,6 +47,7 @@ public class Server {
                     Sender TEXT,
                     Receiver TEXT,
                     Content TEXT,
+                    Media TEXT,
                     Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                     )""");
 
