@@ -8,11 +8,13 @@ import java.net.Socket;
 import java.sql.*;
 
 class ChatServer implements Runnable {
+    private int port;
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private Thread chatThread;
     private ObjectOutputStream output;
     private ObjectInputStream input;
+    private boolean running;
     private final Connection databaseConnection;
     private String senderId;
     private String receiverId;
@@ -24,6 +26,9 @@ class ChatServer implements Runnable {
 
     public ChatServer(int port, String senderId, String receiverId) {
         chatThread = new Thread(this);
+        this.port = port;
+        this.running = true;
+
         this.senderId = senderId;
         this.receiverId = receiverId;
 
@@ -74,13 +79,14 @@ class ChatServer implements Runnable {
         // Starting message writer thread (receives message from the client and writes it in the chat files of both the sender and receiver)
 
         new Thread(() -> {
-            while (true){
+            while (running){
                 // Receiving message
 
                 try {
                     message = input.readObject();
                 } catch (IOException | ClassNotFoundException e) {
-                    throw new RuntimeException(e);
+                    System.out.println("Disconnected from chat server");
+                    shutdown();
                 }
 
                 try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content) VALUES (?, ?, ?)")) {
@@ -98,7 +104,7 @@ class ChatServer implements Runnable {
         // Starting chat conveyor thread (reads chats from the chat file and sends it to the client)
 
         new Thread(() -> {
-            while (true) {
+            while (running) {
                 try (PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC")) {
                     fetchChats.setString(1, senderId);
                     fetchChats.setString(2, receiverId);
@@ -127,6 +133,33 @@ class ChatServer implements Runnable {
                 }
             }
         }).start();
+    }
+
+    public void shutdown() {
+        running = false;
+
+        try {
+            Server.port[port - 1025] = 0;
+
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+
+            if (clientSocket != null && !clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+
+            if (output != null) {
+                output.close();
+            }
+
+            if (input != null) {
+                input.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("ChatServer on port " + port + " has been shut down.");
     }
 }
 
