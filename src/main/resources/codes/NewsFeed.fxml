@@ -22,14 +22,9 @@
          <Button layoutX="698.0" layoutY="37.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0" prefHeight="53.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="821.0" layoutY="37.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0" prefHeight="57.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="1462.0" layoutY="17.0" mnemonicParsing="false" onAction="#onProfileButtonClick" opacity="0.0" prefHeight="83.0" prefWidth="61.0" text="Button" textFill="TRANSPARENT" />
-<!--         <ScrollPane hbarPolicy="NEVER" layoutY="115.0" prefHeight="426.0" prefWidth="707.0" vbarPolicy="NEVER">-->
-<!--            <content>-->
-<!--               <VBox fx:id="feedContainer" spacing="10" />-->
-<!--            </content>-->
 
-<!--         </ScrollPane>-->
 
-         <ScrollPane fx:id="feedScrollPane" hbarPolicy="NEVER" layoutY="115.0" prefHeight="426.0" prefWidth="707.0" vbarPolicy="ALWAYS">
+         <ScrollPane fx:id="feedScrollPane" hbarPolicy="NEVER" layoutX="800" layoutY="115.0" prefHeight="800" prefWidth="800.0" vbarPolicy="ALWAYS">
             <content>
                <VBox fx:id="feedContainer" spacing="10.0">
                   <padding>
@@ -40,7 +35,7 @@
          </ScrollPane>
 
 
-         <Button layoutX="686.0" layoutY="172.0" mnemonicParsing="false" onAction="#onPostButtonClick" prefHeight="72.0" prefWidth="245.0" text="POST SOMETHING!">
+         <Button layoutX="300.0" layoutY="172.0" mnemonicParsing="false" onAction="#onPostButtonClick" prefHeight="72.0" prefWidth="245.0" text="POST SOMETHING!">
             <font>
                <Font size="20.0" />
             </font>
