@@ -135,7 +135,7 @@ class ChatServer implements Runnable {
 
         new Thread(() -> {
             while (true) {
-                try (PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)) AND id > ? ORDER BY id ASC")) {
+                try (PreparedStatement fetchChats = databaseConnection.prepareStatement("SELECT * FROM Chats WHERE ((Sender = ? AND Receiver = ?) OR (Sender = ? AND Receiver = ?)) AND id > ? ORDER BY id ASC")) {
                     fetchChats.setString(1, senderId);
                     fetchChats.setString(2, receiverId);
                     fetchChats.setString(3, receiverId);
@@ -147,15 +147,24 @@ class ChatServer implements Runnable {
                             int id = chats.getInt("id");
                             String sender = chats.getString("Sender");
                             String content = chats.getString("Content");
-                            String timestamp = chats.getString("Timestamp");
+                            String filename = chats.getString("Media");
+                            Timestamp timestamp = chats.getTimestamp("Timestamp");
 
-                            output.writeObject(new MessagePacket(sender, content, null, null));
+                            File mediaFile;
+                            byte[] fileBytes = null;
+
+                            if (filename != null) {
+                                mediaFile = new File("src/Media Database", filename);
+                                fileBytes = Files.readAllBytes(mediaFile.toPath());
+                            }
+
+                            output.writeObject(new MessagePacket(sender, content, filename, fileBytes, timestamp.toLocalDateTime()));
                             output.flush();
                             lastSeenId = id;
                         }
                     }
 
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -165,6 +174,8 @@ class ChatServer implements Runnable {
 
     public void shutdown() {
         try {
+            ClientLocalRepositoryCleaner.clearChatMedia();
+
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }

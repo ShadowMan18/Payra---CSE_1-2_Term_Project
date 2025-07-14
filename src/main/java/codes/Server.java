@@ -48,7 +48,7 @@ public class Server {
                     Receiver TEXT,
                     Content TEXT,
                     Media TEXT,
-                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
                     )""");
 
             statement.execute("""
@@ -57,7 +57,7 @@ public class Server {
                     Author TEXT,
                     Content TEXT,
                     Media TEXT,
-                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
                     )""");
 
             statement.execute("""
@@ -66,7 +66,7 @@ public class Server {
                     PostId INTEGER,
                     Commenter TEXT,
                     Comment TEXT,
-                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
                     )""");
 
@@ -76,7 +76,7 @@ public class Server {
                     PostId INTEGER,
                     Reactor TEXT,
                     ReactType TEXT CHECK(ReactType IN ('like','love','haha','wow','sad','angry')),
-                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
                     )""");
         } catch (SQLException e) {

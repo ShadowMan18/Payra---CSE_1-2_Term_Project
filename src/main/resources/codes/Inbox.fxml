@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
+<?import javafx.geometry.Point3D?>
 <?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -10,6 +11,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
 <StackPane fx:id="InboxLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.InboxController">
@@ -17,7 +19,7 @@
       <ImageView layoutX="-1.0" pickOnBounds="true">
          <Image url="@../images/Inbox.png" />
       </ImageView>
-      <Label fx:id="User" layoutX="244.0" layoutY="41.0" prefHeight="45.0" prefWidth="250.0" textAlignment="CENTER">
+      <Label fx:id="User" layoutX="251.0" layoutY="48.0" prefHeight="45.0" prefWidth="250.0" textAlignment="CENTER">
          <font>
             <Font size="30.0" />
          </font>
@@ -25,32 +27,41 @@
       <Button layoutX="8.0" layoutY="691.0" mnemonicParsing="false" onAction="#onNewsFeedButtonClicked" opacity="0.0" prefHeight="96.0" prefWidth="78.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT" />
       <Button layoutX="21.0" layoutY="350.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0" prefHeight="48.0" prefWidth="48.0" text="Button" textFill="TRANSPARENT" />
       <Button layoutX="23.0" layoutY="460.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0" prefHeight="49.0" prefWidth="44.0" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="476.0" layoutY="101.0" mnemonicParsing="false" onAction="#onSearchButtonClicked" opacity="0.0" prefHeight="24.0" prefWidth="24.0" style="-fx-background-radius: 12px;" text="Button" textFill="TRANSPARENT" />
-      <TextField fx:id="SearchBar" layoutX="135.0" layoutY="90.0" prefHeight="46.0" prefWidth="332.0" promptText="Search" style="-fx-background-color: transparent;">
+      <Button layoutX="472.0" layoutY="129.0" mnemonicParsing="false" onAction="#onSearchButtonClicked" opacity="0.0" prefHeight="24.0" prefWidth="24.0" style="-fx-background-radius: 12px;" text="Button" textFill="TRANSPARENT" />
+      <TextField fx:id="SearchBar" layoutX="135.0" layoutY="120.0" prefHeight="46.0" prefWidth="332.0" promptText="Search" style="-fx-background-color: transparent;">
          <font>
             <Font name="Arial Rounded MT Bold" size="18.0" />
          </font>
       </TextField>
       <ImageView fx:id="ChatBox" fitHeight="900.0" fitWidth="1064.0" layoutX="536.0" pickOnBounds="true" preserveRatio="true" />
-      <Button layoutX="1485.0" layoutY="792.0" mnemonicParsing="false" onAction="#onSendButtonClicked" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="612.0" layoutY="792.0" mnemonicParsing="false" onAction="#onAttachButtonClicked" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="1405.0" layoutY="31.0" mnemonicParsing="false" onAction="#onAudioCallButtonClicked" opacity="0.0" prefHeight="46.0" prefWidth="46.0" style="-fx-background-radius: 23px;" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="1475.0" layoutY="31.0" mnemonicParsing="false" onAction="#onVideoCallButtonClicked" opacity="0.0" prefHeight="46.0" prefWidth="46.0" style="-fx-background-radius: 23px;" text="Button" textFill="TRANSPARENT" />
-      <ImageView fx:id="ReceiverProfilePicture" fitHeight="60.0" fitWidth="60.0" layoutX="600.0" layoutY="24.0" pickOnBounds="true" preserveRatio="true" />
-      <Label fx:id="ReceiverName" alignment="CENTER" contentDisplay="CENTER" layoutX="793.0" layoutY="24.0" prefHeight="50.0" prefWidth="550.0" textAlignment="CENTER">
+      <Button layoutX="1495.0" layoutY="818.0" mnemonicParsing="false" onAction="#onSendButtonClicked" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
+      <Button layoutX="603.0" layoutY="816.0" mnemonicParsing="false" onAction="#onAttachButtonClicked" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
+      <Button layoutX="1400.0" layoutY="29.0" mnemonicParsing="false" onAction="#onAudioCallButtonClicked" opacity="0.0" prefHeight="46.0" prefWidth="46.0" style="-fx-background-radius: 23px;" text="Button" textFill="TRANSPARENT" />
+      <Button layoutX="1467.0" layoutY="29.0" mnemonicParsing="false" onAction="#onVideoCallButtonClicked" opacity="0.0" prefHeight="46.0" prefWidth="46.0" style="-fx-background-radius: 23px;" text="Button" textFill="TRANSPARENT" />
+      <Label fx:id="ReceiverName" layoutX="659.0" layoutY="29.0" prefHeight="50.0" prefWidth="550.0" textAlignment="CENTER">
          <font>
-            <Font name="Arial Rounded MT Bold" size="30.0" />
+            <Font name="Open Sans" size="20" />
          </font>
       </Label>
-      <ScrollPane fx:id="MessageScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="600.0" layoutY="90.0" prefHeight="660.0" prefWidth="936.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
-         <content>
-            <VBox fx:id="MessageContainer" spacing="3.0" styleClass="vbox" />
-         </content></ScrollPane>
-      <TextField fx:id="Message" layoutX="672.0" layoutY="787.0" onKeyPressed="#onEnterKeyPressed" prefHeight="46.0" prefWidth="790.0" promptText="Message" style="-fx-background-color: transparent;">
+      <TextField fx:id="Message" layoutX="672.0" layoutY="814.0" onKeyPressed="#onEnterKeyPressed" prefHeight="46.0" prefWidth="790.0" promptText="Message" style="-fx-background-color: transparent;">
          <font>
             <Font name="Arial Rounded MT Bold" size="18.0" />
          </font>
       </TextField>
+      <Circle fx:id="ReceiverProfilePictureBackground" fill="#0f2e4d" layoutX="625.0" layoutY="54.0" radius="26.0" stroke="BLACK" strokeType="INSIDE" />
+      <ImageView fx:id="ReceiverProfilePicture" fitHeight="50.0" fitWidth="50.0" layoutX="600.0" layoutY="29.0" pickOnBounds="true" preserveRatio="true" />
+      <ScrollPane fx:id="MessageScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="600.0" layoutY="97.0" prefHeight="675.0" prefWidth="936.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+         <content>
+            <VBox fx:id="MessageContainer" spacing="3.0" styleClass="vbox" />
+         </content></ScrollPane>
+      <ScrollPane fx:id="InboxScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="117.0" layoutY="202.0" prefHeight="681.0" prefWidth="400.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+         <content>
+            <VBox fx:id="InboxContainer" spacing="3.0" styleClass="vbox" />
+         </content>
+         <rotationAxis>
+            <Point3D />
+         </rotationAxis>
+      </ScrollPane>
       <!--         <TextField fx:id="Recipient" layoutX="187.0" layoutY="431.0" onKeyReleased="#getRecipientId" prefHeight="38.0" prefWidth="263.0" />-->
    </Group>
    <stylesheets>
