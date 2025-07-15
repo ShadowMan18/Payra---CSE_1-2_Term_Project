@@ -3,6 +3,7 @@ package codes;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -23,6 +24,7 @@ public class Client {
     private Image profilePicture;
     private boolean registered;
     private boolean active;
+    private boolean profilePictureSet;
     private CountDownLatch latch;
 
     // Client pages
@@ -30,6 +32,7 @@ public class Client {
     private final IntroPage introPage;
     private final LoginPage loginPage;
     private final SignupPage signupPage;
+    private final ProfilePicturePage profilePicturePage;
     private final ForgotPasswordPage forgotPasswordPage;
     private final HomePage homePage;
     private final Inbox inbox;
@@ -39,7 +42,7 @@ public class Client {
 
     // Client server network
 
-    private final String ipAddress = "192.168.1.101";
+    private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -95,21 +98,21 @@ public class Client {
     // Constructor
 
     public Client() {
-        this.profilePicture = new Image(String.valueOf(getClass().getResource("/images/Payra.png")));
         this.registered = false;
+        this.profilePictureSet = false;
         this.active = false;
         this.receiverId = null;
         this.connectedToNewsFeed=false;
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
         this.signupPage = new SignupPage();
+        this.profilePicturePage = new ProfilePicturePage();
         this.forgotPasswordPage = new ForgotPasswordPage();
         this.homePage = new HomePage();
         this.inbox = new Inbox();
         this.newsFeed = new NewsFeed();
         this.profilePage = new ProfilePage();
         this.notificationPage = new NotificationPage();
-        System.out.println("Connection status is false");
 
         try {
             this.serverSocket = new Socket(ipAddress, 1024);
@@ -181,15 +184,27 @@ public class Client {
                         latch = null;
                     }
                 }
-                else if (fromServer instanceof String string && string.startsWith("info:")) {
-                    String[] info = string.substring("info:".length()).split(",");
-                    this.id = info[0];
+                else if (fromServer instanceof String string && string.equals("profile_picture_set")) {
+                    this.profilePictureSet = true;
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else if (fromServer instanceof ClientInfo info) {
+                    this.firstName = info.getFirstName();
+                    this.lastName = info.getLastName();
+                    this.id = info.getId();
                     this.email  = id + "@gmail.com";
-                    this.firstName = info[1];
-                    this.lastName = info[2];
-                    this.password = info[3];
-                    this.recoveryQuestion = info[4];
-                    this.recoveryAnswer = info[5];
+                    this.password = info.getPassword();
+                    this.recoveryQuestion = info.getRecoveryQuestion();
+                    this.recoveryAnswer = info.getRecoveryAnswer();
+                    byte[] profilePictureByte = info.getProfilePicture();
+
+                    Platform.runLater(() -> {
+                        profilePicture = new Image(new ByteArrayInputStream(profilePictureByte));
+                    });
 
                     if (latch != null) {
                         latch.countDown();
@@ -352,6 +367,8 @@ public class Client {
         return active;
     }
 
+    public boolean isProfilePictureSet() { return profilePictureSet; }
+
     public String getReceiverId() {
         return receiverId;
     }
@@ -378,6 +395,10 @@ public class Client {
 
     public SignupPage getSignupPage() {
         return signupPage;
+    }
+
+    public ProfilePicturePage getProfilePicturePage() {
+        return profilePicturePage;
     }
 
     public ForgotPasswordPage getForgotPasswordPage() {

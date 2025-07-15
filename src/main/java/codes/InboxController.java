@@ -607,12 +607,12 @@ public class InboxController {
                 Message.setEditable(true);
             }
 
-            if (message == null && filename == null) {
+            if ((message == null || message.isEmpty()) && filename == null) {
                 return;
             }
 
             try {
-                client.getChatOutput().writeObject(new MessagePacket(client.getId(), message, filename, fileBytes));
+                client.getChatOutput().writeObject(new MessagePacket(client.getId(), receiverId, message, filename, fileBytes));
                 client.getChatOutput().flush();
             } catch (IOException e) {
                 throw new RuntimeException(e);

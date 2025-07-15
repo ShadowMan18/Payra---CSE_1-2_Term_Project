@@ -79,11 +79,11 @@ public class SignupPageController {
         // Proceeding to sign up
         boolean isSignedUp = signup();
 
-        // Loading login page
+        // Loading profile picture page
 
         if (isSignedUp) {
             try {
-                client.getLoginPage().startLoginPageView(client, stage);
+                client.getProfilePicturePage().startProfilePicturePageView(client, stage);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -110,11 +110,11 @@ public class SignupPageController {
 
 //            SignupPageLayout.setFocusTraversable(false);
 
-            // Loading login page
+            // Loading profile picture page
 
             if (isSignedUp) {
                 try {
-                    client.getLoginPage().startLoginPageView(client, stage);
+                    client.getProfilePicturePage().startProfilePicturePageView(client, stage);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -157,15 +157,15 @@ public class SignupPageController {
             SignupPageAnswerLabel.setText("");
         }
 
-        client.setFirstName(firstName);
-        client.setLastName(lastName);
-        client.setEmail(email);
-        client.setId(email.substring(0, email.length() - "@gmail.com".length()));
-        client.setPassword(password1);
-        client.setRecoveryQuestion(question);
-        client.setRecoveryAnswer(answer);
-
         if (firstNameCheck && lastNameCheck && emailCheck && passwordCheck && passwordConfirmation && questionCheck && answerCheck) {
+            client.setFirstName(firstName);
+            client.setLastName(lastName);
+            client.setEmail(email);
+            client.setId(email.substring(0, email.length() - "@gmail.com".length()));
+            client.setPassword(password1);
+            client.setRecoveryQuestion(question);
+            client.setRecoveryAnswer(answer);
+
             try {
                 latch = new CountDownLatch(1);
                 client.setLatch(latch);

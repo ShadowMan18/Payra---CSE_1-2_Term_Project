@@ -38,7 +38,8 @@ public class Server {
                     Last_Name TEXT,
                     Password TEXT,
                     Question TEXT,
-                    Answer TEXT
+                    Answer TEXT,
+                    Profile_Picture TEXT
                 )""");
 
             statement.execute("""

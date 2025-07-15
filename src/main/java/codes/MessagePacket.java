@@ -5,20 +5,23 @@ import java.time.LocalDateTime;
 
 public class MessagePacket implements Serializable {
     private String sender;
+    private String receiver;
     private String message;
     private String filename;
     private byte[] filedata;
     private LocalDateTime datetime;
 
-    MessagePacket(String sender, String message, String filename, byte[] filedata) {
+    MessagePacket(String sender, String receiver, String message, String filename, byte[] filedata) {
         this.sender = sender;
+        this.receiver = receiver;
         this.message = message;
         this.filename = filename;
         this.filedata = filedata;
     }
 
-    MessagePacket(String sender, String message, String filename, byte[] filedata, LocalDateTime datetime) {
+    MessagePacket(String sender, String receiver, String message, String filename, byte[] filedata, LocalDateTime datetime) {
         this.sender = sender;
+        this.receiver = receiver;
         this.message = message;
         this.filename = filename;
         this.filedata = filedata;

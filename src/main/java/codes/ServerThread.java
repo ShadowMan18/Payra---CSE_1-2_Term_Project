@@ -1,9 +1,17 @@
 package codes;
 
+import javafx.scene.image.Image;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.sql.*;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -125,6 +133,60 @@ public class ServerThread implements Runnable{
                 System.out.println(Server.clients.size());
             }
 
+            if (fromClient instanceof byte[] imageBytes) {
+                InputStream is = new ByteArrayInputStream(imageBytes);
+                ImageInputStream iis = null;
+                try {
+                    iis = ImageIO.createImageInputStream(is);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+                String format = "png";
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    try {
+                        format = reader.getFormatName().toLowerCase();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                BufferedImage bufferedImage = null;
+                try {
+                    bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String filename = id + "_ProfilePicture." + format;
+                File dir = new File("src/Media Database");
+                if (!dir.exists()) dir.mkdir();
+
+                File file = new File(dir, filename);
+                try {
+                    ImageIO.write(bufferedImage, format, file);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try (PreparedStatement addProfilePicture = databaseConnection.prepareStatement("UPDATE Users SET Profile_Picture = ? WHERE UserId = ?")) {
+                    addProfilePicture.setString(1, filename);
+                    addProfilePicture.setString(2, id);
+
+                    addProfilePicture.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try {
+                    output.writeObject("profile_picture_set");
+                    output.flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Getting client's information
 
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
@@ -136,7 +198,16 @@ public class ServerThread implements Runnable{
 
                     try (ResultSet queryResult = getUserInfo.executeQuery()) {
                         if (queryResult.next()) {
-                            output.writeObject("info:" + queryResult.getString("UserId") + "," + queryResult.getString("First_Name") + "," + queryResult.getString("Last_Name") + "," + queryResult.getString("Password") + "," + queryResult.getString("Question") + "," + queryResult.getString("Answer"));
+                            String firstName = queryResult.getString("First_Name");
+                            String lastName = queryResult.getString("Last_Name");
+                            String password = queryResult.getString("Password");
+                            String recoveryQuestion = queryResult.getString("Question");
+                            String recoveryAnswer = queryResult.getString("Answer");
+                            String imageFile = queryResult.getString("Profile_Picture");
+                            File file = new File("src/Media Database", imageFile);
+                            byte[] profilePictureBytes = Files.readAllBytes(file.toPath());
+
+                            output.writeObject(new ClientInfo(firstName, lastName, id, password, recoveryQuestion, recoveryAnswer, profilePictureBytes));
                             output.flush();
                         }
                     }

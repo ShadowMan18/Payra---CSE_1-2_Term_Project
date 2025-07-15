@@ -146,6 +146,7 @@ class ChatServer implements Runnable {
                         while (chats.next()) {
                             int id = chats.getInt("id");
                             String sender = chats.getString("Sender");
+                            String receiver = chats.getString("Receiver");
                             String content = chats.getString("Content");
                             String filename = chats.getString("Media");
                             Timestamp timestamp = chats.getTimestamp("Timestamp");
@@ -158,7 +159,7 @@ class ChatServer implements Runnable {
                                 fileBytes = Files.readAllBytes(mediaFile.toPath());
                             }
 
-                            output.writeObject(new MessagePacket(sender, content, filename, fileBytes, timestamp.toLocalDateTime()));
+                            output.writeObject(new MessagePacket(sender, receiver, content, filename, fileBytes, timestamp.toLocalDateTime()));
                             output.flush();
                             lastSeenId = id;
                         }
