@@ -1,0 +1,81 @@
+/* ScrollPane Styling */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical,
+.scroll-pane .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar .thumb {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.scroll-pane .scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+/* Feed container alignment */
+#feedContainer {
+    -fx-spacing: 20px;
+    -fx-padding: 20px;
+    -fx-alignment: center;
+}
+
+/* Post card styling */
+.post {
+    -fx-background-color: white;
+    -fx-background-radius: 12px;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1;
+    -fx-border-radius: 12px;
+    -fx-padding: 15px;
+    -fx-spacing: 10px;
+    -fx-max-width: 600px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0.2, 0, 2);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Text styles inside post */
+.label.username {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+.label.timestamp {
+    -fx-text-fill: #888;
+    -fx-font-size: 12px;
+}
+
+.label.content {
+    -fx-text-fill: #111;
+    -fx-wrap-text: true;
+}
+.reaction-bar {
+    -fx-spacing: 10px;
+    -fx-padding: 5px 0 0 0;
+    -fx-alignment: center-left;
+}
+
+.reaction-button {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+    -fx-text-fill: #555;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.reaction-button:hover {
+    -fx-text-fill: #000;
+}

@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<?import javafx.scene.layout.VBox?>
-<?import javafx.geometry.Insets?>
 <StackPane fx:id="NewsFeedLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.NewsFeedController">
+
+   <stylesheets>
+      <URL value="@../FeedStyles.css" />
+   </stylesheets>
+
    <children>
       <Group fx:id="NewsFeedView">
          <ImageView pickOnBounds="true">
@@ -18,28 +24,32 @@
                <Image url="@../images/NewsFeed.png" />
             </image>
          </ImageView>
-         <Button layoutX="96.0" mnemonicParsing="false" onAction="#onChatButtonClicked" opacity="0.0" prefHeight="115.0" prefWidth="106.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT" />
+         <Button layoutX="13.0" layoutY="711.0" mnemonicParsing="false" onAction="#onChatButtonClicked" opacity="0.0" prefHeight="100.0" prefWidth="72.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="698.0" layoutY="37.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0" prefHeight="53.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="821.0" layoutY="37.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0" prefHeight="57.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="1462.0" layoutY="17.0" mnemonicParsing="false" onAction="#onProfileButtonClick" opacity="0.0" prefHeight="83.0" prefWidth="61.0" text="Button" textFill="TRANSPARENT" />
 
 
-         <ScrollPane fx:id="feedScrollPane" hbarPolicy="NEVER" layoutX="800" layoutY="115.0" prefHeight="800" prefWidth="800.0" vbarPolicy="ALWAYS">
+         <ScrollPane fx:id="feedScrollPane" fitToWidth="true" hbarPolicy="NEVER" layoutX="111.1" layoutY="127.4" prefHeight="736.1" prefWidth="1005.9" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
             <content>
-               <VBox fx:id="feedContainer" spacing="10.0">
+               <VBox id="feedContainer" fx:id="feedContainer" alignment="CENTER" spacing="10.0" style="-fx-background-color: transparent;" styleClass="vbox">
                   <padding>
-                     <Insets top="10" right="10" bottom="10" left="10"/>
+                     <Insets bottom="10" left="10" right="10" top="10" />
                   </padding>
                </VBox>
             </content>
          </ScrollPane>
 
 
-         <Button layoutX="300.0" layoutY="172.0" mnemonicParsing="false" onAction="#onPostButtonClick" prefHeight="72.0" prefWidth="245.0" text="POST SOMETHING!">
+         <Button layoutX="390.0" layoutY="58.4" mnemonicParsing="false" onAction="#onPostButtonClick" opacity="0.0" prefHeight="43.9" prefWidth="448.1">
             <font>
                <Font size="20.0" />
             </font>
          </Button>
+         <Button layoutX="14.0" layoutY="462.0" mnemonicParsing="false" opacity="0.0" prefHeight="50.0" prefWidth="67.0" />
+         <Button layoutX="14.0" layoutY="348.0" mnemonicParsing="false" opacity="0.0" prefHeight="52.0" prefWidth="67.0" />
       </Group>
    </children>
+
+
 </StackPane>
