@@ -112,6 +112,22 @@ public class ProfilePicturePageController {
 
     @FXML
     public void onSkipButtonClick(ActionEvent actionEvent) {
+        File image = new File("src/main/resources/images/DefaultProfilePicture.png");
+        byte[] imageBytes;
+
+        try {
+            imageBytes = Files.readAllBytes(image.toPath());
+            latch = new CountDownLatch(1);
+            client.setLatch(latch);
+
+            client.getServerOutput().writeObject(imageBytes);
+            client.getServerOutput().flush();
+
+            latch.await();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // Loading login page
 
         try {

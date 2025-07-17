@@ -4,7 +4,7 @@ import java.io.File;
 
 public class ClientLocalRepositoryCleaner {
     public static void clearChatMedia() {
-        File chatMediaDirectory = new File("src/Client Local Repository/ChatMedia");
+        File chatMediaDirectory = new File("src/Client Local Repository/Chat Media");
         File[] mediaFiles = chatMediaDirectory.listFiles();
 
         if (mediaFiles != null) {
@@ -15,7 +15,7 @@ public class ClientLocalRepositoryCleaner {
     }
 
     public static void clearFeedMedia() {
-        File feedMediaDirectory = new File("src/Client Local Repository/FeedMedia");
+        File feedMediaDirectory = new File("src/Client Local Repository/Feed Media");
         File[] mediaFiles = feedMediaDirectory.listFiles();
 
         if (mediaFiles != null) {

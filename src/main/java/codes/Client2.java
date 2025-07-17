@@ -3,6 +3,8 @@ package codes;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+import java.io.File;
+
 public class Client2 extends Application{
     static Client client;
 
@@ -13,6 +15,19 @@ public class Client2 extends Application{
 
     public static void main(String[] args) {
         client = new Client();
+
+        File chatMediaDirectory = new File("src/Client Local Repository/Chat Media");
+
+        if(!chatMediaDirectory.exists()) {
+            chatMediaDirectory.mkdir();
+        }
+
+        File feedMediaDirectory = new File("src/Client Local Repository/Feed Media");
+
+        if(!feedMediaDirectory.exists()) {
+            feedMediaDirectory.mkdir();
+        }
+
         launch();
     }
 }
