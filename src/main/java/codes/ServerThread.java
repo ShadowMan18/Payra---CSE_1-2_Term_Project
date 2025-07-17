@@ -412,6 +412,14 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            else if (fromClient instanceof PostPacket packet) {
+                if (feedServer != null) {
+                    feedServer.handleIncomingPostPacket(packet);
+                } else {
+                    System.out.println("Received PostPacket but feed server is null for user: " + id);
+                }
+            }
+
 
 
         }

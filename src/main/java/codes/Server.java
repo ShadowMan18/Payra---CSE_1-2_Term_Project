@@ -60,13 +60,23 @@ public class Server {
                     )""");
 
             statement.execute("""
-                    CREATE TABLE IF NOT EXISTS Posts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Author TEXT,
-                    Content TEXT,
-                    Media TEXT,
-                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
-                    )""");
+            CREATE TABLE IF NOT EXISTS Posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Author TEXT,
+            Content TEXT,
+            Media TEXT,
+            Timestamp DATETIME DEFAULT (datetime('now', 'localtime')))
+            """);
+
+            try {
+                statement.execute("ALTER TABLE Posts ADD COLUMN FileName TEXT");
+            } catch (SQLException ignored) {}
+
+            try {
+                statement.execute("ALTER TABLE Posts ADD COLUMN FileData BLOB");
+            } catch (SQLException ignored) {
+                ignored.printStackTrace();
+            }
 
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS Comments (

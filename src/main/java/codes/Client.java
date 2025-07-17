@@ -100,6 +100,16 @@ public class Client {
             }
         }
     }
+    public static void broadcast(PostPacket packet) {
+        for (ObjectOutputStream out : allClientOutputs) {
+            try {
+                out.writeObject(packet);
+                out.flush();
+            } catch (Exception e) {
+                removeClient(out);
+            }
+        }
+    }
 
     // Constructor
 
@@ -590,21 +600,26 @@ public class Client {
         new Thread(() -> {
             while (true) {
                 try {
-                    String feedUpdate = (String) feedInput.readObject();
-                    //System.out.println("Feed: " + feedUpdate);
+                    Object feedUpdate = feedInput.readObject();
+                    //System.out.println("Feed: " + (String)feedUpdate);
 
                     Platform.runLater(() -> {
                         if (newsFeedController != null) {
-                            if (feedUpdate.startsWith("REACTION|")) {
-                                String[] parts = feedUpdate.split("\\|");
-                                int postId = Integer.parseInt(parts[1]);
-                                String reactor = parts[2];
-                                String oldType = parts[3];
-                                String newType = parts[4];
-                                newsFeedController.updateReactionOnPost(postId, reactor, oldType, newType);
-                            } else {
-                                newsFeedController.addPostToFeed(feedUpdate);
+                            if (feedUpdate instanceof String stringUpdate) {
+                                if (stringUpdate.startsWith("REACTION|")) {
+                                    String[] parts = stringUpdate.split("\\|");
+                                    int postId = Integer.parseInt(parts[1]);
+                                    String reactor = parts[2];
+                                    String oldType = parts[3];
+                                    String newType = parts[4];
+                                    newsFeedController.updateReactionOnPost(postId, reactor, oldType, newType);
+                                } else {
+                                    newsFeedController.addPostToFeed(stringUpdate); // This is now unambiguous
+                                }
+                            } else if (feedUpdate instanceof PostPacket packet) {
+                                newsFeedController.addPostToFeed(packet); // Also unambiguous
                             }
+
                         }
                     });
 
@@ -617,15 +632,25 @@ public class Client {
         }).start();
 
     }
-
-    public void sendPostToFeed(String content) {
+    public void sendPostToFeed(String content, String filename, byte[] filedata) {
         try {
-            feedOutput.writeObject(content);
+            PostPacket packet = new PostPacket(getId(), content, filename, filedata);
+            feedOutput.writeObject(packet);
             feedOutput.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+
+//    public void sendPostToFeed(String content) {
+//        try {
+//            feedOutput.writeObject(content);
+//            feedOutput.flush();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     public void sendReaction(int postId, String reactionType) {
         System.out.println("Hi I am a pretty little reaction trying to reach server Thread");

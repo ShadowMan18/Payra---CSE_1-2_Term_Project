@@ -148,7 +148,6 @@ public class NewsFeedController {
         HBox reactionRow = new HBox(10);
         reactionRow.setStyle("-fx-alignment: center-left;");
 
-        // Reaction setup
         ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("/images/redHeart.png"), 24, 24, true, true));
         Label countLabel = new Label(String.valueOf(reactionCounts.getOrDefault("like", 0)));
 
@@ -176,6 +175,70 @@ public class NewsFeedController {
         postBox.getChildren().addAll(usernameLabel, timestampLabel, contentLabel, reactionRow);
         feedContainer.getChildren().add(0, postBox);
     }
+
+    public void addPostToFeed(PostPacket packet) {
+        int postId = packet.getPostId();
+        userReactionsByPostId.put(postId, packet.getUserReactedType());
+
+        VBox postBox = new VBox();
+        postBox.setStyle("-fx-padding: 10; -fx-border-color: #ccc; -fx-border-width: 0 0 1px 0;");
+        postBox.getStyleClass().add("post");
+
+        Label usernameLabel = new Label(packet.getAuthor());
+        usernameLabel.getStyleClass().add("username");
+
+        Label timestampLabel = new Label(packet.getFormattedTimestamp());
+        timestampLabel.getStyleClass().add("timestamp");
+
+        Label contentLabel = new Label(packet.getContent());
+        contentLabel.getStyleClass().add("content");
+        contentLabel.setWrapText(true);
+
+        postBox.getChildren().addAll(usernameLabel, timestampLabel, contentLabel);
+
+        if (packet.getFileData() != null && packet.getFileData().length > 0) {
+            String filename = packet.getFileName().toLowerCase();
+            if (filename.endsWith(".png") || filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+                javafx.scene.image.Image fxImage = new javafx.scene.image.Image(new java.io.ByteArrayInputStream(packet.getFileData()));
+                ImageView imageView = new ImageView(fxImage);
+                imageView.setFitWidth(300);
+                imageView.setPreserveRatio(true);
+                postBox.getChildren().add(imageView);
+            }
+            // need more handlers to support video or audio previews, that's just image for now
+        }
+
+        HBox reactionRow = new HBox(10);
+        reactionRow.setStyle("-fx-alignment: center-left;");
+
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("/images/redHeart.png"), 24, 24, true, true));
+        Label countLabel = new Label(String.valueOf(packet.getReactionCounts().getOrDefault("like", 0)));
+
+        VBox iconWithCount = new VBox(icon, countLabel);
+        iconWithCount.setStyle("-fx-alignment: center;");
+
+        Button likeButton = new Button();
+        likeButton.setGraphic(iconWithCount);
+        likeButton.setStyle("-fx-background-color: transparent;");
+        if ("like".equals(packet.getUserReactedType())) {
+            likeButton.setStyle("-fx-background-color: #d0f0c0;");
+        }
+
+        likeButton.setOnAction(e -> sendReactionToServer(String.valueOf(postId), "like"));
+
+        Map<String, Label> countLabels = new HashMap<>();
+        countLabels.put("like", countLabel);
+        reactionLabelsByPostId.put(postId, countLabels);
+
+        Map<String, Button> reactionButtons = new HashMap<>();
+        reactionButtons.put("like", likeButton);
+        reactionButtonsByPostId.put(postId, reactionButtons);
+
+        reactionRow.getChildren().add(likeButton);
+        postBox.getChildren().add(reactionRow);
+        feedContainer.getChildren().add(0, postBox);
+    }
+
 
     private void sendReactionToServer(String postIdStr, String selectedType) {
         try {

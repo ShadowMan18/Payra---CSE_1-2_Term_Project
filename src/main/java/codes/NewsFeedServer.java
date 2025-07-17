@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
@@ -91,7 +92,7 @@ public class NewsFeedServer implements Runnable {
         running = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();  // This will interrupt the accept()
+                serverSocket.close();
             }
 
             if (clientSocket != null && !clientSocket.isClosed()) {
@@ -142,7 +143,7 @@ public class NewsFeedServer implements Runnable {
                 //out.writeObject("Welcome to the very very very very best Payra newsfeed!");
                 out.flush();
 
-                List<String> posts = new ArrayList<>();
+                List<PostPacket> posts = new ArrayList<>();
                 try (PreparedStatement getPosts = databaseConnection.prepareStatement(
                         "SELECT * FROM Posts ORDER BY Timestamp DESC LIMIT 100")) {
                     try (ResultSet rs = getPosts.executeQuery()) {
@@ -152,10 +153,12 @@ public class NewsFeedServer implements Runnable {
                             String content = rs.getString("Content");
                             String time = rs.getString("Timestamp");
 
-                            //Reactions counts for my posts
-                            StringBuilder reactionData = new StringBuilder();
-                            String userReacted = "none";  // <-- NEW
+                            String fileName = rs.getString("FileName");
+                            byte[] fileData = rs.getBytes("FileData");
 
+
+                            Map<String, Integer> reactionMap = new HashMap<>();
+                            String userReacted = "none";
 
                             try (PreparedStatement getReacts = databaseConnection.prepareStatement(
                                     "SELECT ReactType, COUNT(*) as count FROM Reacts WHERE PostId = ? GROUP BY ReactType")) {
@@ -164,11 +167,10 @@ public class NewsFeedServer implements Runnable {
                                     while (reactSet.next()) {
                                         String type = reactSet.getString("ReactType");
                                         int count = reactSet.getInt("count");
-                                        reactionData.append(type).append("=").append(count).append(";");
+                                        reactionMap.put(type, count);
                                     }
                                 }
                             }
-
 
                             try (PreparedStatement getUserReaction = databaseConnection.prepareStatement(
                                     "SELECT ReactType FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
@@ -181,30 +183,37 @@ public class NewsFeedServer implements Runnable {
                                 }
                             }
 
-                            if (reactionData.length() > 0) {
-                                reactionData.setLength(reactionData.length() - 1); // remove last ;
-                            }
+                            PostPacket packet = new PostPacket(
+                                    postId,
+                                    author,
+                                    content,
+                                    fileName,
+                                    fileData,
+                                    Timestamp.valueOf(time).toLocalDateTime(),
+                                    reactionMap,
+                                    userReacted
+                            );
 
-
-                            String pastPost = postId + "|" + time + "|" + author + "|" + content + "|" + reactionData + "|" + userReacted;
-                            posts.add(pastPost);
+                            posts.add(packet);
                         }
                     }
-                }
-
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                for(int i=posts.size()-1;i>=0;i--){
+
+                for (int i = posts.size() - 1; i >= 0; i--) {
                     out.writeObject(posts.get(i));
                 }
                 out.flush();
 
 
 
+
                 while (true) {
                     Object incoming = in.readObject();
-
+                    if (incoming instanceof PostPacket packet) {
+                        handleIncomingPostPacket(packet);
+                    }
                     if (incoming instanceof String message) {
 
                         if (message.startsWith("REACT:")) {
@@ -250,7 +259,6 @@ public class NewsFeedServer implements Runnable {
                             }
                         }
                         else {
-                            //Insert the posts in db
                             try (PreparedStatement insertPost = databaseConnection.prepareStatement(
                                     "INSERT INTO Posts (Author, Content, Timestamp) VALUES (?, ?, datetime('now'))",
                                     Statement.RETURN_GENERATED_KEYS)) {
@@ -274,6 +282,7 @@ public class NewsFeedServer implements Runnable {
                                 e.printStackTrace();
                             }
                         }
+
                     }
 
 
@@ -298,6 +307,11 @@ public class NewsFeedServer implements Runnable {
     private void broadcast(String message) {
         Client.broadcast(message);
     }
+
+    private void broadcastPost(PostPacket post) {
+        Client.broadcast(post);
+    }
+
 
     public void broadcastReaction(int postId, String reactor, String oldType, String newType) {
         String message = "REACTION|" + postId + "|" + reactor + "|" + oldType + "|" + newType;
@@ -325,6 +339,93 @@ public class NewsFeedServer implements Runnable {
             e.printStackTrace();
         }
         return "none";
+    }
+
+    public void handleIncomingPostPacket(PostPacket packet) {
+        try {
+            int postId = savePostToDB(packet);
+
+            if (postId != -1) {
+                PostPacket broadcastPacket = new PostPacket(postId, packet.getAuthor(), packet.getContent(),
+                        packet.getFileName(), packet.getFileData(), LocalDateTime.now(),
+                        new HashMap<>(), "none"
+                );
+                broadcastPost(broadcastPacket);
+                System.out.println("Broadcasted post (with file): " + postId + " by " + packet.getAuthor());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private List<PostPacket> loadPostPacketsFromDB(String userId) {
+        List<PostPacket> packets = new ArrayList<>();
+        try (PreparedStatement stmt = databaseConnection.prepareStatement(
+                "SELECT * FROM Posts ORDER BY Timestamp DESC LIMIT 100")) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int postId = rs.getInt("id");
+                    String author = rs.getString("Author");
+                    String content = rs.getString("Content");
+                    String filename = rs.getString("FileName");
+                    byte[] filedata = rs.getBytes("FileData");
+                    Timestamp timestamp = rs.getTimestamp("Timestamp");
+
+
+                    Map<String, Integer> reactionCounts = new HashMap<>();
+                    try (PreparedStatement reactStmt = databaseConnection.prepareStatement(
+                            "SELECT ReactType, COUNT(*) as count FROM Reacts WHERE PostId = ? GROUP BY ReactType")) {
+                        reactStmt.setInt(1, postId);
+                        try (ResultSet reactRs = reactStmt.executeQuery()) {
+                            while (reactRs.next()) {
+                                reactionCounts.put(reactRs.getString("ReactType"), reactRs.getInt("count"));
+                            }
+                        }
+                    }
+
+                    String userReaction = "none";
+                    try (PreparedStatement selfReactStmt = databaseConnection.prepareStatement(
+                            "SELECT ReactType FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
+                        selfReactStmt.setInt(1, postId);
+                        selfReactStmt.setString(2, userId);
+                        try (ResultSet reactRs = selfReactStmt.executeQuery()) {
+                            if (reactRs.next()) {
+                                userReaction = reactRs.getString("ReactType");
+                            }
+                        }
+                    }
+
+                    packets.add(new PostPacket(postId, author, content, filename, filedata, timestamp.toLocalDateTime(),
+                            reactionCounts, userReaction
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return packets;
+    }
+
+    private int savePostToDB(PostPacket packet) throws SQLException {
+        int postId = -1;
+        try (PreparedStatement stmt = databaseConnection.prepareStatement(
+                "INSERT INTO Posts (Author, Content, FileName, FileData, Timestamp) VALUES (?, ?, ?, ?, datetime('now'))",
+                Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, packet.getAuthor());
+            stmt.setString(2, packet.getContent());
+            stmt.setString(3, packet.getFileName());
+            stmt.setBytes(4, packet.getFileData());
+            stmt.executeUpdate();
+
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    postId = keys.getInt(1);
+                }
+            }
+        }
+        return postId;
     }
 
 
