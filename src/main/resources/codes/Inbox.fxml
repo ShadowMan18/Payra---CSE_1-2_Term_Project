@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
-<?import javafx.geometry.Point3D?>
 <?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -11,11 +10,12 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 
 <StackPane fx:id="InboxLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.InboxController">
    <Group fx:id="InboxView">
-      <ImageView layoutX="-1.0" pickOnBounds="true">
+      <ImageView pickOnBounds="true">
          <Image url="@../images/Inbox.png" />
       </ImageView>
       <Label fx:id="User" layoutX="251.0" layoutY="48.0" prefHeight="45.0" prefWidth="250.0" textAlignment="CENTER">
@@ -37,21 +37,19 @@
       <TextField fx:id="Message" layoutX="726.0" layoutY="811.0" onKeyPressed="#onEnterKeyPressed" prefHeight="46.0" prefWidth="751.0" promptText="Message" style="-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold;" />
       <ImageView fx:id="receiverProfilePictureView" fitHeight="50.0" fitWidth="50.0" layoutX="591.0" layoutY="29.0" pickOnBounds="true" preserveRatio="true" />
       <Button layoutX="653.0" layoutY="816.0" mnemonicParsing="false" onAction="#onEmojiButtonClick" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
-      <ScrollPane fx:id="MessageScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="600.0" layoutY="93.0" prefHeight="675.0" prefWidth="936.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+      <Rectangle fx:id="emojiContainer" arcHeight="37.0" arcWidth="37.0" fill="#c9d8f2" height="250.0" layoutX="552.0" layoutY="530.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="295.0" />
+      <ScrollPane fx:id="MessageScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="600.0" layoutY="97.0" prefHeight="682.0" prefWidth="936.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
          <content>
             <VBox fx:id="MessageContainer" spacing="3.0" styleClass="vbox" />
          </content></ScrollPane>
-      <ScrollPane fx:id="InboxScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="124.0" layoutY="221.0" prefHeight="660.0" prefWidth="385.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+      <ScrollPane fx:id="InboxScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="128.0" layoutY="221.0" prefHeight="660.0" prefWidth="385.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
          <content>
             <VBox fx:id="InboxContainer" spacing="5.0" styleClass="vbox" />
          </content>
-         <rotationAxis>
-            <Point3D />
-         </rotationAxis>
       </ScrollPane>
-      <ScrollPane fx:id="emojiScroller" hbarPolicy="NEVER" layoutX="560.0" layoutY="550.0" prefHeight="250.0" prefWidth="300.0" vbarPolicy="NEVER">
+      <ScrollPane fx:id="emojiScroller" hbarPolicy="NEVER" layoutX="566.0" layoutY="535.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="240.0" prefWidth="265.0" style="-fx-background-color: transparent" vbarPolicy="NEVER">
          <content>
-            <VBox fx:id="emojiPallet" prefHeight="250.0" prefWidth="300.0" spacing="5.0" style="-fx-background-color: white; -fx-background-radius: 5;" />
+            <VBox fx:id="emojiPallet" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="244.0" prefWidth="265.0" spacing="3.0" style="-fx-background-color: transparent" />
          </content>
       </ScrollPane>
       <!--         <TextField fx:id="Recipient" layoutX="187.0" layoutY="431.0" onKeyReleased="#getRecipientId" prefHeight="38.0" prefWidth="263.0" />-->

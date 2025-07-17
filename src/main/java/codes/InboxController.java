@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
@@ -63,6 +64,8 @@ public class InboxController {
     public ScrollPane emojiScroller;
     @FXML
     public VBox emojiPallet;
+    @FXML
+    public Rectangle emojiContainer;
 
 
     private Client client;
@@ -74,23 +77,19 @@ public class InboxController {
     private String lastMessageDate;
     private String filePath;
     private CountDownLatch latch;
+    private boolean isEmojiPalletOpen;
 
-    private Vector<String> emojis = new Vector<>(Arrays.asList(
-            "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊",
-            "😋","😎","😍","😘","😗","😙","😚","🙂","🤗","🤩",
-            "🤔","😐","😑","😶","🙄","😏","😣","😥","😮","🤐",
-            "😯","😪","😫","😴","😌","😛","😜","😝","🤤","😒",
-            "😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😞",
-            "😟","😤","😢","😭","😦","😧","😨","😩","😬","😰",
-            "😱","😳","😵","😡","😠","😇","🤓","😷","🤒","🤕",
-            "🤢","🤧","😈","👿","👹","👺","💀","👻","👽","🤖",
-            "💩","😺","😸","😹","😻","😼","😽","🙀","😿","😾",
-            "👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞",
-            "🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎",
-            "✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏",
-            "✍️","💅","🤳","💪","🦾","🧠","🦷","👀","👁️","👅",
-            "👄","💋","❤️","🧡","💛","💚","💙","💜","🖤","🤍",
-            "🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"
+    private Vector<String> emojiHexCodes = new Vector(Arrays.asList(
+            "1f600", "1f601", "1f602", "1f603", "1f604", "1f605", "1f606", "1f609", "1f60a", "1f60b",
+            "1f60c", "1f60d", "1f60e", "1f60f", "1f610", "1f611", "1f612", "1f613", "1f614", "1f615",
+            "1f616", "1f617", "1f618", "1f619", "1f61a", "1f61b", "1f61c", "1f61d", "1f61e", "1f61f",
+            "1f620", "1f621", "1f622", "1f623", "1f624", "1f625", "1f626", "1f627", "1f628", "1f629",
+            "1f62a", "1f62b", "1f62c", "1f62d", "1f62e", "1f62f", "1f630", "1f631", "1f632", "1f633",
+            "1f634", "1f635", "1f636", "1f637", "1f638", "1f639", "1f63a", "1f63b", "1f63c", "1f63d",
+            "1f63e", "1f63f", "1f640", "1f641", "1f642", "1f643", "1f644", "1f910", "1f911", "1f912",
+            "1f913", "1f914", "1f915", "1f916", "1f917", "1f918", "1f919", "1f91a", "1f91b", "1f91c",
+            "1f91d", "1f91e", "1f91f", "1f920", "1f921", "1f922", "1f923", "1f924", "1f925", "1f926",
+            "1f927", "1f928", "1f929", "1f92a", "1f92b", "1f92c", "1f92d", "1f92e", "1f92f", "1f930"
     ));
 
 
@@ -130,6 +129,11 @@ public class InboxController {
         MessageContainer.heightProperty().addListener((obs, oldVal, newVal) -> {
             MessageScroller.setVvalue(1.0);
         });
+
+        emojiContainer.setOpacity(0);
+        emojiScroller.setDisable(true);
+        isEmojiPalletOpen = false;
+
         displayUsers("###");
         for (ClientInfo c : client.getClients()) {
             System.out.println(c.getFirstName());
@@ -174,15 +178,38 @@ public class InboxController {
 
     @FXML
     public void onEmojiButtonClick(ActionEvent actionEvent) {
-        for (int i = 0; i < 15; i++) {
-            HBox emojiRow = new HBox();
-            for (int j = 0; j < 10; j++) {
-                Label emoji = new Label(emojis.get((i * 10) + j));
-                emoji.setStyle("-fx-background-color: transparent; -fx-font-family: Arial Rounded MT Bold; -fx-font-size: 15; -fx-padding:3px");
-                emojiRow.getChildren().add(emoji);
+        if (isEmojiPalletOpen) {
+            emojiContainer.setOpacity(0);
+            emojiScroller.setDisable(true);
+            emojiPallet.getChildren().clear();
+            isEmojiPalletOpen = false;
+        }
+        else {
+            emojiContainer.setOpacity(1);
+            emojiScroller.setDisable(false);
+            isEmojiPalletOpen = true;
+
+            for (int i = 0; i < 14; i++) {
+                HBox emojiRow = new HBox();
+                emojiRow.setPrefWidth(300);
+                emojiRow.setPrefHeight(35);
+                emojiRow.setSpacing(3);
+                emojiRow.setStyle("-fx-background-color: transparent");
+
+                for (int j = 0; j < 7; j++) {
+                    String emojiCode = emojiHexCodes.get((i * 7) + j);
+                    ImageView emoji = new ImageView(String.valueOf(getClass().getResource("/images/emojis/" + emojiHexCodes.get((i * 7) + j) + ".png")));
+                    emoji.setFitWidth(35);
+                    emoji.setFitHeight(35);
+
+                    emoji.setOnMouseClicked(event -> {
+                        sendEmoji(emojiCode);
+                    });
+
+                    emojiRow.getChildren().add(emoji);
+                }
+                emojiPallet.getChildren().add(emojiRow);
             }
-            emojiRow.setSpacing(5);
-            emojiPallet.getChildren().add(emojiRow);
         }
     }
 
@@ -221,6 +248,11 @@ public class InboxController {
     public void startChat(String id) {
         SearchBar.clear();
         displayUsers("###");
+
+        emojiContainer.setOpacity(0);
+        emojiScroller.setDisable(true);
+        emojiPallet.getChildren().clear();
+        isEmojiPalletOpen = false;
 
         resetChat();
 
@@ -475,19 +507,26 @@ public class InboxController {
             File mediaFile = new File("src/Client Local Repository/Chat Media", filename);
             Image img = new Image(mediaFile.toURI().toString());
             ImageView image = new ImageView(img);
-            image.setFitWidth(300);
             image.setPreserveRatio(true);
-            double width = img.getWidth();
-            double height = img.getHeight();
-            Rectangle rectangularClip = new Rectangle(300, height * (300 / width));
-            rectangularClip.setArcWidth(20);
-            rectangularClip.setArcHeight(20);
-            image.setClip(rectangularClip);
-            Rectangle border = new Rectangle(303, height * (300 / width) + 3);
-            border.setArcWidth(20);
-            border.setArcHeight(20);
+            VBox imageBox;
 
-            VBox imageBox = new VBox(new StackPane(border, image), timeBox);
+            if (filename.endsWith("emoji.png")) {
+                image.setFitWidth(60);
+                imageBox = new VBox(image, timeBox);
+            }
+            else {
+                image.setFitWidth(300);
+                double width = img.getWidth();
+                double height = img.getHeight();
+                Rectangle rectangularClip = new Rectangle(300, height * (300 / width));
+                rectangularClip.setArcWidth(20);
+                rectangularClip.setArcHeight(20);
+                image.setClip(rectangularClip);
+                Rectangle border = new Rectangle(303, height * (300 / width) + 3);
+                border.setArcWidth(20);
+                border.setArcHeight(20);
+                imageBox = new VBox(new StackPane(border, image), timeBox);
+            }
 
             media = new StackPane(imageBox);
 
@@ -693,14 +732,14 @@ public class InboxController {
             usernameLabel.setPrefHeight(50);
             HBox userInfo = new HBox(profilePictureView, usernameLabel);
             userInfo.setSpacing(20);
-            userInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+            userInfo.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 5px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0.2, 0, 2);");
 
             userInfo.setOnMouseEntered(event -> {
-                userInfo.setStyle("-fx-background-color: #ebf3fa; -fx-background-radius: 10; -fx-padding: 5px;");
+                userInfo.setStyle("-fx-background-color: #ebf3fa; -fx-background-radius: 10; -fx-padding: 5px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0.2, 0, 2);");
             });
 
             userInfo.setOnMouseExited(event -> {
-                userInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+                userInfo.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 5px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0.2, 0, 2);");
             });
 
             userInfo.setOnMouseClicked(event -> {
@@ -791,23 +830,41 @@ public class InboxController {
         }
     }
 
-    public void showImage(Image image, String filename) {
-        Stage imageStage = new Stage();
-        ImageView imageView = new ImageView(image);
-        double width = image.getWidth();
-        double height = image.getHeight();
-        imageView.setFitHeight(Screen.SCREENHEIGHT * 0.75);
-        imageView.setPreserveRatio(true);
-        StackPane root = new StackPane(imageView);
-        Scene scene = new Scene(root, width * (imageView.getFitHeight() / height) + 30, imageView.getFitHeight() + 30);
-        Image icon = new Image(String.valueOf(getClass().getResource("/images/Payra.png")));
-        imageStage.getIcons().add(icon);
-        imageStage.setTitle(filename);
-        imageStage.setScene(scene);
-        imageStage.show();
+    public void sendEmoji(String emojiCode) {
+        File emojiFile = new File("src/main/resources/images/emojis", emojiCode + ".png");
+        byte[] emojiBytes;
 
-        imageStage.setOnCloseRequest(event ->{
-            imageStage.close();
-        });
+        try {
+            emojiBytes = Files.readAllBytes(emojiFile.toPath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            client.getChatOutput().writeObject(new MessagePacket(client.getId(), receiverId, null, emojiCode + "emoji.png", emojiBytes));
+            client.getChatOutput().flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
+
+//    public void showImage(Image image, String filename) {
+//        Stage imageStage = new Stage();
+//        ImageView imageView = new ImageView(image);
+//        double width = image.getWidth();
+//        double height = image.getHeight();
+//        imageView.setFitHeight(Screen.SCREENHEIGHT * 0.75);
+//        imageView.setPreserveRatio(true);
+//        StackPane root = new StackPane(imageView);
+//        Scene scene = new Scene(root, width * (imageView.getFitHeight() / height) + 30, imageView.getFitHeight() + 30);
+//        Image icon = new Image(String.valueOf(getClass().getResource("/images/Payra.png")));
+//        imageStage.getIcons().add(icon);
+//        imageStage.setTitle(filename);
+//        imageStage.setScene(scene);
+//        imageStage.show();
+//
+//        imageStage.setOnCloseRequest(event ->{
+//            imageStage.close();
+//        });
+//    }
 }

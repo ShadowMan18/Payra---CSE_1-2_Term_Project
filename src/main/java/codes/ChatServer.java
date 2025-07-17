@@ -90,8 +90,15 @@ class ChatServer implements Runnable {
 
                 System.out.println("received:" + message.getSender() + " " + message.getMessage() + " " + message.getFilename());
 
-                if (message.getFilename() != null) {
-                    filename = message.getFilename();
+                if (message != null && message.getFilename() != null) {
+
+
+                    if (message.getFilename().endsWith("emoji.png")) {
+                        filename = message.getFilename();
+                    }
+                    else {
+                        filename = message.getSender() + "_" + message.getFilename();
+                    }
 
                     File mediaDirectory = new File("src/Media Database");
 
@@ -99,7 +106,7 @@ class ChatServer implements Runnable {
                         mediaDirectory.mkdir();
                     }
 
-                    File file = new File(mediaDirectory, message.getFilename());
+                    File file= new File(mediaDirectory, filename);;
 
                     try {
                         FileOutputStream fos = new FileOutputStream(file);
