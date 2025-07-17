@@ -149,7 +149,7 @@ public class NewsFeedController {
         reactionRow.setStyle("-fx-alignment: center-left;");
 
         // Reaction setup
-        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("/images/like.png"), 24, 24, true, true));
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("/images/redHeart.png"), 24, 24, true, true));
         Label countLabel = new Label(String.valueOf(reactionCounts.getOrDefault("like", 0)));
 
         VBox iconWithCount = new VBox(icon, countLabel);
