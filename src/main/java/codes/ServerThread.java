@@ -337,6 +337,59 @@ public class ServerThread implements Runnable{
                     feedServer.shutdown();
                 }
             }
+
+            else if (fromClient instanceof String string && string.startsWith("REACTION|")) {
+                //System.out.println("Hello, I am a reaction. Add me to db");
+
+                String[] parts = string.split("\\|");
+                if (parts.length == 4) {
+                    int postId = Integer.parseInt(parts[1]);
+                    String reactor = parts[2];
+                    String reactType = parts[3];
+
+                    try {
+                        // old reaction
+                        String oldType = "none";
+                        try (PreparedStatement oldReactStmt = databaseConnection.prepareStatement(
+                                "SELECT ReactType FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
+                            oldReactStmt.setInt(1, postId);
+                            oldReactStmt.setString(2, reactor);
+                            try (ResultSet rs = oldReactStmt.executeQuery()) {
+                                if (rs.next()) oldType = rs.getString("ReactType");
+                            }
+                        }
+
+                        // Delete reaction
+                        try (PreparedStatement deleteStmt = databaseConnection.prepareStatement(
+                                "DELETE FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
+                            deleteStmt.setInt(1, postId);
+                            deleteStmt.setString(2, reactor);
+                            deleteStmt.executeUpdate();
+                        }
+
+                        // insert
+                        if (!reactType.equals("none")) {
+                            try (PreparedStatement insertStmt = databaseConnection.prepareStatement(
+                                    "INSERT INTO Reacts (PostId, Reactor, ReactType, Timestamp) VALUES (?, ?, ?, datetime('now'))")) {
+                                insertStmt.setInt(1, postId);
+                                insertStmt.setString(2, reactor);
+                                insertStmt.setString(3, reactType);
+                                insertStmt.executeUpdate();
+                            }
+                        }
+
+
+                        NewsFeedServer.broadcastToAll(postId, reactor, oldType, reactType);
+
+
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+
+
         }
     }
 

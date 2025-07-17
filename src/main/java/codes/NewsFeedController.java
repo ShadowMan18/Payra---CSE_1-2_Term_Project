@@ -6,13 +6,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class NewsFeedController {
@@ -26,6 +32,10 @@ public class NewsFeedController {
     private Client client;
     private Stage stage;
     private CountDownLatch latch;
+    private final Map<Integer, Map<String, Label>> reactionLabelsByPostId = new HashMap<>();
+    private final Map<Integer, String> userReactionsByPostId = new HashMap<>();
+    private final Map<Integer, Map<String, Button>> reactionButtonsByPostId = new HashMap<>();
+
 
     public void setNewsFeedController(Client client, Stage stage) {
         try {
@@ -96,12 +106,126 @@ public class NewsFeedController {
             e.printStackTrace();
         }
     }
+    private final String[] reactionTypes = { "like", "love", "sad" };
 
-    public void addPostToFeed(String post) {
-        Label label = new Label(post);
-        label.setWrapText(true);
-        label.setStyle("-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-background-radius: 5;");
-        feedContainer.getChildren().add(0, label);
+    public void addPostToFeed(String rawPost) {
+        String[] parts = rawPost.split("\\|", 6);
+        if (parts.length < 4) return;
+
+        String postId = parts[0];
+        String timestamp = parts[1];
+        String username = parts[2];
+        String content = parts[3];
+        Map<String, Integer> reactionCounts = parseReactionCounts(parts.length >= 5 ? parts[4] : "");
+        String userReactedType = (parts.length == 6) ? parts[5] : "none";
+        int postIdInt = Integer.parseInt(postId);
+        userReactionsByPostId.put(postIdInt, userReactedType);
+
+        VBox postBox = new VBox();
+        postBox.setStyle("-fx-padding: 10; -fx-border-color: #ccc; -fx-border-width: 0 0 1px 0;");
+        postBox.getStyleClass().add("post");
+
+        Label usernameLabel = new Label(username);
+        usernameLabel.getStyleClass().add("username");
+
+        Label timestampLabel = new Label(timestamp);
+        timestampLabel.getStyleClass().add("timestamp");
+
+        Label contentLabel = new Label(content);
+        contentLabel.getStyleClass().add("content");
+        contentLabel.setWrapText(true);
+
+        HBox reactionRow = new HBox(10);
+        reactionRow.setStyle("-fx-alignment: center-left;");
+
+        // Reaction setup
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("/images/like.png"), 24, 24, true, true));
+        Label countLabel = new Label(String.valueOf(reactionCounts.getOrDefault("like", 0)));
+
+        VBox iconWithCount = new VBox(icon, countLabel);
+        iconWithCount.setStyle("-fx-alignment: center;");
+
+        Button likeButton = new Button();
+        likeButton.setGraphic(iconWithCount);
+        likeButton.setStyle("-fx-background-color: transparent;");
+        if ("like".equals(userReactedType)) {
+            likeButton.setStyle("-fx-background-color: #d0f0c0;");
+        }
+
+        likeButton.setOnAction(e -> sendReactionToServer(postId, "like"));
+
+        Map<String, Label> countLabels = new HashMap<>();
+        countLabels.put("like", countLabel);
+        reactionLabelsByPostId.put(postIdInt, countLabels);
+
+        Map<String, Button> reactionButtons = new HashMap<>();
+        reactionButtons.put("like", likeButton);
+        reactionButtonsByPostId.put(postIdInt, reactionButtons);
+
+        reactionRow.getChildren().add(likeButton);
+        postBox.getChildren().addAll(usernameLabel, timestampLabel, contentLabel, reactionRow);
+        feedContainer.getChildren().add(0, postBox);
+    }
+
+    private void sendReactionToServer(String postIdStr, String selectedType) {
+        try {
+            int postId = Integer.parseInt(postIdStr);
+
+            String currentType = userReactionsByPostId.getOrDefault(postId, "none");
+
+            if (currentType.equals(selectedType)) {
+                // Toggle off
+                client.sendReaction(postId, "none");
+            } else {
+                // add
+                client.sendReaction(postId, selectedType);
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid post ID format: " + postIdStr);
+        }
+    }
+
+
+    private Map<String, Integer> parseReactionCounts(String data) {
+        Map<String, Integer> map = new HashMap<>();
+        for (String entry : data.split(";")) {
+            String[] pair = entry.split("=");
+            if (pair.length == 2) {
+                try {
+                    map.put(pair[0], Integer.parseInt(pair[1]));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return map;
+    }
+
+    public void updateReactionOnPost(int postId, String reactor, String oldType, String newType) {
+        if (!"like".equals(oldType) && !"like".equals(newType)) return;
+
+        Map<String, Label> labels = reactionLabelsByPostId.get(postId);
+        Map<String, Button> buttons = reactionButtonsByPostId.get(postId);
+        if (labels == null || buttons == null) return;
+
+        if (client.getId().equals(reactor)) {
+            if ("none".equals(newType)) {
+                userReactionsByPostId.remove(postId);
+                buttons.get("like").setStyle("-fx-background-color: transparent;");
+            } else {
+                userReactionsByPostId.put(postId, "like");
+                buttons.get("like").setStyle("-fx-background-color: #d0f0c0;");
+            }
+        }
+
+        Label countLabel = labels.get("like");
+        if (countLabel != null) {
+            try {
+                int count = Integer.parseInt(countLabel.getText());
+                if ("like".equals(oldType)) count--;
+                if ("like".equals(newType)) count++;
+                countLabel.setText(String.valueOf(Math.max(0, count)));
+            } catch (NumberFormatException ignored) {}
+        }
     }
 
 

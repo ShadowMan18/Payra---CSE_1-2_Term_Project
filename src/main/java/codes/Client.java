@@ -2,12 +2,16 @@ package codes;
 
 import javafx.application.Platform;
 import javafx.scene.image.Image;
+import org.controlsfx.control.tableview2.filter.filtereditor.SouthFilter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
@@ -559,21 +563,29 @@ public class Client {
             while (true) {
                 try {
                     String feedUpdate = (String) feedInput.readObject();
-                    //System.out.println("Feed: " + feedUpdate);
 
                     Platform.runLater(() -> {
                         if (newsFeedController != null) {
-                            newsFeedController.addPostToFeed(feedUpdate);
+                            if (feedUpdate.startsWith("REACTION|")) {
+                                String[] parts = feedUpdate.split("\\|");
+                                int postId = Integer.parseInt(parts[1]);
+                                String reactor = parts[2];
+                                String oldType = parts[3];
+                                String newType = parts[4];
+                                newsFeedController.updateReactionOnPost(postId, reactor, oldType, newType);
+                            } else {
+                                newsFeedController.addPostToFeed(feedUpdate);
+                            }
                         }
                     });
 
                 } catch (IOException | ClassNotFoundException e) {
                     System.out.println("Feed reading thread exiting for client " + this.id );
-                    //e.printStackTrace();
                     break;
                 }
             }
         }).start();
+
     }
 
     public void sendPostToFeed(String content) {
@@ -584,4 +596,20 @@ public class Client {
             e.printStackTrace();
         }
     }
+
+
+    public void sendReaction(int postId, String reactionType) {
+        System.out.println("Hi I am a pretty little reaction trying to reach server Thread");
+        try {
+            String message = "REACTION|" + postId + "|" + this.id + "|" + reactionType;
+            serverOutput.writeObject(message);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
 }

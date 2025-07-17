@@ -15,6 +15,7 @@ public class Server {
     public static int[] port = new int[45000];
     public static final Map<String, NewsFeedServer> feedServers = new ConcurrentHashMap<>();
 
+
     public static void main(String[] args) {
         // Creating database if it isn't created
 
@@ -71,15 +72,20 @@ public class Server {
                     FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
                     )""");
 
+//            statement.execute("DROP TABLE IF EXISTS Reacts");
+
             statement.execute("""
-                    CREATE TABLE IF NOT EXISTS Reacts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    PostId INTEGER,
-                    Reactor TEXT,
-                    ReactType TEXT CHECK(ReactType IN ('like','love','haha','wow','sad','angry')),
-                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
-                    FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
-                    )""");
+            CREATE TABLE IF NOT EXISTS Reacts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                PostId INTEGER,
+                Reactor TEXT,
+                ReactType TEXT CHECK(ReactType IN ('like','love','sad')),
+                Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(PostId, Reactor),
+                FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
+            )
+        """);
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

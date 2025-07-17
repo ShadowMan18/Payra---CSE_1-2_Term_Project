@@ -7,9 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,6 +28,7 @@ public class NewsFeedServer implements Runnable {
     private final ExecutorService clientPool = Executors.newCachedThreadPool();
     private volatile boolean running = true;
     private final CountDownLatch serverReadyLatch;
+    private final Map<Integer, String> userReactionsByPostId = new HashMap<>();
 
     public NewsFeedServer(int port,CountDownLatch latch) {
         this.postThread=new Thread(this);
@@ -147,15 +147,51 @@ public class NewsFeedServer implements Runnable {
                         "SELECT * FROM Posts ORDER BY Timestamp DESC LIMIT 100")) {
                     try (ResultSet rs = getPosts.executeQuery()) {
                         while (rs.next()) {
+                            int postId = rs.getInt("id");
                             String author = rs.getString("Author");
                             String content = rs.getString("Content");
                             String time = rs.getString("Timestamp");
 
-                            String pastPost = "[" + time + "] " + author + ": " + content;
+                            //Reactions counts for my posts
+                            StringBuilder reactionData = new StringBuilder();
+                            String userReacted = "none";  // <-- NEW
+
+
+                            try (PreparedStatement getReacts = databaseConnection.prepareStatement(
+                                    "SELECT ReactType, COUNT(*) as count FROM Reacts WHERE PostId = ? GROUP BY ReactType")) {
+                                getReacts.setInt(1, postId);
+                                try (ResultSet reactSet = getReacts.executeQuery()) {
+                                    while (reactSet.next()) {
+                                        String type = reactSet.getString("ReactType");
+                                        int count = reactSet.getInt("count");
+                                        reactionData.append(type).append("=").append(count).append(";");
+                                    }
+                                }
+                            }
+
+
+                            try (PreparedStatement getUserReaction = databaseConnection.prepareStatement(
+                                    "SELECT ReactType FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
+                                getUserReaction.setInt(1, postId);
+                                getUserReaction.setString(2, thisClientId);
+                                try (ResultSet rsUser = getUserReaction.executeQuery()) {
+                                    if (rsUser.next()) {
+                                        userReacted = rsUser.getString("ReactType");
+                                    }
+                                }
+                            }
+
+                            if (reactionData.length() > 0) {
+                                reactionData.setLength(reactionData.length() - 1); // remove last ;
+                            }
+
+
+                            String pastPost = postId + "|" + time + "|" + author + "|" + content + "|" + reactionData + "|" + userReacted;
                             posts.add(pastPost);
                         }
                     }
                 }
+
                 catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -165,33 +201,88 @@ public class NewsFeedServer implements Runnable {
                 out.flush();
 
 
-                //Write my posts in the database!
+
                 while (true) {
-                    Object post = in.readObject();
-                    if (post instanceof String) {
-                        String timestamp = new SimpleDateFormat("HH:mm:ss").format(new Date());
-                        String finalPost = "[" + timestamp + "] " + thisClientId + ": " + post;
+                    Object incoming = in.readObject();
 
-                        // Save to DB
-                        try (PreparedStatement insertPost = databaseConnection.prepareStatement(
-                                "INSERT INTO Posts (Author, Content, Timestamp) VALUES (?, ?, datetime('now'))")) {
-                            insertPost.setString(1, thisClientId);
-                            insertPost.setString(2, (String) post);
-                            insertPost.executeUpdate();
-                        } catch (SQLException e) {
-                            e.printStackTrace();
+                    if (incoming instanceof String message) {
+
+                        if (message.startsWith("REACT:")) {
+                            String[] parts = message.split(":", 3);
+                            if (parts.length == 3) {
+                                int postId = Integer.parseInt(parts[1]);
+                                String newType = parts[2];
+
+                                String oldType = getOldReactionType(postId, thisClientId);
+
+                                try {
+
+                                    try (PreparedStatement deleteStmt = databaseConnection.prepareStatement(
+                                            "DELETE FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
+                                        deleteStmt.setInt(1, postId);
+                                        deleteStmt.setString(2, thisClientId);
+                                        deleteStmt.executeUpdate();
+                                    }
+
+                                    if (!newType.equals(oldType)) {
+
+                                        try (PreparedStatement insertStmt = databaseConnection.prepareStatement(
+                                                "INSERT INTO Reacts (PostId, Reactor, ReactType) VALUES (?, ?, ?)")) {
+                                            insertStmt.setInt(1, postId);
+                                            insertStmt.setString(2, thisClientId);
+                                            insertStmt.setString(3, newType);
+                                            insertStmt.executeUpdate();
+                                        }
+
+                                        System.out.println("Reaction updated: " + thisClientId + " -> " + newType);
+                                    } else {
+                                        System.out.println("Reaction removed (toggle off): " + thisClientId);
+                                        newType = "none";
+                                    }
+
+
+                                    broadcastReaction(postId, thisClientId, oldType, newType);
+
+
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         }
+                        else {
+                            //Insert the posts in db
+                            try (PreparedStatement insertPost = databaseConnection.prepareStatement(
+                                    "INSERT INTO Posts (Author, Content, Timestamp) VALUES (?, ?, datetime('now'))",
+                                    Statement.RETURN_GENERATED_KEYS)) {
 
-                        broadcast(finalPost);
-                        System.out.println("New post: " + finalPost);
+                                insertPost.setString(1, thisClientId);
+                                insertPost.setString(2, message);
+                                insertPost.executeUpdate();
+
+                                try (ResultSet generatedKeys = insertPost.getGeneratedKeys()) {
+                                    if (generatedKeys.next()) {
+                                        int postId = generatedKeys.getInt(1);
+                                        String timestamp = new SimpleDateFormat("HH:mm:ss").format(new Date());
+                                        String finalPost = postId + "|" + timestamp + "|" + thisClientId + "|" + message;
+
+                                        broadcast(finalPost);
+                                        System.out.println("New post (ID: " + postId + "): " + finalPost);
+                                    }
+                                }
+
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
+
+
                 }
 
             } catch (IOException | ClassNotFoundException e) {
-
                 Client.removeClient(out);
                 System.out.println("Client disconnected from feed.");
-            }finally {
+            } finally {
                 try {
                     if (out != null) Client.removeClient(out);
                     if (in != null) in.close();
@@ -204,9 +295,38 @@ public class NewsFeedServer implements Runnable {
             }
         }
     }
-
     private void broadcast(String message) {
         Client.broadcast(message);
     }
+
+    public void broadcastReaction(int postId, String reactor, String oldType, String newType) {
+        String message = "REACTION|" + postId + "|" + reactor + "|" + oldType + "|" + newType;
+        broadcast(message);
+    }
+
+    public static void broadcastToAll(int postId, String reactor, String oldType, String newType) {
+        String message = "REACTION|" + postId + "|" + reactor + "|" + oldType + "|" + newType;
+        Client.broadcast(message);
+    }
+
+
+
+    private String getOldReactionType(int postId, String reactor) {
+        try (PreparedStatement stmt = databaseConnection.prepareStatement(
+                "SELECT ReactType FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
+            stmt.setInt(1, postId);
+            stmt.setString(2, reactor);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("ReactType");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "none";
+    }
+
+
 
 }
