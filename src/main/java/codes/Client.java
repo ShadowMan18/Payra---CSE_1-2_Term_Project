@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Comparator;
+import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
@@ -52,6 +54,7 @@ public class Client {
     private Socket chatSocket;
     private ObjectOutputStream chatOutput;
     private ObjectInputStream chatInput;
+    private Vector<ClientInfo> clients;
     private String receiverId;
     private String receiverName;
     private String receiverFirstName;
@@ -132,6 +135,8 @@ public class Client {
             throw new RuntimeException(e);
         }
 
+        clients = new Vector<>();
+
 //        Thread Writer = new Thread(() -> {
 //            Scanner scanner = new Scanner(System.in);
 //            while (true) {
@@ -165,7 +170,8 @@ public class Client {
                 try {
                     fromServer = serverInput.readObject();
                 } catch (IOException | ClassNotFoundException e) {
-                    throw new RuntimeException(e);
+                    System.out.println("No connection with server");
+                    break;
                 }
 
                 if (fromServer instanceof Boolean b) {
@@ -211,6 +217,17 @@ public class Client {
                         latch = null;
                     }
                 }
+                else if (fromServer instanceof Vector<?> v) {
+                    if (!v.isEmpty() && v.get(0) instanceof ClientInfo) {
+                        clients = (Vector<ClientInfo>) v;
+                        clients.sort(Comparator.comparing(ClientInfo::getFirstName));
+                    }
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
                 else if (fromServer instanceof String string && string.equals("login_successful")) {
                     this.active = true;
 
@@ -233,6 +250,14 @@ public class Client {
                     this.receiverFirstName = connectionInfo[3];
 
                     connectToChatServer(port);
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else if (fromServer instanceof String string && string.equals("chat_closed")) {
+                    chatStatus = false;
 
                     if (latch != null) {
                         latch.countDown();
@@ -447,6 +472,10 @@ public class Client {
 
     public ObjectInputStream getFeedInput() {
         return feedInput;
+    }
+
+    public Vector<ClientInfo> getClients() {
+        return clients;
     }
 
     // Setters

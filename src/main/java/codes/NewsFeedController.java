@@ -7,8 +7,10 @@ import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -20,6 +22,8 @@ public class NewsFeedController {
     public StackPane NewsFeedLayout;
     @FXML
     public Group NewsFeedView;
+    @FXML
+    public ImageView userProfilePictureView;
     @FXML
     private VBox feedContainer;
 
@@ -41,8 +45,14 @@ public class NewsFeedController {
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
+
         this.client = client;
         this.stage = stage;
+
+        userProfilePictureView.setImage(client.getProfilePicture());
+        Circle clip = new Circle(35, 35, 35);
+        userProfilePictureView.setClip(clip);
+
         NewsFeedLayout.setPrefWidth(Screen.SCREENWIDTH);
         NewsFeedLayout.setPrefHeight(Screen.SCREENHEIGHT);
         NewsFeedView.scaleXProperty().bind(NewsFeedLayout.widthProperty().divide(1600));

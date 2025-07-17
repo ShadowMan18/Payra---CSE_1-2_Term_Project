@@ -11,11 +11,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     static Vector<String> clients = new Vector<>();
-    static Map<String, ServerThread> currentClients = new HashMap<>();
-    public static int[] port = new int[45000];
-    public static final Map<String, NewsFeedServer> feedServers = new ConcurrentHashMap<>();
+    static final Map<String, ServerThread> currentClients = new ConcurrentHashMap<>();
+    static Vector<Integer> port = new Vector<>();
+    static final Map<String, NewsFeedServer> feedServers = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
+        // Initializing port vector
+
+        for (int i = 0; i < 45000; i++) {
+            port.add(0);
+        }
+
         // Creating database if it isn't created
 
         Connection databaseConnection;
@@ -84,7 +90,21 @@ public class Server {
             throw new RuntimeException(e);
         }
 
+        File mediaDirectory = new File("src/Media Database");
+
+        if(!mediaDirectory.exists()) {
+            mediaDirectory.mkdir();
+        }
+
         System.out.println("Database created");
+
+//        // Delete row (for debugging)
+//
+//        try (PreparedStatement deleteRow = databaseConnection.prepareStatement("DELETE FROM Users WHERE UserId = 'rakib1'")) {
+//            deleteRow.executeUpdate();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
 
         // Storing the clients' id in "clients" Vector from clients.txt file
 

@@ -93,13 +93,13 @@ class ChatServer implements Runnable {
                 if (message.getFilename() != null) {
                     filename = message.getFilename();
 
-                    File dir = new File("src/Media Database");
+                    File mediaDirectory = new File("src/Media Database");
 
-                    if (!dir.exists()) {
-                        dir.mkdir();
+                    if (!mediaDirectory.exists()) {
+                        mediaDirectory.mkdir();
                     }
 
-                    File file = new File(dir, message.getFilename());
+                    File file = new File(mediaDirectory, message.getFilename());
 
                     try {
                         FileOutputStream fos = new FileOutputStream(file);
@@ -167,7 +167,7 @@ class ChatServer implements Runnable {
 
                     Thread.sleep(500);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    break;
                 }
             }
         }).start();
@@ -193,7 +193,7 @@ class ChatServer implements Runnable {
                 input.close();
             }
 
-            Server.port[port - 1025] = 0;
+            Server.port.set(port - 1025, 0);
             System.out.println("ChatServer on port " + port + " has been shut down.");
         } catch (IOException e) {
             e.printStackTrace();

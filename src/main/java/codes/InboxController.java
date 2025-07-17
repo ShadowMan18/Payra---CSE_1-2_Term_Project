@@ -17,14 +17,19 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 
 public class InboxController {
@@ -35,49 +40,100 @@ public class InboxController {
     @FXML
     public Label User;
     @FXML
+    public ImageView userProfilePictureView;
+    @FXML
     public TextField SearchBar;
     @FXML
     public ImageView ChatBox;
     @FXML
-    public ImageView ReceiverProfilePicture;
+    public ImageView receiverProfilePictureView;
     @FXML
     public Label ReceiverName;
-    @FXML
-    public Circle ReceiverProfilePictureBackground;
     @FXML
     public TextField Message;
     @FXML
     public ScrollPane MessageScroller;
     @FXML
     public VBox MessageContainer;
+    @FXML
+    public ScrollPane InboxScroller;
+    @FXML
+    public VBox InboxContainer;
+    @FXML
+    public ScrollPane emojiScroller;
+    @FXML
+    public VBox emojiPallet;
 
 
     private Client client;
     private Stage stage;
     private String receiverId;
+    private String receiverFirstName;
     private Image receiverProfilePicture;
     private String lastSender;
     private String lastMessageDate;
     private String filePath;
+    private CountDownLatch latch;
+
+    private Vector<String> emojis = new Vector<>(Arrays.asList(
+            "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊",
+            "😋","😎","😍","😘","😗","😙","😚","🙂","🤗","🤩",
+            "🤔","😐","😑","😶","🙄","😏","😣","😥","😮","🤐",
+            "😯","😪","😫","😴","😌","😛","😜","😝","🤤","😒",
+            "😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😞",
+            "😟","😤","😢","😭","😦","😧","😨","😩","😬","😰",
+            "😱","😳","😵","😡","😠","😇","🤓","😷","🤒","🤕",
+            "🤢","🤧","😈","👿","👹","👺","💀","👻","👽","🤖",
+            "💩","😺","😸","😹","😻","😼","😽","🙀","😿","😾",
+            "👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞",
+            "🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎",
+            "✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏",
+            "✍️","💅","🤳","💪","🦾","🧠","🦷","👀","👁️","👅",
+            "👄","💋","❤️","🧡","💛","💚","💙","💜","🖤","🤍",
+            "🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"
+    ));
 
 
     public void setInboxController(Client client, Stage stage) {
         this.client = client;
         this.stage = stage;
+
+        try {
+            latch = new CountDownLatch(1);
+            client.setLatch(latch);
+
+            client.getServerOutput().writeObject("load_clients");
+            client.getServerOutput().flush();
+
+            latch.await();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        userProfilePictureView.setImage(client.getProfilePicture());
+        Circle clip = new Circle(35, 35, 35);
+        userProfilePictureView.setClip(clip);
+
         client.setChatStatus(false);
-        ReceiverProfilePictureBackground.setOpacity(0);
         Message.setOpacity(0);
         Message.setDisable(true);
         InboxLayout.setPrefWidth(Screen.SCREENWIDTH);
         InboxLayout.setPrefHeight(Screen.SCREENHEIGHT);
         InboxView.scaleXProperty().bind(InboxLayout.widthProperty().divide(1600));
         InboxView.scaleYProperty().bind(InboxLayout.heightProperty().divide(900));
+        InboxScroller.setFitToWidth(true);
+        InboxContainer.setFillWidth(true);
+        InboxContainer.setMinHeight(Region.USE_PREF_SIZE);
         MessageScroller.setFitToWidth(true);
         MessageContainer.setFillWidth(true);
         MessageContainer.setMinHeight(Region.USE_PREF_SIZE);
         MessageContainer.heightProperty().addListener((obs, oldVal, newVal) -> {
             MessageScroller.setVvalue(1.0);
         });
+        displayUsers("###");
+        for (ClientInfo c : client.getClients()) {
+            System.out.println(c.getFirstName());
+        }
     }
 
     @FXML
@@ -116,13 +172,59 @@ public class InboxController {
         client.getProfilePage().startProfilePageView(client, stage);
     }
 
-    public void onSearchButtonClicked(ActionEvent actionEvent) {
-        // Taking recipient id from the input field
+    @FXML
+    public void onEmojiButtonClick(ActionEvent actionEvent) {
+        for (int i = 0; i < 15; i++) {
+            HBox emojiRow = new HBox();
+            for (int j = 0; j < 10; j++) {
+                Label emoji = new Label(emojis.get((i * 10) + j));
+                emoji.setStyle("-fx-background-color: transparent; -fx-font-family: Arial Rounded MT Bold; -fx-font-size: 15; -fx-padding:3px");
+                emojiRow.getChildren().add(emoji);
+            }
+            emojiRow.setSpacing(5);
+            emojiPallet.getChildren().add(emojiRow);
+        }
+    }
 
-        receiverId = SearchBar.getText().trim();
-        receiverId = receiverId.substring(0, receiverId.length() - "@gmail.com".length());
+    public void resetChat() {
+        if (client.getChatStatus()) {
+            try {
+                latch = new CountDownLatch(1);
+                client.setLatch(latch);
 
+                client.getServerOutput().writeObject("close_chat");
+                client.getServerOutput().flush();
+
+                latch.await();
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        MessageContainer.getChildren().clear();
+        lastSender = null;
+        lastMessageDate = null;
+    }
+
+    public void searchUser(KeyEvent actionEvent) {
+        String prefix = SearchBar.getText();
+
+        if (prefix == null || prefix.isEmpty()) {
+            displayUsers("###");
+        }
+        else {
+            prefix = prefix.replaceAll("\\s+", "").toLowerCase();
+            displayUsers(prefix);
+        }
+    }
+
+    public void startChat(String id) {
         SearchBar.clear();
+        displayUsers("###");
+
+        resetChat();
+
+        this.receiverId = id;
 
         // Sending chat command with recipient id to the server
 
@@ -147,16 +249,20 @@ public class InboxController {
 
         Image chatBox = new Image(String.valueOf(getClass().getResource("/images/ChatBox.png")));
         ChatBox.setImage(chatBox);
-        ReceiverProfilePictureBackground.setOpacity(1);
         Message.setOpacity(1);
         Message.setDisable(false);
-
-        ReceiverName.setText(client.getReceiverName());
-
-        receiverProfilePicture = new Image(String.valueOf(getClass().getResource("/images/DefaultprofilePicture.png")));
-        ReceiverProfilePicture.setImage(receiverProfilePicture);
+        
+        for (ClientInfo clientInfo : client.getClients()) {
+            if (clientInfo.getId().equals(receiverId)) {
+                ReceiverName.setText(clientInfo.getFirstName() + " " + clientInfo.getLastName());
+                receiverFirstName = clientInfo.getFirstName();
+                receiverProfilePicture = new Image(new ByteArrayInputStream(clientInfo.getProfilePicture()));
+            }
+        }
+        
+        receiverProfilePictureView.setImage(receiverProfilePicture);
         Circle clip = new Circle(25, 25, 25);
-        ReceiverProfilePicture.setClip(clip);
+        receiverProfilePictureView.setClip(clip);
 
 
         // Starting chat reader thread (Receives message from the chat server and shows it in the chat box)
@@ -204,7 +310,13 @@ public class InboxController {
                 String time = timeFormat;
 
                 if (filename != null) {
-                    File mediaFile = new File("src/Client Local Repository/ChatMedia", filename);
+                    File chatMediaDirectory = new File("src/Client Local Repository/Chat Media");
+
+                    if(!chatMediaDirectory.exists()) {
+                        chatMediaDirectory.mkdir();
+                    }
+
+                    File mediaFile = new File(chatMediaDirectory, filename);
 
                     try {
                         FileOutputStream fos = new FileOutputStream(mediaFile);
@@ -219,7 +331,7 @@ public class InboxController {
                     if (!date.equals(lastMessageDate)) {
                         Label DateLabel = new Label();
                         DateLabel.setText(date);
-                        DateLabel.setStyle("-fx-background-color: #c9d8f2; -fx-background-radius: 3; -fx-font-family: Open Sans; -fx-font-size: 12; -fx-text-fill: #000000; -fx-font-weight: bold");
+                        DateLabel.setStyle("-fx-background-color: #c9d8f2; -fx-background-radius: 3; -fx-font-family: Open Sans; -fx-font-size: 12; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-padding:3px");
                         DateLabel.setAlignment(Pos.CENTER);
                         HBox DateBox = new HBox(DateLabel);
                         DateBox.setAlignment(Pos.CENTER);
@@ -295,7 +407,7 @@ public class InboxController {
         }
         else if (sender.equals(receiverId) && !sender.equals(lastSender)) {
             profilePicture.setImage(receiverProfilePicture);
-            senderLabel.setText(client.getReceiverFirstName());
+            senderLabel.setText(receiverFirstName);
             SenderBox.setAlignment(Pos.CENTER_LEFT);
             TextContainer = new VBox(SenderBox, MessageBox);
             lastSender = receiverId;
@@ -349,7 +461,7 @@ public class InboxController {
         Circle circularClip = new Circle(20, 20, 20);
         profilePicture.setClip(circularClip);
 
-        senderLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 12; -fx-text-fill: #000000");
+        senderLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 12; -fx-text-fill: #000000");
         HBox SenderBox = new HBox(senderLabel);
 
         Label timeLabel = new Label(time);
@@ -360,7 +472,7 @@ public class InboxController {
         StackPane media = null;
 
         if (mediaType.equals("image")) {
-            File mediaFile = new File("src/Client Local Repository/ChatMedia", filename);
+            File mediaFile = new File("src/Client Local Repository/Chat Media", filename);
             Image img = new Image(mediaFile.toURI().toString());
             ImageView image = new ImageView(img);
             image.setFitWidth(300);
@@ -388,7 +500,7 @@ public class InboxController {
             });
         }
         else if (mediaType.equals("audio")) {
-            File mediaFile = new File("src/Client Local Repository/ChatMedia", filename);
+            File mediaFile = new File("src/Client Local Repository/Chat Media", filename);
             Image img = new Image(String.valueOf(getClass().getResource("/images/Audio_Icon.png")));
             ImageView audioIcon = new ImageView(img);
             audioIcon.setFitWidth(100);
@@ -401,7 +513,7 @@ public class InboxController {
             filenameLabel.setPrefHeight(20);
             filenameLabel.setWrapText(true);
             filenameLabel.setAlignment(Pos.CENTER);
-            filenameLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 12; -fx-text-fill: #000000");
+            filenameLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 12; -fx-text-fill: #000000");
 
             VBox fileBox = new VBox(audioIcon, filenameLabel, timeBox);
 
@@ -417,7 +529,7 @@ public class InboxController {
             });
         }
         else if (mediaType.equals("video")) {
-            File mediaFile = new File("src/Client Local Repository/ChatMedia", filename);
+            File mediaFile = new File("src/Client Local Repository/Chat Media", filename);
             Image img = new Image(String.valueOf(getClass().getResource("/images/Video_Icon.png")));
             ImageView videoIcon = new ImageView(img);
             videoIcon.setFitWidth(100);
@@ -431,7 +543,7 @@ public class InboxController {
             filenameLabel.setPrefHeight(20);
             filenameLabel.setWrapText(true);
             filenameLabel.setAlignment(Pos.CENTER);
-            filenameLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 12; -fx-text-fill: #000000");
+            filenameLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 12; -fx-text-fill: #000000");
 
 
             VBox fileBox = new VBox(videoIcon, filenameLabel, timeBox);
@@ -448,7 +560,7 @@ public class InboxController {
             });
         }
         else {
-            File mediaFile = new File("src/Client Local Repository/ChatMedia", filename);
+            File mediaFile = new File("src/Client Local Repository/Chat Media", filename);
             Image img = new Image(String.valueOf(getClass().getResource("/images/File_Icon.png")));
             ImageView fileIcon = new ImageView(img);
             fileIcon.setFitWidth(100);
@@ -461,7 +573,7 @@ public class InboxController {
             filenameLabel.setPrefHeight(20);
             filenameLabel.setWrapText(true);
             filenameLabel.setAlignment(Pos.CENTER);
-            filenameLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 12; -fx-text-fill: #000000");
+            filenameLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 12; -fx-text-fill: #000000");
 
             VBox fileBox = new VBox(fileIcon, filenameLabel, timeBox);
             
@@ -482,18 +594,18 @@ public class InboxController {
 
 //        if (sender.equals(client.getId())) {
 //            if (!sender.equals(lastSender)) {
-//                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #75baff; -fx-background-radius: 20 0 20 20;");
+//                MessageLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #75baff; -fx-background-radius: 20 0 20 20;");
 //            }
 //            else {
-//                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #75baff; -fx-background-radius: 20 20 20 20;");
+//                MessageLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #75baff; -fx-background-radius: 20 20 20 20;");
 //            }
 //        }
 //        else {
 //            if (!sender.equals(lastSender)) {
-//                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #b6b9c0; -fx-background-radius: 0 20 20 20;");
+//                MessageLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #b6b9c0; -fx-background-radius: 0 20 20 20;");
 //            }
 //            else {
-//                MessageLabel.setStyle("-fx-font-family: Arial Rounded MT Bold; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #b6b9c0; -fx-background-radius: 20 20 20 20;");
+//                MessageLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 8; -fx-background-color: #b6b9c0; -fx-background-radius: 20 20 20 20;");
 //            }
 //        }
 
@@ -508,7 +620,7 @@ public class InboxController {
         }
         else if (sender.equals(receiverId) && !sender.equals(lastSender)) {
             profilePicture.setImage(receiverProfilePicture);
-            senderLabel.setText(client.getReceiverFirstName());
+            senderLabel.setText(receiverFirstName);
             SenderBox.setAlignment(Pos.CENTER_LEFT);
             MediaContainer = new VBox(SenderBox, media);
             lastSender = receiverId;
@@ -550,6 +662,63 @@ public class InboxController {
         });
     }
 
+    public void displayUsers(String prefix) {
+        Vector<ClientInfo> displayableUsers = new Vector<>();
+        
+        if (prefix.equals("###")) {
+            displayableUsers = client.getClients();
+        }
+        else {
+            for (ClientInfo clientInfo : client.getClients()) {
+                String name = clientInfo.getFirstName().toLowerCase() + clientInfo.getLastName().toLowerCase();
+                if (name.startsWith(prefix)) {
+                    displayableUsers.add(clientInfo);
+                }
+            }
+        }
+
+        InboxContainer.getChildren().clear();
+
+        char lastChar = '*';
+        
+        for (ClientInfo clientInfo : displayableUsers) {
+            Image profilePicture = new Image(new ByteArrayInputStream(clientInfo.getProfilePicture()));
+            ImageView profilePictureView = new ImageView(profilePicture);
+            profilePictureView.setFitWidth(50);
+            profilePictureView.setFitHeight(50);
+            Circle clip = new Circle(25, 25, 25);
+            profilePictureView.setClip(clip);
+            Label usernameLabel = new Label(clientInfo.getFirstName() + " " + clientInfo.getLastName());
+            usernameLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #000000");
+            usernameLabel.setPrefHeight(50);
+            HBox userInfo = new HBox(profilePictureView, usernameLabel);
+            userInfo.setSpacing(20);
+            userInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+
+            userInfo.setOnMouseEntered(event -> {
+                userInfo.setStyle("-fx-background-color: #ebf3fa; -fx-background-radius: 10; -fx-padding: 5px;");
+            });
+
+            userInfo.setOnMouseExited(event -> {
+                userInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+            });
+
+            userInfo.setOnMouseClicked(event -> {
+                startChat(clientInfo.getId());
+            });
+
+            Label firstLetterLabel = new Label(String.valueOf(clientInfo.getFirstName().charAt(0)));
+            firstLetterLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-weight: bold; -fx-font-size: 20; -fx-text-fill: #000000; -fx-padding: 8px;");
+
+            if (clientInfo.getFirstName().charAt(0) != lastChar) {
+                InboxContainer.getChildren().add(firstLetterLabel);
+                lastChar = clientInfo.getFirstName().charAt(0);
+            }
+
+            InboxContainer.getChildren().add(userInfo);
+        }
+    }
+
     public void onSendButtonClicked(ActionEvent actionEvent) {
         sendMessage();
     }
@@ -566,6 +735,7 @@ public class InboxController {
             System.out.println("File selected: " + filePath);
             Message.setText(filePath);
             Message.setEditable(false);
+            Platform.runLater(() -> Message.requestFocus());
         }
     }
 
@@ -605,6 +775,7 @@ public class InboxController {
                 filePath = null;
                 Message.clear();
                 Message.setEditable(true);
+                Message.requestFocus();
             }
 
             if ((message == null || message.isEmpty()) && filename == null) {

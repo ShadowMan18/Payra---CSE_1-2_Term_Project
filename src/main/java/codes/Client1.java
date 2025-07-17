@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -17,6 +18,19 @@ public class Client1 extends Application{
 
     public static void main(String[] args) {
         client = new Client();
+
+        File chatMediaDirectory = new File("src/Client Local Repository/Chat Media");
+
+        if(!chatMediaDirectory.exists()) {
+            chatMediaDirectory.mkdir();
+        }
+
+        File feedMediaDirectory = new File("src/Client Local Repository/Feed Media");
+
+        if(!feedMediaDirectory.exists()) {
+            feedMediaDirectory.mkdir();
+        }
+
         launch();
     }
 }

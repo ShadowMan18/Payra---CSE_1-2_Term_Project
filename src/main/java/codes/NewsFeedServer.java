@@ -106,7 +106,7 @@ public class NewsFeedServer implements Runnable {
                 input.close();
             }
 
-            Server.port[port - 1025] = 0;
+            Server.port.set(port - 1025, 0);
             System.out.println("Shut down NewsFeedServer at port " + port);
         } catch (IOException e) {
             e.printStackTrace();

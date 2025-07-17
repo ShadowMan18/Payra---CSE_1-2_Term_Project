@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.sql.*;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
@@ -130,7 +131,9 @@ public class ServerThread implements Runnable{
                 }
 
                 System.out.println(this.id + " signed up.");
-                System.out.println(Server.clients.size());
+                for (String s : Server.clients) {
+                    System.out.println(s);
+                }
             }
 
             if (fromClient instanceof byte[] imageBytes) {
@@ -160,10 +163,13 @@ public class ServerThread implements Runnable{
                 }
 
                 String filename = id + "_ProfilePicture." + format;
-                File dir = new File("src/Media Database");
-                if (!dir.exists()) dir.mkdir();
+                File mediaDirectory = new File("src/Media Database");
 
-                File file = new File(dir, filename);
+                if (!mediaDirectory.exists()) {
+                    mediaDirectory.mkdir();
+                }
+
+                File file = new File(mediaDirectory, filename);
                 try {
                     ImageIO.write(bufferedImage, format, file);
                 } catch (IOException e) {
@@ -193,25 +199,10 @@ public class ServerThread implements Runnable{
                 String id = string.substring("get_info:".length());
                 this.id = id;
 
-                try (PreparedStatement getUserInfo = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?")) {
-                    getUserInfo.setString(1, id);
-
-                    try (ResultSet queryResult = getUserInfo.executeQuery()) {
-                        if (queryResult.next()) {
-                            String firstName = queryResult.getString("First_Name");
-                            String lastName = queryResult.getString("Last_Name");
-                            String password = queryResult.getString("Password");
-                            String recoveryQuestion = queryResult.getString("Question");
-                            String recoveryAnswer = queryResult.getString("Answer");
-                            String imageFile = queryResult.getString("Profile_Picture");
-                            File file = new File("src/Media Database", imageFile);
-                            byte[] profilePictureBytes = Files.readAllBytes(file.toPath());
-
-                            output.writeObject(new ClientInfo(firstName, lastName, id, password, recoveryQuestion, recoveryAnswer, profilePictureBytes));
-                            output.flush();
-                        }
-                    }
-                } catch (SQLException | IOException e) {
+                try {
+                    output.writeObject(getClientInfo(id));
+                    output.flush();
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -229,7 +220,9 @@ public class ServerThread implements Runnable{
                 }
 
                 System.out.println(this.id + " logged in");
-                System.out.println(Server.currentClients.size());
+                for (String s : Server.clients) {
+                    System.out.println(s);
+                }
             }
 
             // Updating client's information
@@ -256,6 +249,29 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            // Sending all clients' information to the user
+
+            if (fromClient instanceof String string && string.equals("load_clients")) {
+                Vector<ClientInfo> clientInfo = new Vector<>();
+
+                for (String id : Server.clients) {
+                    clientInfo.add(getClientInfo(id));
+                }
+
+                System.out.println("Loading clients");
+
+                for (ClientInfo c : clientInfo) {
+                    System.out.println(c.getFirstName());
+                }
+
+                try {
+                    output.writeObject(clientInfo);
+                    output.flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Enabling a client to chat with another client
 
             if (fromClient instanceof String string && string.startsWith("chat_with:")) {
@@ -266,9 +282,9 @@ public class ServerThread implements Runnable{
                 int port = 0;
 
                 for (int i = 0; i < 45000; i++) {
-                    if (Server.port[i] == 0) {
+                    if (Server.port.get(i) == 0) {
                         port = i + 1025;
-                        Server.port[i] = 1;
+                        Server.port.set(i, 1);
                         break;
                     }
                 }
@@ -300,6 +316,14 @@ public class ServerThread implements Runnable{
             if (fromClient instanceof String string && string.equals("close_chat")) {
                 if (chatServer != null) {
                     chatServer.shutdown();
+
+                    try {
+                        output.writeObject("chat_closed");
+                        output.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     System.out.println("Shut down chat server for client " + id);
                 }
             }
@@ -309,9 +333,9 @@ public class ServerThread implements Runnable{
                 int port = 0;
 
                 for (int i = 0; i < 45000; i++) {
-                    if (Server.port[i] == 0) {
+                    if (Server.port.get(i) == 0) {
                         port = i + 1025;
-                        Server.port[i] = 1;
+                        Server.port.set(i, 1);
                         break;
                     }
                 }
@@ -340,4 +364,33 @@ public class ServerThread implements Runnable{
         }
     }
 
+    public ClientInfo getClientInfo(String id) {
+        String firstName = null;
+        String lastName = null;
+        String password = null;
+        String recoveryQuestion = null;
+        String recoveryAnswer = null;
+        byte[] profilePictureBytes = null;
+
+        try (PreparedStatement getUserInfo = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?")) {
+            getUserInfo.setString(1, id);
+
+            try (ResultSet queryResult = getUserInfo.executeQuery()) {
+                if (queryResult.next()) {
+                    firstName = queryResult.getString("First_Name");
+                    lastName = queryResult.getString("Last_Name");
+                    password = queryResult.getString("Password");
+                    recoveryQuestion = queryResult.getString("Question");
+                    recoveryAnswer = queryResult.getString("Answer");
+                    String imageFile = queryResult.getString("Profile_Picture");
+                    File file = new File("src/Media Database", imageFile);
+                    profilePictureBytes = Files.readAllBytes(file.toPath());
+                }
+            }
+        } catch (SQLException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ClientInfo(firstName, lastName, id, password, recoveryQuestion, recoveryAnswer, profilePictureBytes);
+    }
 }
