@@ -135,6 +135,26 @@ class ChatServer implements Runnable {
                 } catch (SQLException e) {
                     break;
                 }
+
+                try (PreparedStatement addChat = databaseConnection.prepareStatement("DELETE FROM ChatNotification WHERE Sender = ? AND Receiver = ? AND TYPE = ?")) {
+                    addChat.setString(1, senderId);
+                    addChat.setString(2, receiverId);
+                    addChat.setString(3, "message");
+
+                    addChat.executeUpdate();
+                } catch (SQLException e) {
+                    break;
+                }
+
+                try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO ChatNotification (Sender, Receiver, Type) VALUES (?, ?, ?)")) {
+                    addChat.setString(1, senderId);
+                    addChat.setString(2, receiverId);
+                    addChat.setString(3, "message");
+
+                    addChat.executeUpdate();
+                } catch (SQLException e) {
+                    break;
+                }
             }
         }).start();
 

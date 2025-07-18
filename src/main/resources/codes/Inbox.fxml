@@ -28,16 +28,17 @@
       <Button layoutX="21.0" layoutY="350.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0" prefHeight="48.0" prefWidth="48.0" text="Button" textFill="TRANSPARENT" />
       <Button layoutX="23.0" layoutY="460.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0" prefHeight="49.0" prefWidth="44.0" text="Button" textFill="TRANSPARENT" />
       <TextField fx:id="SearchBar" layoutX="141.0" layoutY="120.0" onKeyTyped="#searchUser" prefHeight="46.0" prefWidth="323.0" promptText="Search" style="-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold" />
+      <Label fx:id="noUserFoundLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="128.0" layoutY="182.0" prefHeight="30.0" prefWidth="385.0" text="No user found" textAlignment="CENTER" textFill="#c7c7c7" style="-fx-font-family: Open Sans; -fx-font-weight: bold; -fx-font-size: 15"/>
       <ImageView fx:id="ChatBox" fitHeight="900.0" fitWidth="1064.0" layoutX="536.0" pickOnBounds="true" preserveRatio="true" />
       <Button layoutX="1512.0" layoutY="816.0" mnemonicParsing="false" onAction="#onSendButtonClicked" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
       <Button layoutX="586.0" layoutY="816.0" mnemonicParsing="false" onAction="#onAttachButtonClicked" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
       <Button layoutX="1435.0" layoutY="31.0" mnemonicParsing="false" onAction="#onAudioCallButtonClicked" opacity="0.0" prefHeight="46.0" prefWidth="46.0" style="-fx-background-radius: 23px;" text="Button" textFill="TRANSPARENT" />
       <Button layoutX="1503.0" layoutY="31.0" mnemonicParsing="false" onAction="#onVideoCallButtonClicked" opacity="0.0" prefHeight="46.0" prefWidth="46.0" style="-fx-background-radius: 23px;" text="Button" textFill="TRANSPARENT" />
-      <Label fx:id="ReceiverName" layoutX="656.0" layoutY="29.0" prefHeight="50.0" prefWidth="550.0" style="-fx-font-family: Open Sans; -fx-font-size: 25; -fx-font-weight: bold" textAlignment="CENTER" />
+      <Label fx:id="ReceiverName" layoutX="656.0" layoutY="29.0" prefHeight="50.0" prefWidth="550.0" style="-fx-font-family: Calibre; -fx-font-size: 20; -fx-font-weight: bold"/>
       <TextField fx:id="Message" layoutX="726.0" layoutY="811.0" onKeyPressed="#onEnterKeyPressed" prefHeight="46.0" prefWidth="751.0" promptText="Message" style="-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold;" />
       <ImageView fx:id="receiverProfilePictureView" fitHeight="50.0" fitWidth="50.0" layoutX="591.0" layoutY="29.0" pickOnBounds="true" preserveRatio="true" />
       <Button layoutX="653.0" layoutY="816.0" mnemonicParsing="false" onAction="#onEmojiButtonClick" opacity="0.0" prefHeight="36.0" prefWidth="36.0" style="-fx-background-radius: 18px;" text="Button" textFill="TRANSPARENT" />
-      <Rectangle fx:id="emojiContainer" arcHeight="37.0" arcWidth="37.0" fill="#c9d8f2" height="250.0" layoutX="552.0" layoutY="530.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="295.0" />
+      <Rectangle fx:id="emojiContainer" arcHeight="28.0" arcWidth="28.0" fill="#c9d8f2" height="250.0" layoutX="552.0" layoutY="530.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="295.0" />
       <ScrollPane fx:id="MessageScroller" fitToWidth="true" hbarPolicy="NEVER" layoutX="600.0" layoutY="97.0" prefHeight="682.0" prefWidth="936.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
          <content>
             <VBox fx:id="MessageContainer" spacing="3.0" styleClass="vbox" />

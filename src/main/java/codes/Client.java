@@ -9,10 +9,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Vector;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
@@ -59,9 +61,8 @@ public class Client {
     private ObjectInputStream chatInput;
     private Vector<ClientInfo> clients;
     private String receiverId;
-    private String receiverName;
-    private String receiverFirstName;
     private boolean chatStatus;
+    public static Map<String, String> chatNotification = new ConcurrentHashMap<>();
 
     // NewsFeed server network
 
@@ -259,8 +260,6 @@ public class Client {
                     String[] connectionInfo = string.substring("connect_to:".length()).split(",");
                     int port = Integer.parseInt(connectionInfo[0]);
                     this.receiverId = connectionInfo[1];
-                    this.receiverName = connectionInfo[2];
-                    this.receiverFirstName = connectionInfo[3];
 
                     connectToChatServer(port);
 
@@ -409,14 +408,6 @@ public class Client {
 
     public String getReceiverId() {
         return receiverId;
-    }
-
-    public String getReceiverName() {
-        return receiverName;
-    }
-
-    public String getReceiverFirstName() {
-        return receiverFirstName;
     }
 
     public boolean getChatStatus() {

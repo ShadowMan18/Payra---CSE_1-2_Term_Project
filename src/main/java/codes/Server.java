@@ -60,23 +60,34 @@ public class Server {
                     )""");
 
             statement.execute("""
-            CREATE TABLE IF NOT EXISTS Posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            Author TEXT,
-            Content TEXT,
-            Media TEXT,
-            Timestamp DATETIME DEFAULT (datetime('now', 'localtime')))
-            """);
+                    CREATE TABLE IF NOT EXISTS ChatNotification (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Sender TEXT,
+                    Receiver TEXT,
+                    Type TEXT,
+                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
+                    )""");
 
-            try {
-                statement.execute("ALTER TABLE Posts ADD COLUMN FileName TEXT");
-            } catch (SQLException ignored) {}
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS Posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Author TEXT,
+                    Content TEXT,
+                    Media TEXT,
+                    FileName TEXT,
+                    FileData BLOB,
+                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime')))
+                    """);
 
-            try {
-                statement.execute("ALTER TABLE Posts ADD COLUMN FileData BLOB");
-            } catch (SQLException ignored) {
-                ignored.printStackTrace();
-            }
+//            try {
+//                statement.execute("ALTER TABLE Posts ADD COLUMN ");
+//            } catch (SQLException ignored) {}
+//
+//            try {
+//                statement.execute("ALTER TABLE Posts ADD COLUMN ");
+//            } catch (SQLException ignored) {
+//                ignored.printStackTrace();
+//            }
 
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS Comments (

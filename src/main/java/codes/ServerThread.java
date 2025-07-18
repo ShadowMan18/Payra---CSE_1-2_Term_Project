@@ -306,7 +306,7 @@ public class ServerThread implements Runnable{
                 }
 
                 try {
-                    output.writeObject("connect_to:" + port + "," + receiverId + "," + receiverName + "," + receiverFirstName);
+                    output.writeObject("connect_to:" + port + "," + receiverId);
                     output.flush();
                 } catch (IOException e) {
                     throw new RuntimeException(e);

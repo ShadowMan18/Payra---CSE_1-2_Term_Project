@@ -45,6 +45,8 @@ public class InboxController {
     @FXML
     public TextField SearchBar;
     @FXML
+    public Label noUserFoundLabel;
+    @FXML
     public ImageView ChatBox;
     @FXML
     public ImageView receiverProfilePictureView;
@@ -114,6 +116,7 @@ public class InboxController {
         userProfilePictureView.setClip(clip);
 
         client.setChatStatus(false);
+        noUserFoundLabel.setOpacity(0);
         Message.setOpacity(0);
         Message.setDisable(true);
         InboxLayout.setPrefWidth(Screen.SCREENWIDTH);
@@ -130,9 +133,7 @@ public class InboxController {
             MessageScroller.setVvalue(1.0);
         });
 
-        emojiContainer.setOpacity(0);
-        emojiScroller.setDisable(true);
-        isEmojiPalletOpen = false;
+        disableEmojiPallet();
 
         displayUsers("###");
         for (ClientInfo c : client.getClients()) {
@@ -179,15 +180,10 @@ public class InboxController {
     @FXML
     public void onEmojiButtonClick(ActionEvent actionEvent) {
         if (isEmojiPalletOpen) {
-            emojiContainer.setOpacity(0);
-            emojiScroller.setDisable(true);
-            emojiPallet.getChildren().clear();
-            isEmojiPalletOpen = false;
+            disableEmojiPallet();
         }
         else {
-            emojiContainer.setOpacity(1);
-            emojiScroller.setDisable(false);
-            isEmojiPalletOpen = true;
+            enableEmojiPallet();
 
             for (int i = 0; i < 14; i++) {
                 HBox emojiRow = new HBox();
@@ -202,6 +198,14 @@ public class InboxController {
                     emoji.setFitWidth(35);
                     emoji.setFitHeight(35);
 
+                    emoji.setOnMouseEntered(event -> {
+                        emoji.setStyle("-fx-background-color: gray; -fx-background-radius: 5");
+                    });
+
+                    emoji.setOnMouseExited(event -> {
+                        emoji.setStyle("-fx-background-color: transparent;");
+                    });
+
                     emoji.setOnMouseClicked(event -> {
                         sendEmoji(emojiCode);
                     });
@@ -211,6 +215,19 @@ public class InboxController {
                 emojiPallet.getChildren().add(emojiRow);
             }
         }
+    }
+
+    public void enableEmojiPallet() {
+        emojiContainer.setOpacity(1);
+        emojiScroller.setDisable(false);
+        isEmojiPalletOpen = true;
+    }
+
+    public void disableEmojiPallet() {
+        emojiContainer.setOpacity(0);
+        emojiScroller.setDisable(true);
+        emojiPallet.getChildren().clear();
+        isEmojiPalletOpen = false;
     }
 
     public void resetChat() {
@@ -249,10 +266,7 @@ public class InboxController {
         SearchBar.clear();
         displayUsers("###");
 
-        emojiContainer.setOpacity(0);
-        emojiScroller.setDisable(true);
-        emojiPallet.getChildren().clear();
-        isEmojiPalletOpen = false;
+        disableEmojiPallet();
 
         resetChat();
 
@@ -723,15 +737,15 @@ public class InboxController {
         for (ClientInfo clientInfo : displayableUsers) {
             Image profilePicture = new Image(new ByteArrayInputStream(clientInfo.getProfilePicture()));
             ImageView profilePictureView = new ImageView(profilePicture);
-            profilePictureView.setFitWidth(50);
-            profilePictureView.setFitHeight(50);
-            Circle clip = new Circle(25, 25, 25);
+            profilePictureView.setFitWidth(40);
+            profilePictureView.setFitHeight(40);
+            Circle clip = new Circle(20, 20, 20);
             profilePictureView.setClip(clip);
             Label usernameLabel = new Label(clientInfo.getFirstName() + " " + clientInfo.getLastName());
-            usernameLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #000000");
-            usernameLabel.setPrefHeight(50);
+            usernameLabel.setStyle("-fx-font-family: Open Sans; -fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #000000");
+            usernameLabel.setPrefHeight(40);
             HBox userInfo = new HBox(profilePictureView, usernameLabel);
-            userInfo.setSpacing(20);
+            userInfo.setSpacing(15);
             userInfo.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 5px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0.2, 0, 2);");
 
             userInfo.setOnMouseEntered(event -> {
@@ -747,7 +761,7 @@ public class InboxController {
             });
 
             Label firstLetterLabel = new Label(String.valueOf(clientInfo.getFirstName().charAt(0)));
-            firstLetterLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-weight: bold; -fx-font-size: 20; -fx-text-fill: #000000; -fx-padding: 8px;");
+            firstLetterLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #000000; -fx-padding: 8px;");
 
             if (clientInfo.getFirstName().charAt(0) != lastChar) {
                 InboxContainer.getChildren().add(firstLetterLabel);
@@ -755,6 +769,13 @@ public class InboxController {
             }
 
             InboxContainer.getChildren().add(userInfo);
+        }
+
+        if (displayableUsers.isEmpty()) {
+            noUserFoundLabel.setOpacity(1);
+        }
+        else {
+            noUserFoundLabel.setOpacity(0);
         }
     }
 
