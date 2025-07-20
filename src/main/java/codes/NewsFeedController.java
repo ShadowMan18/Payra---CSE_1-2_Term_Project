@@ -59,9 +59,9 @@ public class NewsFeedController {
         this.client = client;
         this.stage = stage;
 
-        userProfilePictureView.setImage(client.getProfilePicture());
-        Circle clip = new Circle(35, 35, 35);
-        userProfilePictureView.setClip(clip);
+//        userProfilePictureView.setImage(client.getProfilePicture());
+//        Circle clip = new Circle(35, 35, 35);
+//        userProfilePictureView.setClip(clip);
 
         NewsFeedLayout.setPrefWidth(Screen.SCREENWIDTH);
         NewsFeedLayout.setPrefHeight(Screen.SCREENHEIGHT);

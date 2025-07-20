@@ -91,8 +91,7 @@ class ChatServer implements Runnable {
                 System.out.println("received:" + message.getSender() + " " + message.getMessage() + " " + message.getFilename());
 
                 if (message != null && message.getFilename() != null) {
-
-
+                    
                     if (message.getFilename().endsWith("emoji.png")) {
                         filename = message.getFilename();
                     }
@@ -136,22 +135,31 @@ class ChatServer implements Runnable {
                     break;
                 }
 
-                try (PreparedStatement addChat = databaseConnection.prepareStatement("DELETE FROM ChatNotification WHERE Sender = ? AND Receiver = ? AND TYPE = ?")) {
-                    addChat.setString(1, senderId);
-                    addChat.setString(2, receiverId);
-                    addChat.setString(3, "message");
+                try (PreparedStatement deleteNotification = databaseConnection.prepareStatement("DELETE FROM Notification WHERE Sender = ? AND Receiver = ? AND TYPE = ?")) {
+                    deleteNotification.setString(1, senderId);
+                    deleteNotification.setString(2, receiverId);
+                    deleteNotification.setString(3, "message");
 
-                    addChat.executeUpdate();
+                    deleteNotification.executeUpdate();
                 } catch (SQLException e) {
                     break;
                 }
 
-                try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO ChatNotification (Sender, Receiver, Type) VALUES (?, ?, ?)")) {
-                    addChat.setString(1, senderId);
-                    addChat.setString(2, receiverId);
-                    addChat.setString(3, "message");
+                try (PreparedStatement addNotification = databaseConnection.prepareStatement("INSERT INTO Notification (Sender, Receiver, Type, Status) VALUES (?, ?, ?, ?)")) {
+                    addNotification.setString(1, senderId);
+                    addNotification.setString(2, receiverId);
+                    addNotification.setString(3, "message");
+                    addNotification.setString(4, "unseen");
 
-                    addChat.executeUpdate();
+                    if (Server.currentClients.get(receiverId) != null) {
+                        if (Server.currentClients.get(receiverId).getChatServer() != null) {
+                            if (Server.currentClients.get(receiverId).getChatServer().getReceiverId().equals(senderId)) {
+                                addNotification.setString(4, "seen");
+                            }
+                        }
+                    }
+
+                    addNotification.executeUpdate();
                 } catch (SQLException e) {
                     break;
                 }
@@ -226,5 +234,7 @@ class ChatServer implements Runnable {
             e.printStackTrace();
         }
     }
+
+    public String getReceiverId() { return receiverId; }
 }
 

@@ -60,11 +60,12 @@ public class Server {
                     )""");
 
             statement.execute("""
-                    CREATE TABLE IF NOT EXISTS ChatNotification (
+                    CREATE TABLE IF NOT EXISTS Notification (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Sender TEXT,
                     Receiver TEXT,
                     Type TEXT,
+                    Status TEXT,
                     Timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
                     )""");
 
@@ -78,16 +79,6 @@ public class Server {
                     FileData BLOB,
                     Timestamp DATETIME DEFAULT (datetime('now', 'localtime')))
                     """);
-
-//            try {
-//                statement.execute("ALTER TABLE Posts ADD COLUMN ");
-//            } catch (SQLException ignored) {}
-//
-//            try {
-//                statement.execute("ALTER TABLE Posts ADD COLUMN ");
-//            } catch (SQLException ignored) {
-//                ignored.printStackTrace();
-//            }
 
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS Comments (
@@ -127,7 +118,7 @@ public class Server {
 
 //        // Delete row (for debugging)
 //
-//        try (PreparedStatement deleteRow = databaseConnection.prepareStatement("DELETE FROM Users WHERE UserId = 'rakib1'")) {
+//        try (PreparedStatement deleteRow = databaseConnection.prepareStatement("DELETE FROM Users WHERE UserId = 'amartya'")) {
 //            deleteRow.executeUpdate();
 //        } catch (SQLException e) {
 //            throw new RuntimeException(e);

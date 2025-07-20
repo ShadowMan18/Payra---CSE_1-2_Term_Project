@@ -59,6 +59,17 @@ public class ServerThread implements Runnable{
         serverThread.start();
     }
 
+    public synchronized void sendToClient(Object obj) {
+        try {
+            output.writeObject(obj);
+            output.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public ChatServer getChatServer() { return chatServer; }
+
     @Override
     public void run() {
         // Receiving instructions from the client and sending feedbacks
@@ -93,42 +104,45 @@ public class ServerThread implements Runnable{
                 String id = string.substring("check:".length());
                 this.id = id;
                 System.out.println(id);
-
-                try {
-                    System.out.println(Server.clients.contains(id));
-                    output.writeObject(Server.clients.contains(id));
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                System.out.println(Server.clients.contains(id));
+                sendToClient(Server.clients.contains(id));
             }
 
             // Signing up a client
 
-            if (fromClient instanceof String string && string.startsWith("signup:")) {
-                String[] clientInfo = string.substring("signup:".length()).split(",");
-
-                this.id = clientInfo[0];
+            if (fromClient instanceof ClientInfo clientInfo) {
+                this.id = clientInfo.getId();
                 Server.clients.add(id);
 
-                try (PreparedStatement addUser = databaseConnection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer) VALUES (?, ?, ?, ?, ?, ?)")) {
-                    addUser.setString(1, clientInfo[0]);
-                    addUser.setString(2, clientInfo[2]);
-                    addUser.setString(3, clientInfo[3]);
-                    addUser.setString(4, clientInfo[1]);
-                    addUser.setString(5, clientInfo[4]);
-                    addUser.setString(6, clientInfo[5]);
+                try (PreparedStatement addUser = databaseConnection.prepareStatement("INSERT INTO Users (UserId, First_Name, Last_Name, Password, Question, Answer, Profile_Picture) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                    addUser.setString(1, clientInfo.getId());
+                    addUser.setString(2, clientInfo.getFirstName());
+                    addUser.setString(3, clientInfo.getLastName());
+                    addUser.setString(4, clientInfo.getPassword());
+                    addUser.setString(5, clientInfo.getRecoveryQuestion());
+                    addUser.setString(6, clientInfo.getRecoveryAnswer());
+                    addUser.setString(7, "DefaultProfilePicture.png");
 
                     addUser.executeUpdate();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
 
+                File mediaDirectory = new File("src/Media Database");
+
+                if (!mediaDirectory.exists()) {
+                    mediaDirectory.mkdir();
+                }
+
+                File mediaFile = new File(mediaDirectory, "DefaultProfilePicture.png");
                 try {
-                    output.writeObject("signup_successful");
+                    FileOutputStream fos = new FileOutputStream(mediaFile);
+                    fos.write(clientInfo.getProfilePicture());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+
+                sendToClient("signup_successful");
 
                 System.out.println(this.id + " signed up.");
                 for (String s : Server.clients) {
@@ -185,12 +199,7 @@ public class ServerThread implements Runnable{
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    output.writeObject("profile_picture_set");
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient("profile_picture_set");
             }
 
             // Getting client's information
@@ -199,12 +208,7 @@ public class ServerThread implements Runnable{
                 String id = string.substring("get_info:".length());
                 this.id = id;
 
-                try {
-                    output.writeObject(getClientInfo(id));
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient(getClientInfo(id));
             }
 
             // Logging in a client
@@ -213,11 +217,32 @@ public class ServerThread implements Runnable{
                 this.id = string.substring("login:".length());
                 Server.currentClients.put(id, this);
 
-                try {
-                    output.writeObject("login_successful");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient("login_successful");
+
+                // Starting notification thread
+
+                new Thread (() -> {
+                    int lastNotifId = 0;
+
+                    while (true) {
+                        try (PreparedStatement getNotification = databaseConnection.prepareStatement("SELECT * FROM Notification WHERE Receiver = ? AND id > ? ORDER BY id ASC")) {
+                            getNotification.setString(1, id);
+                            getNotification.setInt(2, lastNotifId);
+
+                            try (ResultSet notifications = getNotification.executeQuery()) {
+                                while (notifications.next()) {
+                                    sendToClient("notif:" + notifications.getString("Sender") + "," + notifications.getString("Type") + "," + notifications.getString("Status"));
+                                    lastNotifId = notifications.getInt("id");
+                                }
+                            }
+
+                            Thread.sleep(1000);
+                        } catch (SQLException | InterruptedException e) {
+                            e.printStackTrace();
+                            break;
+                        }
+                    }
+                }).start();
 
                 System.out.println(this.id + " logged in");
                 for (String s : Server.clients) {
@@ -241,12 +266,7 @@ public class ServerThread implements Runnable{
                     }
                 }
 
-                try {
-                    output.writeObject("updated");
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient("updated");
             }
 
             // Sending all clients' information to the user
@@ -264,12 +284,7 @@ public class ServerThread implements Runnable{
                     System.out.println(c.getFirstName());
                 }
 
-                try {
-                    output.writeObject(clientInfo);
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient(clientInfo);
             }
 
             // Enabling a client to chat with another client
@@ -284,8 +299,11 @@ public class ServerThread implements Runnable{
                 for (int i = 0; i < 45000; i++) {
                     if (Server.port.get(i) == 0) {
                         port = i + 1025;
-                        Server.port.set(i, 1);
-                        break;
+                        try (ServerSocket serverSocket = new ServerSocket(port)) {
+                            serverSocket.setReuseAddress(true);
+                            Server.port.set(i, 1);
+                            break;
+                        } catch (IOException ignored) {}
                     }
                 }
 
@@ -305,26 +323,29 @@ public class ServerThread implements Runnable{
                     throw new RuntimeException(e);
                 }
 
-                try {
-                    output.writeObject("connect_to:" + port + "," + receiverId);
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient("connect_to:" + port + "," + receiverId);
             }
 
             if (fromClient instanceof String string && string.equals("close_chat")) {
                 if (chatServer != null) {
                     chatServer.shutdown();
+                }
+                sendToClient("chat_closed");
+                System.out.println("Shut down chat server for client " + id);
+            }
 
-                    try {
-                        output.writeObject("chat_closed");
-                        output.flush();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+            if (fromClient instanceof String string && string.startsWith("seen:")) {
+                String[] notificationInfo = string.substring("seen:".length()).split(",");
+                String sender = notificationInfo[0];
+                String receiver = notificationInfo[1];
 
-                    System.out.println("Shut down chat server for client " + id);
+                try (PreparedStatement updateNotificationStatus = databaseConnection.prepareStatement("UPDATE Notification SET Status = 'seen' WHERE Sender = ? AND Receiver = ?")) {
+                    updateNotificationStatus.setString(1, sender);
+                    updateNotificationStatus.setString(2, receiver);
+
+                    updateNotificationStatus.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
@@ -335,24 +356,18 @@ public class ServerThread implements Runnable{
                 for (int i = 0; i < 45000; i++) {
                     if (Server.port.get(i) == 0) {
                         port = i + 1025;
-                        Server.port.set(i, 1);
-                        break;
+                        try (ServerSocket serverSocket = new ServerSocket(port)) {
+                            serverSocket.setReuseAddress(true);
+                            Server.port.set(i, 1);
+                            break;
+                        } catch (IOException ignored) {}
                     }
                 }
 
                 CountDownLatch fLatch = new CountDownLatch(1);
                 feedServer = new NewsFeedServer(port, fLatch);
                 Server.feedServers.put(id, feedServer);
-
-                try {
-                    fLatch.await();
-                    output.writeObject("NewsFeed connection:" + port);
-                    output.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                sendToClient("NewsFeed connection:" + port);
             }
 
             if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {

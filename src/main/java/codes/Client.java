@@ -2,6 +2,7 @@ package codes;
 
 import javafx.application.Platform;
 import javafx.scene.image.Image;
+import javafx.util.Pair;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Vector;
 import java.sql.PreparedStatement;
@@ -31,7 +33,6 @@ public class Client {
     private Image profilePicture;
     private boolean registered;
     private boolean active;
-    private boolean profilePictureSet;
     private CountDownLatch latch;
 
     // Client pages
@@ -62,7 +63,8 @@ public class Client {
     private Vector<ClientInfo> clients;
     private String receiverId;
     private boolean chatStatus;
-    public static Map<String, String> chatNotification = new ConcurrentHashMap<>();
+    private boolean newNotification;
+    public Map<String, Pair<String, String>> notification = new LinkedHashMap<>();
 
     // NewsFeed server network
 
@@ -116,9 +118,9 @@ public class Client {
 
     public Client() {
         this.registered = false;
-        this.profilePictureSet = false;
         this.active = false;
         this.receiverId = null;
+        this.newNotification = false;
         this.connectedToNewsFeed=false;
         this.introPage = new IntroPage();
         this.loginPage = new LoginPage();
@@ -205,8 +207,6 @@ public class Client {
                     }
                 }
                 else if (fromServer instanceof String string && string.equals("profile_picture_set")) {
-                    this.profilePictureSet = true;
-
                     if (latch != null) {
                         latch.countDown();
                         latch = null;
@@ -274,6 +274,26 @@ public class Client {
                     if (latch != null) {
                         latch.countDown();
                         latch = null;
+                    }
+                }
+                else if (fromServer instanceof String string && string.startsWith("notif:")) {
+                    String[] notificationInfo = string.substring("notif:".length()).split(",");
+                    String sender = notificationInfo[0];
+                    String type = notificationInfo[1];
+                    String status = notificationInfo[2];
+
+                    if (notification.get(sender) != null) {
+                        notification.remove(sender);
+                    }
+
+                    notification.put(sender, new Pair(type, status));
+
+                    if (status.equals("unseen")) {
+                        newNotification = true;
+                    }
+
+                    if (type.equals("message")) {
+                        System.out.println(sender + " sent a " + notification.get(sender));
                     }
                 }
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
@@ -404,8 +424,6 @@ public class Client {
         return active;
     }
 
-    public boolean isProfilePictureSet() { return profilePictureSet; }
-
     public String getReceiverId() {
         return receiverId;
     }
@@ -482,6 +500,7 @@ public class Client {
         return clients;
     }
 
+    public boolean hasNewNotification() { return newNotification; }
     // Setters
 
     public void setFirstName(String firstName) {
@@ -515,6 +534,8 @@ public class Client {
     public void setProfilePicture(String url) { this.profilePicture = new Image(String.valueOf(getClass().getResource(url))); }
 
     public void setChatStatus(boolean status) { chatStatus = status; }
+
+    public void resetNotificationStatus() { newNotification = false; }
 
     public void setLatch(CountDownLatch latch) {
         this.latch = latch;

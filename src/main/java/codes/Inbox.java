@@ -29,8 +29,6 @@ public class Inbox {
         stage.setTitle("Inbox");
         stage.setScene(scene);
 
-        inboxController.User.setText(client.getEmail());
-
         stage.setOnCloseRequest(event ->{
             Platform.exit();
             System.exit(0);

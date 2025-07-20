@@ -11,7 +11,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.CountDownLatch;
 
 public class SignupPageController {
@@ -189,7 +191,11 @@ public class SignupPageController {
                 latch = new CountDownLatch(1);
                 client.setLatch(latch);
 
-                client.getServerOutput().writeObject("signup:" + client + "," + question + "," + answer);
+                File image = new File("src/main/resources/images/DefaultProfilePicture.png");
+                byte[] imageBytes;
+                imageBytes = Files.readAllBytes(image.toPath());
+
+                client.getServerOutput().writeObject(new ClientInfo(firstName, lastName, email.substring(0, email.length() - "@gmail.com".length()), password1, question, answer, imageBytes));
                 client.getServerOutput().flush();
 
                 latch.await();

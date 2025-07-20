@@ -1,8 +1,10 @@
 package codes;
 
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -10,15 +12,21 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.BoxBlur;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import javafx.util.Pair;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
@@ -38,8 +46,6 @@ public class InboxController {
     public StackPane InboxLayout;
     @FXML
     public Group InboxView;
-    @FXML
-    public Label User;
     @FXML
     public ImageView userProfilePictureView;
     @FXML
@@ -68,6 +74,8 @@ public class InboxController {
     public VBox emojiPallet;
     @FXML
     public Rectangle emojiContainer;
+    @FXML
+    public Circle notificationDot;
 
 
     private Client client;
@@ -133,43 +141,190 @@ public class InboxController {
             MessageScroller.setVvalue(1.0);
         });
 
-        disableEmojiPallet();
-
         displayUsers("###");
         for (ClientInfo c : client.getClients()) {
             System.out.println(c.getFirstName());
         }
+
+        new Thread(() -> {
+            while (true) {
+                if (client.hasNewNotification()) {
+                    notificationDot.setOpacity(1);
+                }
+                else {
+                    notificationDot.setOpacity(0);
+                }
+            }
+        }).start();
     }
 
     @FXML
-    public void onNewsFeedButtonClicked(ActionEvent mouseEvent) throws IOException {
+    public void onNewsFeedButtonClicked(ActionEvent mouseEvent) {
         // Loading news feed page
 
-        client.getServerOutput().writeObject("close_chat");
-        client.getServerOutput().flush();
+        try {
+            latch = new CountDownLatch(1);
+            client.setLatch(latch);
 
-        client.getNewsFeed().startNewsFeedView(client, stage);
+            client.getServerOutput().writeObject("close_chat");
+            client.getServerOutput().flush();
+
+            latch.await();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            client.getNewsFeed().startNewsFeedView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
-    public void onHomeButtonClicked(ActionEvent mouseEvent) throws IOException {
+    public void onHomeButtonClicked(ActionEvent mouseEvent) {
         // Loading home page
 
-        client.getServerOutput().writeObject("close_chat");
-        client.getServerOutput().flush();
+        try {
+            latch = new CountDownLatch(1);
+            client.setLatch(latch);
 
-        client.getHomePage().startHomePageView(client, stage);
+            client.getServerOutput().writeObject("close_chat");
+            client.getServerOutput().flush();
+
+            latch.await();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            client.getHomePage().startHomePageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
-    public void onNotificationButtonClick(ActionEvent actionEvent) throws IOException {
-        // Loading notification page
+    public void onNotificationButtonClick(ActionEvent actionEvent) {
+        client.resetNotificationStatus();
 
-        client.getServerOutput().writeObject("close_chat");
-        client.getServerOutput().flush();
+        Rectangle background = new Rectangle(350, 350);
+        background.setArcWidth(28);
+        background.setArcHeight(28);
+        background.setFill(Color.web("#f4f4f4"));
+        background.setStroke(Color.BLACK);
+        background.setStrokeWidth(0);
+        background.setLayoutX(0);
+        background.setLayoutY(0);
 
-        client.getNotificationPage().startNotificationPageView(client, stage);
+        Label notificationLabel = new Label("Notifications");
+        notificationLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 20; -fx-font-weight: bold;");
+        notificationLabel.setAlignment(Pos.CENTER);
+
+        HBox notificationLabelBox = new HBox(notificationLabel);
+        notificationLabelBox.setAlignment(Pos.CENTER);
+
+        VBox notificationBox = new VBox(3);
+        notificationBox.setPrefSize(321, 334);
+        notificationBox.setStyle("-fx-background-color: transparent;");
+
+        ScrollPane notificationScroller = new ScrollPane(new VBox(notificationLabelBox, notificationBox));
+        notificationScroller.setLayoutX(14);
+        notificationScroller.setLayoutY(0);
+        notificationScroller.setPrefSize(321, 334);
+        notificationScroller.setStyle("-fx-background-color: transparent;");
+        notificationScroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        notificationScroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        Pane boxContainer = new Pane(background, notificationScroller);
+        boxContainer.setLayoutX(99);
+        boxContainer.setLayoutY(458);
+
+        boxContainer.setOpacity(0);
+        boxContainer.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), boxContainer);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+
+        Vector<ClientInfo> users = client.getClients();
+
+        for (String sender : client.notification.keySet()) {
+            ClientInfo clientInfo = null;
+
+            for (int j = 0; j < users.size(); j++) {
+                if (users.get(j).getId().equals(sender)) {
+                    clientInfo = users.get(j);
+                }
+            }
+
+            Image profilePicture = new Image(new ByteArrayInputStream(clientInfo.getProfilePicture()));
+            ImageView profilePictureView = new ImageView(profilePicture);
+            profilePictureView.setFitWidth(24);
+            profilePictureView.setFitHeight(24);
+            Circle clip = new Circle(12, 12, 12);
+            profilePictureView.setClip(clip);
+            String text;
+            if (client.notification.get(sender).getKey().equals("message")) {
+                text = "sent a message.";
+            }
+            else {
+                text = "called you.";
+            }
+            Label textLabel = new Label(clientInfo.getFirstName() + " " + clientInfo.getLastName() + " " + text);
+            if (client.notification.get(sender).getValue().equals("unseen")) {
+                textLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #000000");
+                client.notification.put(sender, new Pair<>(client.notification.get(sender).getKey(), "seen"));
+                try {
+                    client.getServerOutput().writeObject("seen:" + sender + "," + client.getId());
+                    client.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            else {
+                textLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 16; -fx-text-fill: #000000");
+            }
+            textLabel.setWrapText(true);
+            textLabel.setAlignment(Pos.CENTER);
+            HBox notificationInfo = new HBox(profilePictureView, textLabel);
+            notificationInfo.setSpacing(5);
+            notificationInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+
+            notificationInfo.setOnMouseEntered(event -> {
+                notificationInfo.setStyle("-fx-background-color: #d5d7db; -fx-background-radius: 10; -fx-padding: 5px;");
+            });
+
+            notificationInfo.setOnMouseExited(event -> {
+                notificationInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+            });
+
+            notificationInfo.setOnMouseClicked(event -> {
+                startChat(sender);
+            });
+
+            notificationBox.getChildren().add(0, notificationInfo);
+        }
+
+        Platform.runLater(() -> {
+            stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                Bounds boxBounds = boxContainer.localToScene(boxContainer.getBoundsInParent());
+                double x = event.getSceneX();
+                double y = event.getSceneY();
+
+                if (!boxBounds.contains(x, y)) {
+                    InboxView.getChildren().remove(boxContainer);
+                }
+            });
+        });
+
+        InboxView.getChildren().add(boxContainer);
     }
+
+    public void viewNotifications() {
+
+    }
+
 
     public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
         // Loading profile page
@@ -179,55 +334,80 @@ public class InboxController {
 
     @FXML
     public void onEmojiButtonClick(ActionEvent actionEvent) {
-        if (isEmojiPalletOpen) {
-            disableEmojiPallet();
-        }
-        else {
-            enableEmojiPallet();
+        Rectangle background = new Rectangle(295, 250);
+        background.setArcWidth(28);
+        background.setArcHeight(28);
+        background.setFill(Color.web("#f4f4f4"));
+        background.setStroke(Color.LIGHTGRAY);
+        background.setStrokeWidth(1);
+        background.setLayoutX(0);
+        background.setLayoutY(0);
 
-            for (int i = 0; i < 14; i++) {
-                HBox emojiRow = new HBox();
-                emojiRow.setPrefWidth(300);
-                emojiRow.setPrefHeight(35);
-                emojiRow.setSpacing(3);
-                emojiRow.setStyle("-fx-background-color: transparent");
+        VBox emojiBox = new VBox(3);
+        emojiBox.setPrefSize(265, 240);
+        emojiBox.setStyle("-fx-background-color: transparent;");
 
-                for (int j = 0; j < 7; j++) {
-                    String emojiCode = emojiHexCodes.get((i * 7) + j);
-                    ImageView emoji = new ImageView(String.valueOf(getClass().getResource("/images/emojis/" + emojiHexCodes.get((i * 7) + j) + ".png")));
-                    emoji.setFitWidth(35);
-                    emoji.setFitHeight(35);
+        ScrollPane scrollPane = new ScrollPane(emojiBox);
+        scrollPane.setLayoutX(14);
+        scrollPane.setLayoutY(5);
+        scrollPane.setPrefSize(265, 240);
+        scrollPane.setStyle("-fx-background-color: transparent;");
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
-                    emoji.setOnMouseEntered(event -> {
-                        emoji.setStyle("-fx-background-color: gray; -fx-background-radius: 5");
-                    });
+        Pane emojiContainer = new Pane(background, scrollPane);
+        emojiContainer.setLayoutX(552);
+        emojiContainer.setLayoutY(530);
 
-                    emoji.setOnMouseExited(event -> {
-                        emoji.setStyle("-fx-background-color: transparent;");
-                    });
-
-                    emoji.setOnMouseClicked(event -> {
-                        sendEmoji(emojiCode);
-                    });
-
-                    emojiRow.getChildren().add(emoji);
-                }
-                emojiPallet.getChildren().add(emojiRow);
-            }
-        }
-    }
-
-    public void enableEmojiPallet() {
-        emojiContainer.setOpacity(1);
-        emojiScroller.setDisable(false);
-        isEmojiPalletOpen = true;
-    }
-
-    public void disableEmojiPallet() {
         emojiContainer.setOpacity(0);
-        emojiScroller.setDisable(true);
-        emojiPallet.getChildren().clear();
-        isEmojiPalletOpen = false;
+        emojiContainer.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), emojiContainer);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+
+        for (int i = 0; i < 14; i++) {
+            HBox emojiRow = new HBox();
+            emojiRow.setPrefWidth(300);
+            emojiRow.setPrefHeight(35);
+            emojiRow.setSpacing(3);
+            emojiRow.setStyle("-fx-background-color: transparent");
+
+            for (int j = 0; j < 7; j++) {
+                String emojiCode = emojiHexCodes.get((i * 7) + j);
+                ImageView emoji = new ImageView(String.valueOf(getClass().getResource("/images/emojis/" + emojiHexCodes.get((i * 7) + j) + ".png")));
+                emoji.setFitWidth(35);
+                emoji.setFitHeight(35);
+
+                emoji.setOnMouseEntered(event -> {
+                    emoji.setStyle("-fx-background-color: gray; -fx-background-radius: 5");
+                });
+
+                emoji.setOnMouseExited(event -> {
+                    emoji.setStyle("-fx-background-color: transparent;");
+                });
+
+                emoji.setOnMouseClicked(event -> {
+                    sendEmoji(emojiCode);
+                });
+
+                emojiRow.getChildren().add(emoji);
+            }
+            emojiBox.getChildren().add(emojiRow);
+        }
+
+        Platform.runLater(() -> {
+            stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                Bounds bounds = emojiContainer.localToScene(emojiContainer.getBoundsInParent());
+                double x = event.getSceneX();
+                double y = event.getSceneY();
+                if (!bounds.contains(x, y)) {
+                    InboxView.getChildren().remove(emojiContainer);
+                }
+            });
+        });
+
+        InboxView.getChildren().add(emojiContainer);
     }
 
     public void resetChat() {
@@ -266,8 +446,6 @@ public class InboxController {
         SearchBar.clear();
         displayUsers("###");
 
-        disableEmojiPallet();
-
         resetChat();
 
         this.receiverId = id;
@@ -275,6 +453,8 @@ public class InboxController {
         // Sending chat command with recipient id to the server
 
         try {
+            Thread.sleep(100);
+
             CountDownLatch latch = new CountDownLatch(1);
             client.setLatch(latch);
 
