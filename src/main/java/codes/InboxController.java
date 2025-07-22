@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -238,7 +239,7 @@ public class InboxController {
 
         Pane boxContainer = new Pane(background, notificationScroller);
         boxContainer.setLayoutX(99);
-        boxContainer.setLayoutY(458);
+        boxContainer.setLayoutY(460);
 
         boxContainer.setOpacity(0);
         boxContainer.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
@@ -319,17 +320,6 @@ public class InboxController {
         });
 
         InboxView.getChildren().add(boxContainer);
-    }
-
-    public void viewNotifications() {
-
-    }
-
-
-    public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
-        // Loading profile page
-
-        client.getProfilePage().startProfilePageView(client, stage);
     }
 
     @FXML
