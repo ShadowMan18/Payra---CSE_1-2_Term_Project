@@ -21,6 +21,7 @@ public class ServerThread implements Runnable{
     private Thread serverThread;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
+    private final String clientIPAddress;
     private ChatServer chatServer;
     private NewsFeedServer feedServer;
     private final Connection databaseConnection;
@@ -35,12 +36,8 @@ public class ServerThread implements Runnable{
 
         try {
             this.output = new ObjectOutputStream(clientSocket.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
             this.input = new ObjectInputStream(clientSocket.getInputStream());
+            this.clientIPAddress = clientSocket.getInetAddress().getHostAddress();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -349,6 +346,12 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            if (fromClient instanceof String string && string.startsWith("audio_call:")) {
+                String receiverId = string.substring("audio_call:".length());
+                String receiverIPAddress = Server.currentClients.get(receiverId).getClientIPAddress();
+                sendToClient("receiverIP:" + receiverIPAddress);
+            }
+
             if (fromClient instanceof String string && string.startsWith("NewsFeed: open")) {
 
                 int port = 0;
@@ -468,5 +471,9 @@ public class ServerThread implements Runnable{
         }
 
         return new ClientInfo(firstName, lastName, id, password, recoveryQuestion, recoveryAnswer, profilePictureBytes);
+    }
+
+    public String getClientIPAddress() {
+        return clientIPAddress;
     }
 }

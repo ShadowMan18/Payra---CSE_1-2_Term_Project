@@ -50,7 +50,7 @@ public class Client {
 
     // Client server network
 
-    private final String ipAddress = "192.168.252.229";
+    private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -65,6 +65,8 @@ public class Client {
     private boolean chatStatus;
     private boolean newNotification;
     public Map<String, Pair<String, String>> notification = new LinkedHashMap<>();
+
+    private String receiverIPAddress;
 
     // NewsFeed server network
 
@@ -296,6 +298,14 @@ public class Client {
                         System.out.println(sender + " sent a " + notification.get(sender));
                     }
                 }
+                else if (fromServer instanceof String string && string.startsWith("receiverIP:")) {
+                    this.receiverIPAddress = string.substring("receiverIP:".length());
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
                     int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
 
@@ -432,6 +442,10 @@ public class Client {
         return chatStatus;
     }
 
+    public String getReceiverIPAddress() {
+        return receiverIPAddress;
+    }
+
     public IntroPage getIntroPage() {
         return introPage;
     }
@@ -547,6 +561,19 @@ public class Client {
     }
 
     // Public methods
+
+    public synchronized void sendToServer(Object obj) {
+        try {
+            latch = new CountDownLatch(1);
+
+            serverOutput.writeObject(obj);
+            serverOutput.flush();
+
+            latch.await();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public void connectToChatServer(int port) {
         try {

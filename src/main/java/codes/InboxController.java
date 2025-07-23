@@ -143,6 +143,7 @@ public class InboxController {
         });
 
         displayUsers("###");
+
         for (ClientInfo c : client.getClients()) {
             System.out.println(c.getFirstName());
         }
@@ -971,7 +972,11 @@ public class InboxController {
 
     public void onAudioCallButtonClicked(ActionEvent actionEvent) {
         if (client.getChatStatus()) {
+            client.sendToServer("audio_call:" + receiverId);
 
+            if (client.getReceiverIPAddress() != null) {
+                AudioVideoCall.startAudioCall(client.getReceiverIPAddress());
+            }
         }
     }
 
