@@ -982,7 +982,11 @@ public class InboxController {
 
     public void onVideoCallButtonClicked(ActionEvent actionEvent) {
         if (client.getChatStatus()) {
+            client.sendToServer("audio_call:" + receiverId);
 
+            if (client.getReceiverIPAddress() != null) {
+                AudioVideoCall.startVideoCall(client.getReceiverIPAddress());
+            }
         }
     }
 
