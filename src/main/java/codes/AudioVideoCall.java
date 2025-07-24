@@ -348,27 +348,27 @@ public class AudioVideoCall {
         }
 
         if (speaker != null) {
-            microphone.close();
+            speaker.close();
         }
 
-        if (audioSenderSocket != null) {
-            microphone.close();
+        if (audioSenderSocket != null && !audioSenderSocket.isClosed()) {
+            audioSenderSocket.close();
         }
 
-        if (audioReceiverSocket != null) {
-            microphone.close();
+        if (audioReceiverSocket != null && !audioReceiverSocket.isClosed()) {
+            audioReceiverSocket.close();
         }
 
-        if (videoSenderSocket != null) {
-            microphone.close();
+        if (videoSenderSocket != null && !videoSenderSocket.isClosed()) {
+            videoSenderSocket.close();
         }
 
-        if (videoReceiverSocket != null) {
-            microphone.close();
+        if (videoReceiverSocket != null && !videoReceiverSocket.isClosed()) {
+            videoReceiverSocket.close();
         }
 
-        if (webcam != null) {
-            microphone.close();
+        if (webcam != null && webcam.isOpened()) {
+            webcam.release();
         }
 
         if (videoStage != null) {
