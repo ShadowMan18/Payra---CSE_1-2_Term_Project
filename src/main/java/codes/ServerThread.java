@@ -346,10 +346,15 @@ public class ServerThread implements Runnable{
                 }
             }
 
-            if (fromClient instanceof String string && string.startsWith("audio_call:")) {
-                String receiverId = string.substring("audio_call:".length());
-                String receiverIPAddress = Server.currentClients.get(receiverId).getClientIPAddress();
-                sendToClient("receiverIP:" + receiverIPAddress);
+            if (fromClient instanceof String string && string.startsWith("call:")) {
+                String receiverId = string.substring("call:".length());
+
+                if (Server.currentClients.get(receiverId) != null) {
+                    sendToClient("receiverIP:" + Server.currentClients.get(receiverId).getClientIPAddress());
+                }
+                else {
+                    sendToClient("receiverIP:n/a");
+                }
             }
 
             if (fromClient instanceof String string && string.startsWith("NewsFeed: open")) {

@@ -303,6 +303,7 @@ public class Client {
                 }
                 else if (fromServer instanceof String string && string.startsWith("receiverIP:")) {
                     this.receiverIPAddress = string.substring("receiverIP:".length());
+                    System.out.println(receiverIPAddress);
 
                     if (latch != null) {
                         latch.countDown();

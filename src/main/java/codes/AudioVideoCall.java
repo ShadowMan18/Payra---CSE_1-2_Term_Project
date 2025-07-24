@@ -148,28 +148,9 @@ public class AudioVideoCall {
                 if (isVideoRunning) {
                     System.out.println("video turned off");
                     isVideoRunning = false;
-                    try {
-                        final int CHUNK_SIZE = 1400;
-                        int totalChunks = (int) Math.ceil((double) sender.getProfilePicture().length / CHUNK_SIZE);
-                        int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
-
-                        for (int i = 0; i < totalChunks; i++) {
-                            int start = i * CHUNK_SIZE;
-                            int length = Math.min(CHUNK_SIZE, sender.getProfilePicture().length - start);
-                            byte[] chunkData = Arrays.copyOfRange(sender.getProfilePicture(), start, start + length);
-
-                            ByteBuffer packetBuffer = ByteBuffer.allocate(8 + chunkData.length);
-                            packetBuffer.putInt(frameId);
-                            packetBuffer.putShort((short) i);
-                            packetBuffer.putShort((short) totalChunks);
-                            packetBuffer.put(chunkData);
-
-                            DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(),InetAddress.getByName(receiverIPAddress), 22223);
-                            videoSenderSocket.send(packet);
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    Platform.runLater(() -> {
+                        myVideoView.setImage(new Image(new ByteArrayInputStream(sender.getProfilePicture())));
+                    });
                 }
                 else {
                     System.out.println("video turned on");
