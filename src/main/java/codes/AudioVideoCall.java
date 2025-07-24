@@ -29,6 +29,17 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class AudioVideoCall {
+    private static TargetDataLine microphone;
+    private static SourceDataLine speaker;
+    private static DatagramSocket audioSenderSocket;
+    private static DatagramSocket audioReceiverSocket;
+    private static DatagramSocket videoSenderSocket;
+    private static DatagramSocket videoReceiverSocket;
+    private static VideoCapture webcam;
+    private static boolean isCallRunning;
+    private static boolean isAudioRunning;
+    private static boolean isVideoRunning;
+
     private static Stage videoStage;
     private static ImageView videoView;
     private static ImageView myVideoView;
@@ -41,16 +52,21 @@ public class AudioVideoCall {
 
     public static void startAudioCall(String receiverIPAddress) {
         System.out.println(receiverIPAddress);
+        isCallRunning = true;
+        isAudioRunning = true;
+        isVideoRunning = false;
+
         // Initiating audio sender thread
 
         new Thread(() -> {
-            try (DatagramSocket audioSocket = new DatagramSocket()) {
+            try {
+                audioSenderSocket = new DatagramSocket();
                 InetAddress receiverAddress = InetAddress.getByName(receiverIPAddress);
                 int port = 22222;
 
                 AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false);
                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-                TargetDataLine microphone = (TargetDataLine) AudioSystem.getLine(info);
+                microphone = (TargetDataLine) AudioSystem.getLine(info);
                 microphone.open(format);
                 microphone.start();
 
@@ -58,10 +74,10 @@ public class AudioVideoCall {
 
                 System.out.println("🎤 Audio capture started...");
 
-                while (true) {
+                while (isCallRunning && isAudioRunning) {
                     int bufferSize = microphone.read(buffer, 0, buffer.length);
                     DatagramPacket packet = new DatagramPacket(buffer, bufferSize, receiverAddress, port);
-                    audioSocket.send(packet);
+                    audioSenderSocket.send(packet);
                 }
 
             } catch (Exception e) {
@@ -73,22 +89,22 @@ public class AudioVideoCall {
 
         new Thread(() -> {
             try {
-                DatagramSocket audioSocket = new DatagramSocket(22222);
+                audioReceiverSocket = new DatagramSocket(22222);
 
                 AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false);
                 DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-                SourceDataLine speakers = (SourceDataLine) AudioSystem.getLine(info);
-                speakers.open(format);
-                speakers.start();
+                speaker = (SourceDataLine) AudioSystem.getLine(info);
+                speaker.open(format);
+                speaker.start();
 
                 byte[] buffer = new byte[4096];
 
                 System.out.println("🔊 Audio receiver started...");
 
-                while (true) {
+                while (isCallRunning) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    audioSocket.receive(packet);
-                    speakers.write(packet.getData(), 0, packet.getLength());
+                    audioReceiverSocket.receive(packet);
+                    speaker.write(packet.getData(), 0, packet.getLength());
                 }
 
             } catch (Exception e) {
@@ -101,6 +117,8 @@ public class AudioVideoCall {
         // Start audio call
 
         startAudioCall(receiverIPAddress);
+
+        isVideoRunning = true;
 
         // Initiating video preview
 
@@ -146,15 +164,15 @@ public class AudioVideoCall {
             }
 
             endCallButton.setOnMouseClicked(event -> {
-
+                endCall();
             });
 
             muteButton.setOnMouseClicked(event -> {
-
+                isAudioRunning = false;
             });
 
             stopVideoButton.setOnMouseClicked(event -> {
-
+                isVideoRunning = false;
             });
 
 
@@ -197,11 +215,12 @@ public class AudioVideoCall {
         // Initiating video sender thread
 
         new Thread(() -> {
-            try (DatagramSocket socket = new DatagramSocket()) {
+            try {
+                videoSenderSocket = new DatagramSocket();
                 InetAddress receiverAddress = InetAddress.getByName(receiverIPAddress);
                 int port = 22223;
 
-                VideoCapture webcam = new VideoCapture(0, Videoio.CAP_DSHOW);
+                webcam = new VideoCapture(0, Videoio.CAP_DSHOW);
                 webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, windowWidth);
                 webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, windowHeight);
 
@@ -213,7 +232,7 @@ public class AudioVideoCall {
                 MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                 final int CHUNK_SIZE = 1400;
 
-                while (true) {
+                while (isCallRunning && isVideoRunning) {
                     Mat frame = new Mat();
 
                     if (webcam.read(frame) && !frame.empty()) {
@@ -246,7 +265,7 @@ public class AudioVideoCall {
                             packetBuffer.put(chunkData);
 
                             DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(), receiverAddress, port);
-                            socket.send(packet);
+                            videoSenderSocket.send(packet);
                         }
                     }
 
@@ -261,16 +280,17 @@ public class AudioVideoCall {
         // Initiating video receiver thread
 
         new Thread(() -> {
-            try (DatagramSocket receiverSocket = new DatagramSocket(22223)) {
+            try {
+                videoReceiverSocket = new DatagramSocket(22223);
                 byte[] buffer = new byte[1500];
                 Map<Integer, List<byte[]>> frameChunks = new HashMap<>();
                 Map<Integer, Integer> chunkCounts = new HashMap<>();
 
                 System.out.println("📥 Listening on port 22223...");
 
-                while (true) {
+                while (isCallRunning) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    receiverSocket.receive(packet);
+                    videoReceiverSocket.receive(packet);
 
                     ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
                     int frameId = byteBuffer.getInt();
@@ -320,6 +340,43 @@ public class AudioVideoCall {
                 e.printStackTrace();
             }
         }).start();
+    }
 
+    public static void endCall() {
+        if (microphone != null) {
+            microphone.close();
+        }
+
+        if (speaker != null) {
+            microphone.close();
+        }
+
+        if (audioSenderSocket != null) {
+            microphone.close();
+        }
+
+        if (audioReceiverSocket != null) {
+            microphone.close();
+        }
+
+        if (videoSenderSocket != null) {
+            microphone.close();
+        }
+
+        if (videoReceiverSocket != null) {
+            microphone.close();
+        }
+
+        if (webcam != null) {
+            microphone.close();
+        }
+
+        if (videoStage != null) {
+            videoStage.close();
+        }
+
+        isCallRunning = false;
+        isAudioRunning = false;
+        isVideoRunning = false;
     }
 }
