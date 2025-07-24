@@ -147,28 +147,28 @@ public class AudioVideoCall {
                 if (isVideoRunning) {
                     System.out.println("video turned off");
                     isVideoRunning = false;
-//                    try {
-//                        final int CHUNK_SIZE = 1400;
-//                        int totalChunks = (int) Math.ceil((double) sender.getProfilePicture().length / CHUNK_SIZE);
-//                        int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
-//
-//                        for (int i = 0; i < totalChunks; i++) {
-//                            int start = i * CHUNK_SIZE;
-//                            int length = Math.min(CHUNK_SIZE, sender.getProfilePicture().length - start);
-//                            byte[] chunkData = Arrays.copyOfRange(sender.getProfilePicture(), start, start + length);
-//
-//                            ByteBuffer packetBuffer = ByteBuffer.allocate(8 + chunkData.length);
-//                            packetBuffer.putInt(frameId);
-//                            packetBuffer.putShort((short) i);
-//                            packetBuffer.putShort((short) totalChunks);
-//                            packetBuffer.put(chunkData);
-//
-//                            DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(),InetAddress.getByName(receiverIPAddress), 22223);
-//                            videoSenderSocket.send(packet);
-//                        }
-//                    } catch (IOException e) {
-//                        throw new RuntimeException(e);
-//                    }
+                    try {
+                        final int CHUNK_SIZE = 1400;
+                        int totalChunks = (int) Math.ceil((double) sender.getProfilePicture().length / CHUNK_SIZE);
+                        int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+
+                        for (int i = 0; i < totalChunks; i++) {
+                            int start = i * CHUNK_SIZE;
+                            int length = Math.min(CHUNK_SIZE, sender.getProfilePicture().length - start);
+                            byte[] chunkData = Arrays.copyOfRange(sender.getProfilePicture(), start, start + length);
+
+                            ByteBuffer packetBuffer = ByteBuffer.allocate(8 + chunkData.length);
+                            packetBuffer.putInt(frameId);
+                            packetBuffer.putShort((short) i);
+                            packetBuffer.putShort((short) totalChunks);
+                            packetBuffer.put(chunkData);
+
+                            DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(),InetAddress.getByName(receiverIPAddress), 22223);
+                            videoSenderSocket.send(packet);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 else {
                     System.out.println("video turned on");
@@ -232,10 +232,14 @@ public class AudioVideoCall {
                 System.out.println("🎤 Audio capture started...");
 
                 while (isCallRunning) {
+                    int bufferSize = microphone.read(buffer, 0, buffer.length);
+
                     if (isAudioRunning) {
-                        int bufferSize = microphone.read(buffer, 0, buffer.length);
                         DatagramPacket packet = new DatagramPacket(buffer, bufferSize, receiverAddress, port);
                         audioSenderSocket.send(packet);
+                    }
+                    else {
+                        Thread.sleep(500);
                     }
                 }
 
@@ -292,10 +296,10 @@ public class AudioVideoCall {
                 final int CHUNK_SIZE = 1400;
 
                 while (isCallRunning) {
-                    if (isVideoRunning) {
-                        Mat frame = new Mat();
+                    Mat frame = new Mat();
 
-                        if (webcam.read(frame) && !frame.empty()) {
+                    if (webcam.read(frame) && !frame.empty()) {
+                        if (isVideoRunning) {
                             Core.flip(frame, frame, 1);
 
                             MatOfByte buffer = new MatOfByte();
@@ -328,11 +332,11 @@ public class AudioVideoCall {
                                 videoSenderSocket.send(packet);
                             }
                         }
+                        else {
+                            Thread.sleep(500);
+                        }
                     }
-
-                    // Optional delay or frame rate control can be added here
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
