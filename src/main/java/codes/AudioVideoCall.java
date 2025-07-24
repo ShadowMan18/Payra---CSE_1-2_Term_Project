@@ -45,6 +45,7 @@ public class AudioVideoCall {
     private boolean isCallRunning;
     private boolean isAudioRunning;
     private boolean isVideoRunning;
+    private volatile long lastFrameReceivedTime;
 
     private Stage videoStage;
     private ImageView videoView;
@@ -357,6 +358,8 @@ public class AudioVideoCall {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     videoReceiverSocket.receive(packet);
 
+                    lastFrameReceivedTime = System.currentTimeMillis();
+
                     ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
                     int frameId = byteBuffer.getInt();
                     int chunkIndex = byteBuffer.getShort() & 0xFFFF;
@@ -403,6 +406,25 @@ public class AudioVideoCall {
 
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }).start();
+
+        // Initiating video receiver monitoring thread
+
+        new Thread(() -> {
+            while (isCallRunning) {
+                long currentTime = System.currentTimeMillis();
+
+                if (currentTime - lastFrameReceivedTime > 2000) {
+                    Platform.runLater(() -> {
+                        videoView.setImage(new Image(new ByteArrayInputStream(receiver.getProfilePicture())));
+                    });
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
         }).start();
     }
