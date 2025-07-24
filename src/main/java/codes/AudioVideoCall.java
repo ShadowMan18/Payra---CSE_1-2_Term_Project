@@ -10,13 +10,20 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
 import javax.sound.sampled.*;
+import java.io.ByteArrayOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class AudioVideoCall {
+    static {
+        System.load("C:/Program Files/opencv/build/java/x64/opencv_java4120.dll");
+    }
+
     public static void startAudioCall(String receiverIPAddress) {
+        System.out.println(receiverIPAddress);
         // Initiating audio sender thread
 
         new Thread(() -> {
@@ -74,13 +81,11 @@ public class AudioVideoCall {
     }
 
     public static void startVideoCall(String receiverIPAddress) {
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        // Start audio call
 
-        // Initiating audio call
+        startAudioCall(receiverIPAddress);
 
-//        startAudioCall(receiverIPAddress);
-
-        // Initiating video sending thread
+        // Initiating video sender thread
 
         new Thread(() -> {
             try (DatagramSocket socket = new DatagramSocket()) {
@@ -88,9 +93,8 @@ public class AudioVideoCall {
                 int port = 22223;
 
                 VideoCapture webcam = new VideoCapture(0, Videoio.CAP_DSHOW);
-
-                webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, 1500);
-                webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, 600);
+                webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, 1280);
+                webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, 720);
 
                 if (!webcam.isOpened()) {
                     System.out.println("❌ Cannot open webcam!");
@@ -98,6 +102,7 @@ public class AudioVideoCall {
                 }
 
                 MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 30);
+                final int CHUNK_SIZE = 1400;
 
                 while (true) {
                     Mat frame = new Mat();
@@ -109,34 +114,40 @@ public class AudioVideoCall {
                         Imgcodecs.imencode(".jpg", frame, buffer, jpegParams);
                         byte[] frameBytes = buffer.toArray();
 
-                        // Check frame size to avoid UDP packet size error (max safe ~60KB)
-                        if (frameBytes.length > 60000) {
-                            System.out.println("⚠️ Frame too large (" + frameBytes.length + " bytes), skipping...");
-                        } else {
-                            DatagramPacket packet = new DatagramPacket(frameBytes, frameBytes.length, receiverAddress, port);
+                        int totalChunks = (int) Math.ceil((double) frameBytes.length / CHUNK_SIZE);
+                        int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+
+                        for (int i = 0; i < totalChunks; i++) {
+                            int start = i * CHUNK_SIZE;
+                            int length = Math.min(CHUNK_SIZE, frameBytes.length - start);
+                            byte[] chunkData = Arrays.copyOfRange(frameBytes, start, start + length);
+
+                            ByteBuffer packetBuffer = ByteBuffer.allocate(8 + chunkData.length);
+                            packetBuffer.putInt(frameId);
+                            packetBuffer.putShort((short) i);
+                            packetBuffer.putShort((short) totalChunks);
+                            packetBuffer.put(chunkData);
+
+                            DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(), receiverAddress, port);
                             socket.send(packet);
                         }
                     }
 
-                    // Display frame in window (optional)
-//                     HighGui.imshow("Webcam Feed", frame);
-
-//                    if (HighGui.waitKey(15) == 27) break; // ESC to exit
+                    // Optional delay or frame rate control can be added here
                 }
-
-//                webcam.release();
-//                HighGui.destroyAllWindows();
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
 
-        // Initiating video receiving thread
+        // Initiating video receiver thread
 
         new Thread(() -> {
             try (DatagramSocket receiverSocket = new DatagramSocket(22223)) {
-                byte[] buffer = new byte[65535];
+                byte[] buffer = new byte[1500];
+                Map<Integer, List<byte[]>> frameChunks = new HashMap<>();
+                Map<Integer, Integer> chunkCounts = new HashMap<>();
 
                 System.out.println("📥 Listening on port 22223...");
 
@@ -144,14 +155,40 @@ public class AudioVideoCall {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     receiverSocket.receive(packet);
 
-                    byte[] frameBytes = Arrays.copyOfRange(packet.getData(), 0, packet.getLength());
-                    Mat frame = Imgcodecs.imdecode(new MatOfByte(frameBytes), Imgcodecs.IMREAD_COLOR);
+                    ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
+                    int frameId = byteBuffer.getInt();
+                    int chunkIndex = byteBuffer.getShort() & 0xFFFF;
+                    int totalChunks = byteBuffer.getShort() & 0xFFFF;
 
-                    if (!frame.empty()) {
-                        HighGui.imshow("Receiver Feed1", frame);
-                        HighGui.waitKey(1);
+                    byte[] chunkData = new byte[packet.getLength() - 8];
+                    byteBuffer.get(chunkData);
+
+                    frameChunks.putIfAbsent(frameId, new ArrayList<>(Collections.nCopies(totalChunks, null)));
+                    chunkCounts.putIfAbsent(frameId, 0);
+
+                    List<byte[]> chunks = frameChunks.get(frameId);
+                    if (chunks.get(chunkIndex) == null) {
+                        chunks.set(chunkIndex, chunkData);
+                        chunkCounts.put(frameId, chunkCounts.get(frameId) + 1);
+                    }
+
+                    if (chunkCounts.get(frameId).equals(totalChunks)) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        for (byte[] chunk : chunks) outputStream.write(chunk);
+
+                        byte[] fullFrame = outputStream.toByteArray();
+                        Mat frame = Imgcodecs.imdecode(new MatOfByte(fullFrame), Imgcodecs.IMREAD_COLOR);
+
+                        if (!frame.empty()) {
+                            HighGui.imshow("Receiver Feed", frame);
+                            HighGui.waitKey(1);
+                        }
+
+                        frameChunks.remove(frameId);
+                        chunkCounts.remove(frameId);
                     }
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
