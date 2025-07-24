@@ -1,5 +1,17 @@
 package codes;
 
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
 import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -8,6 +20,7 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
 import javax.sound.sampled.*;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,6 +29,12 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class AudioVideoCall {
+    private static Stage videoStage;
+    private static ImageView videoView;
+    private static ImageView myVideoView;
+    private static double windowWidth = Screen.SCREENWIDTH * 0.7;
+    private static double windowHeight = Screen.SCREENHEIGHT * 0.8;
+
     static {
         System.load("C:/Program Files/opencv/build/java/x64/opencv_java4120.dll");
     }
@@ -83,6 +102,104 @@ public class AudioVideoCall {
 
         startAudioCall(receiverIPAddress);
 
+        // Initiating video preview
+
+        Platform.runLater(() -> {
+            videoView = new ImageView();
+            videoView.setFitWidth(windowWidth);
+            videoView.setFitHeight(windowHeight);
+            videoView.setPreserveRatio(true);
+            Rectangle clip1 = new Rectangle();
+            clip1.setArcWidth(20);
+            clip1.setArcHeight(20);
+            videoView.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
+                clip1.setWidth(newBounds.getWidth());
+                clip1.setHeight(newBounds.getHeight());
+            });
+            videoView.setClip(clip1);
+
+            myVideoView = new ImageView();
+            myVideoView.setFitWidth(windowWidth * 0.2);
+            myVideoView.setFitHeight(windowHeight * 0.2);
+            myVideoView.setPreserveRatio(true);
+            Rectangle clip2 = new Rectangle();
+            clip2.setArcWidth(20);
+            clip2.setArcHeight(20);
+            myVideoView.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
+                clip2.setWidth(newBounds.getWidth());
+                clip2.setHeight(newBounds.getHeight());
+            });
+            myVideoView.setClip(clip2);
+
+            Rectangle background = new Rectangle();
+            background.setFill(Color.web("#092038"));
+
+            ImageView endCallButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/End_Call_Button.jpg"))));
+            ImageView muteButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Mute_Button.jpg"))));
+            ImageView stopVideoButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Video_Button.jpg"))));
+
+            for (ImageView button : new ImageView[]{endCallButton, muteButton, stopVideoButton}) {
+                button.setFitWidth(50);
+                button.setFitHeight(50);
+                Circle clip = new Circle(25, 25, 25);
+                button.setClip(clip);
+            }
+
+            endCallButton.setOnMouseClicked(event -> {
+
+            });
+
+            muteButton.setOnMouseClicked(event -> {
+
+            });
+
+            stopVideoButton.setOnMouseClicked(event -> {
+
+            });
+
+
+            HBox buttonContainer = new HBox(stopVideoButton, muteButton, endCallButton);
+            buttonContainer.setSpacing(15);
+            buttonContainer.setPadding(new Insets(8));
+            buttonContainer.setAlignment(Pos.CENTER);
+            buttonContainer.setMaxWidth(Region.USE_PREF_SIZE);
+            buttonContainer.setMaxHeight(66);
+
+            buttonContainer.setBackground(new Background(new BackgroundFill(Color.web("#000000", 0.6), new CornerRadii(20), Insets.EMPTY)));
+
+            StackPane root = new StackPane(background, videoView, myVideoView, buttonContainer);
+
+            background.widthProperty().bind(root.widthProperty());
+            background.heightProperty().bind(root.heightProperty());
+
+            // Layout positions inside root StackPane
+            StackPane.setAlignment(videoView, Pos.CENTER);
+            StackPane.setMargin(videoView, new Insets(10));
+
+            StackPane.setAlignment(myVideoView, Pos.BOTTOM_RIGHT);
+            StackPane.setMargin(myVideoView, new Insets(10));
+
+            StackPane.setAlignment(buttonContainer, Pos.BOTTOM_CENTER);
+            StackPane.setMargin(buttonContainer, new Insets(10));
+
+            // Create scene and stage
+            Scene scene = new Scene(root, windowWidth + 20, windowHeight);
+
+            videoStage = new Stage();
+            videoStage.setTitle("Video Call");
+            Image icon = new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Payra.png")));
+            videoStage.getIcons().add(icon);
+            videoStage.setAlwaysOnTop(true);
+            videoStage.setResizable(false);
+            videoStage.setScene(scene);
+
+            videoStage.show();
+        });
+
+
+
+
+
         // Initiating video sender thread
 
         new Thread(() -> {
@@ -91,15 +208,15 @@ public class AudioVideoCall {
                 int port = 22223;
 
                 VideoCapture webcam = new VideoCapture(0, Videoio.CAP_DSHOW);
-                webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, Screen.SCREENWIDTH * 0.5);
-                webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, Screen.SCREENHEIGHT * 0.5);
+                webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, windowWidth);
+                webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, windowHeight);
 
                 if (!webcam.isOpened()) {
                     System.out.println("❌ Cannot open webcam!");
                     return;
                 }
 
-                MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 70);
+                MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                 final int CHUNK_SIZE = 1400;
 
                 while (true) {
@@ -111,6 +228,14 @@ public class AudioVideoCall {
                         MatOfByte buffer = new MatOfByte();
                         Imgcodecs.imencode(".jpg", frame, buffer, jpegParams);
                         byte[] frameBytes = buffer.toArray();
+
+                        Image videoImage = new Image(new ByteArrayInputStream(frameBytes));
+
+                        Platform.runLater(() -> {
+                            if (myVideoView != null) {
+                                myVideoView.setImage(videoImage);
+                            }
+                        });
 
                         int totalChunks = (int) Math.ceil((double) frameBytes.length / CHUNK_SIZE);
                         int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
@@ -178,12 +303,15 @@ public class AudioVideoCall {
                         Mat frame = Imgcodecs.imdecode(new MatOfByte(fullFrame), Imgcodecs.IMREAD_COLOR);
 
                         if (!frame.empty()) {
-                            Mat resizedView = new Mat();
-                            Size videoResolution = new Size(Screen.SCREENWIDTH * 0.5, Screen.SCREENHEIGHT * 0.5);
-                            Imgproc.resize(frame, resizedView, videoResolution);
+                            MatOfByte bufferMat = new MatOfByte();
+                            Imgcodecs.imencode(".jpg", frame, bufferMat);
+                            Image videoImage = new Image(new ByteArrayInputStream(bufferMat.toArray()));
 
-                            HighGui.imshow("Receiver Feed", resizedView);
-                            HighGui.waitKey(1);
+                            Platform.runLater(() -> {
+                                if (videoView != null) {
+                                    videoView.setImage(videoImage);
+                                }
+                            });
                         }
 
                         frameChunks.remove(frameId);
@@ -195,5 +323,6 @@ public class AudioVideoCall {
                 e.printStackTrace();
             }
         }).start();
+
     }
 }
