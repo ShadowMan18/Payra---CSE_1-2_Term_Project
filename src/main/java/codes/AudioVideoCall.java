@@ -1,11 +1,9 @@
 package codes;
 
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.core.MatOfInt;
+import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
@@ -93,15 +91,15 @@ public class AudioVideoCall {
                 int port = 22223;
 
                 VideoCapture webcam = new VideoCapture(0, Videoio.CAP_DSHOW);
-                webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, 1280);
-                webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, 720);
+                webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, Screen.SCREENWIDTH * 0.5);
+                webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, Screen.SCREENHEIGHT * 0.5);
 
                 if (!webcam.isOpened()) {
                     System.out.println("❌ Cannot open webcam!");
                     return;
                 }
 
-                MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 30);
+                MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 70);
                 final int CHUNK_SIZE = 1400;
 
                 while (true) {
@@ -180,7 +178,11 @@ public class AudioVideoCall {
                         Mat frame = Imgcodecs.imdecode(new MatOfByte(fullFrame), Imgcodecs.IMREAD_COLOR);
 
                         if (!frame.empty()) {
-                            HighGui.imshow("Receiver Feed", frame);
+                            Mat resizedView = new Mat();
+                            Size videoResolution = new Size(Screen.SCREENWIDTH * 0.5, Screen.SCREENHEIGHT * 0.5);
+                            Imgproc.resize(frame, resizedView, videoResolution);
+
+                            HighGui.imshow("Receiver Feed", resizedView);
                             HighGui.waitKey(1);
                         }
 
