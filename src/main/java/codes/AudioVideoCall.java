@@ -227,10 +227,12 @@ public class AudioVideoCall {
 
                 System.out.println("🎤 Audio capture started...");
 
-                while (isCallRunning && isAudioRunning) {
-                    int bufferSize = microphone.read(buffer, 0, buffer.length);
-                    DatagramPacket packet = new DatagramPacket(buffer, bufferSize, receiverAddress, port);
-                    audioSenderSocket.send(packet);
+                while (isCallRunning) {
+                    if (isAudioRunning) {
+                        int bufferSize = microphone.read(buffer, 0, buffer.length);
+                        DatagramPacket packet = new DatagramPacket(buffer, bufferSize, receiverAddress, port);
+                        audioSenderSocket.send(packet);
+                    }
                 }
 
             } catch (Exception e) {
@@ -285,40 +287,42 @@ public class AudioVideoCall {
                 MatOfInt jpegParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                 final int CHUNK_SIZE = 1400;
 
-                while (isCallRunning && isVideoRunning) {
-                    Mat frame = new Mat();
+                while (isCallRunning) {
+                    if (isVideoRunning) {
+                        Mat frame = new Mat();
 
-                    if (webcam.read(frame) && !frame.empty()) {
-                        Core.flip(frame, frame, 1);
+                        if (webcam.read(frame) && !frame.empty()) {
+                            Core.flip(frame, frame, 1);
 
-                        MatOfByte buffer = new MatOfByte();
-                        Imgcodecs.imencode(".jpg", frame, buffer, jpegParams);
-                        byte[] frameBytes = buffer.toArray();
+                            MatOfByte buffer = new MatOfByte();
+                            Imgcodecs.imencode(".jpg", frame, buffer, jpegParams);
+                            byte[] frameBytes = buffer.toArray();
 
-                        Image videoImage = new Image(new ByteArrayInputStream(frameBytes));
+                            Image videoImage = new Image(new ByteArrayInputStream(frameBytes));
 
-                        Platform.runLater(() -> {
-                            if (myVideoView != null) {
-                                myVideoView.setImage(videoImage);
+                            Platform.runLater(() -> {
+                                if (myVideoView != null) {
+                                    myVideoView.setImage(videoImage);
+                                }
+                            });
+
+                            int totalChunks = (int) Math.ceil((double) frameBytes.length / CHUNK_SIZE);
+                            int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+
+                            for (int i = 0; i < totalChunks; i++) {
+                                int start = i * CHUNK_SIZE;
+                                int length = Math.min(CHUNK_SIZE, frameBytes.length - start);
+                                byte[] chunkData = Arrays.copyOfRange(frameBytes, start, start + length);
+
+                                ByteBuffer packetBuffer = ByteBuffer.allocate(8 + chunkData.length);
+                                packetBuffer.putInt(frameId);
+                                packetBuffer.putShort((short) i);
+                                packetBuffer.putShort((short) totalChunks);
+                                packetBuffer.put(chunkData);
+
+                                DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(), receiverAddress, port);
+                                videoSenderSocket.send(packet);
                             }
-                        });
-
-                        int totalChunks = (int) Math.ceil((double) frameBytes.length / CHUNK_SIZE);
-                        int frameId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
-
-                        for (int i = 0; i < totalChunks; i++) {
-                            int start = i * CHUNK_SIZE;
-                            int length = Math.min(CHUNK_SIZE, frameBytes.length - start);
-                            byte[] chunkData = Arrays.copyOfRange(frameBytes, start, start + length);
-
-                            ByteBuffer packetBuffer = ByteBuffer.allocate(8 + chunkData.length);
-                            packetBuffer.putInt(frameId);
-                            packetBuffer.putShort((short) i);
-                            packetBuffer.putShort((short) totalChunks);
-                            packetBuffer.put(chunkData);
-
-                            DatagramPacket packet = new DatagramPacket(packetBuffer.array(), packetBuffer.capacity(), receiverAddress, port);
-                            videoSenderSocket.send(packet);
                         }
                     }
 
