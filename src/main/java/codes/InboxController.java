@@ -975,7 +975,16 @@ public class InboxController {
             client.sendToServer("audio_call:" + receiverId);
 
             if (client.getReceiverIPAddress() != null) {
-                AudioVideoCall.startAudioCall(client.getReceiverIPAddress());
+                ClientInfo receiver = null;
+
+                for (ClientInfo c : client.getClients()) {
+                    if (c.getId().equals(receiverId)) {
+                        receiver = c;
+                        break;
+                    }
+                }
+
+                new AudioVideoCall(client.getInfo(), receiver).startAudioCall(client.getReceiverIPAddress());
             }
         }
     }
@@ -985,7 +994,16 @@ public class InboxController {
             client.sendToServer("audio_call:" + receiverId);
 
             if (client.getReceiverIPAddress() != null) {
-                AudioVideoCall.startVideoCall(client.getReceiverIPAddress());
+                ClientInfo receiver = null;
+
+                for (ClientInfo c : client.getClients()) {
+                    if (c.getId().equals(receiverId)) {
+                        receiver = c;
+                        break;
+                    }
+                }
+
+                new AudioVideoCall(client.getInfo(), receiver).startVideoCall(client.getReceiverIPAddress());
             }
         }
     }

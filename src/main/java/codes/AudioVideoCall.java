@@ -29,96 +29,48 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class AudioVideoCall {
-    private static TargetDataLine microphone;
-    private static SourceDataLine speaker;
-    private static DatagramSocket audioSenderSocket;
-    private static DatagramSocket audioReceiverSocket;
-    private static DatagramSocket videoSenderSocket;
-    private static DatagramSocket videoReceiverSocket;
-    private static VideoCapture webcam;
-    private static boolean isCallRunning;
-    private static boolean isAudioRunning;
-    private static boolean isVideoRunning;
+    private ClientInfo sender;
+    private ClientInfo receiver;
+    private Image senderImage;
+    private Image receiverImage;
 
-    private static Stage videoStage;
-    private static ImageView videoView;
-    private static ImageView myVideoView;
-    private static double windowWidth = Screen.SCREENWIDTH * 0.7;
-    private static double windowHeight = Screen.SCREENHEIGHT * 0.8;
+    private TargetDataLine microphone;
+    private SourceDataLine speaker;
+    private DatagramSocket audioSenderSocket;
+    private DatagramSocket audioReceiverSocket;
+    private DatagramSocket videoSenderSocket;
+    private DatagramSocket videoReceiverSocket;
+    private VideoCapture webcam;
+    private boolean isCallRunning;
+    private boolean isAudioRunning;
+    private boolean isVideoRunning;
+
+    private Stage videoStage;
+    private ImageView videoView;
+    private ImageView myVideoView;
+    private double windowWidth = Screen.SCREENWIDTH * 0.7;
+    private double windowHeight = Screen.SCREENHEIGHT * 0.8;
 
     static {
         System.load("C:/Program Files/opencv/build/java/x64/opencv_java4120.dll");
     }
 
-    public static void startAudioCall(String receiverIPAddress) {
+    public AudioVideoCall(ClientInfo sender, ClientInfo receiver) {
+        this.sender = sender;
+        this.receiver = receiver;
+
+        senderImage = new Image(new ByteArrayInputStream(sender.getProfilePicture()));
+        receiverImage = new Image(new ByteArrayInputStream(receiver.getProfilePicture()));
+
+        isCallRunning = false;
+        isAudioRunning = false;
+        isVideoRunning = false;
+    }
+
+    public void startAudioCall(String receiverIPAddress) {
         System.out.println(receiverIPAddress);
         isCallRunning = true;
         isAudioRunning = true;
-        isVideoRunning = false;
-
-        // Initiating audio sender thread
-
-        new Thread(() -> {
-            try {
-                audioSenderSocket = new DatagramSocket();
-                InetAddress receiverAddress = InetAddress.getByName(receiverIPAddress);
-                int port = 22222;
-
-                AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false);
-                DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-                microphone = (TargetDataLine) AudioSystem.getLine(info);
-                microphone.open(format);
-                microphone.start();
-
-                byte[] buffer = new byte[4096];
-
-                System.out.println("🎤 Audio capture started...");
-
-                while (isCallRunning && isAudioRunning) {
-                    int bufferSize = microphone.read(buffer, 0, buffer.length);
-                    DatagramPacket packet = new DatagramPacket(buffer, bufferSize, receiverAddress, port);
-                    audioSenderSocket.send(packet);
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-        // Initiating audio receiver thread
-
-        new Thread(() -> {
-            try {
-                audioReceiverSocket = new DatagramSocket(22222);
-
-                AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false);
-                DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-                speaker = (SourceDataLine) AudioSystem.getLine(info);
-                speaker.open(format);
-                speaker.start();
-
-                byte[] buffer = new byte[4096];
-
-                System.out.println("🔊 Audio receiver started...");
-
-                while (isCallRunning) {
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    audioReceiverSocket.receive(packet);
-                    speaker.write(packet.getData(), 0, packet.getLength());
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    public static void startVideoCall(String receiverIPAddress) {
-        // Start audio call
-
-        startAudioCall(receiverIPAddress);
-
-        isVideoRunning = true;
 
         // Initiating video preview
 
@@ -211,6 +163,72 @@ public class AudioVideoCall {
 
             videoStage.show();
         });
+
+        videoView.setImage(receiverImage);
+
+        // Initiating audio sender thread
+
+        new Thread(() -> {
+            try {
+                audioSenderSocket = new DatagramSocket();
+                InetAddress receiverAddress = InetAddress.getByName(receiverIPAddress);
+                int port = 22222;
+
+                AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false);
+                DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+                microphone = (TargetDataLine) AudioSystem.getLine(info);
+                microphone.open(format);
+                microphone.start();
+
+                byte[] buffer = new byte[4096];
+
+                System.out.println("🎤 Audio capture started...");
+
+                while (isCallRunning && isAudioRunning) {
+                    int bufferSize = microphone.read(buffer, 0, buffer.length);
+                    DatagramPacket packet = new DatagramPacket(buffer, bufferSize, receiverAddress, port);
+                    audioSenderSocket.send(packet);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        // Initiating audio receiver thread
+
+        new Thread(() -> {
+            try {
+                audioReceiverSocket = new DatagramSocket(22222);
+
+                AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false);
+                DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+                speaker = (SourceDataLine) AudioSystem.getLine(info);
+                speaker.open(format);
+                speaker.start();
+
+                byte[] buffer = new byte[4096];
+
+                System.out.println("🔊 Audio receiver started...");
+
+                while (isCallRunning) {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    audioReceiverSocket.receive(packet);
+                    speaker.write(packet.getData(), 0, packet.getLength());
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public void startVideoCall(String receiverIPAddress) {
+        // Start audio call
+
+        startAudioCall(receiverIPAddress);
+
+        isVideoRunning = true;
 
         // Initiating video sender thread
 
@@ -342,7 +360,7 @@ public class AudioVideoCall {
         }).start();
     }
 
-    public static void endCall() {
+    public void endCall() {
         if (microphone != null) {
             microphone.close();
         }

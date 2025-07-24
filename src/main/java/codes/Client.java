@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 public class Client {
     // Client information
 
+    private ClientInfo info;
     private String firstName;
     private String lastName;
     private String email;
@@ -216,6 +217,7 @@ public class Client {
                     }
                 }
                 else if (fromServer instanceof ClientInfo info) {
+                    this.info = info;
                     this.firstName = info.getFirstName();
                     this.lastName = info.getLastName();
                     this.id = info.getId();
@@ -394,6 +396,10 @@ public class Client {
     }
 
     // Getters
+
+    public ClientInfo getInfo() {
+        return info;
+    }
 
     public String getFirstName() {
         return firstName;
