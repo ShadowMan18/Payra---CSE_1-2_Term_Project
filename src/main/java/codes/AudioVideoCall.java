@@ -68,16 +68,27 @@ public class AudioVideoCall {
     }
 
     public void startAudioCall(String receiverIPAddress) {
-        System.out.println(receiverIPAddress);
         isCallRunning = true;
         isAudioRunning = true;
 
+        startCall(receiverIPAddress);
+    }
+
+    public void startVideoCall(String receiverIPAddress) {
+        isCallRunning = true;
+        isAudioRunning = true;
+        isVideoRunning = true;
+
+        startCall(receiverIPAddress);
+    }
+
+    private void startCall(String receiverIPAddress) {
         // Initiating video preview
 
         Platform.runLater(() -> {
             videoView = new ImageView();
-            videoView.setFitWidth(windowWidth);
-            videoView.setFitHeight(windowHeight);
+            videoView.setFitWidth(windowWidth/2);
+            videoView.setFitHeight(windowHeight/2);
             videoView.setPreserveRatio(true);
             Rectangle clip1 = new Rectangle();
             clip1.setArcWidth(20);
@@ -87,6 +98,7 @@ public class AudioVideoCall {
                 clip1.setHeight(newBounds.getHeight());
             });
             videoView.setClip(clip1);
+            videoView.setImage(receiverImage);
 
             myVideoView = new ImageView();
             myVideoView.setFitWidth(windowWidth * 0.2);
@@ -99,7 +111,6 @@ public class AudioVideoCall {
                 clip2.setWidth(newBounds.getWidth());
                 clip2.setHeight(newBounds.getHeight());
             });
-            myVideoView.setClip(clip2);
 
             Rectangle background = new Rectangle();
             background.setFill(Color.web("#092038"));
@@ -164,8 +175,6 @@ public class AudioVideoCall {
             videoStage.show();
         });
 
-        videoView.setImage(receiverImage);
-
         // Initiating audio sender thread
 
         new Thread(() -> {
@@ -221,14 +230,6 @@ public class AudioVideoCall {
                 e.printStackTrace();
             }
         }).start();
-    }
-
-    public void startVideoCall(String receiverIPAddress) {
-        // Start audio call
-
-        startAudioCall(receiverIPAddress);
-
-        isVideoRunning = true;
 
         // Initiating video sender thread
 
