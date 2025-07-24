@@ -22,6 +22,7 @@ import org.opencv.videoio.Videoio;
 import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -87,8 +88,8 @@ public class AudioVideoCall {
 
         Platform.runLater(() -> {
             videoView = new ImageView();
-            videoView.setFitWidth(windowWidth/2);
-            videoView.setFitHeight(windowHeight/2);
+            videoView.setFitWidth(windowWidth);
+            videoView.setFitHeight(windowHeight);
             videoView.setPreserveRatio(true);
             Rectangle clip1 = new Rectangle();
             clip1.setArcWidth(20);
@@ -111,6 +112,7 @@ public class AudioVideoCall {
                 clip2.setWidth(newBounds.getWidth());
                 clip2.setHeight(newBounds.getHeight());
             });
+            myVideoView.setClip(clip2);
 
             Rectangle background = new Rectangle();
             background.setFill(Color.web("#092038"));
@@ -131,11 +133,27 @@ public class AudioVideoCall {
             });
 
             muteButton.setOnMouseClicked(event -> {
-                isAudioRunning = false;
+                if (isAudioRunning) {
+                    isAudioRunning = false;
+                }
+                else {
+                    isAudioRunning = true;
+                }
             });
 
             stopVideoButton.setOnMouseClicked(event -> {
-                isVideoRunning = false;
+                if (isVideoRunning) {
+                    isVideoRunning = false;
+                    try {
+                        DatagramPacket packet = new DatagramPacket(sender.getProfilePicture(), sender.getProfilePicture().length, InetAddress.getByName(receiverIPAddress), 22223);
+                        videoSenderSocket.send(packet);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else {
+                    isVideoRunning = true;
+                }
             });
 
 
