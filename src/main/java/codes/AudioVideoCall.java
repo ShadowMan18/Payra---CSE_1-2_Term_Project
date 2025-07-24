@@ -172,7 +172,6 @@ public class AudioVideoCall {
             background.widthProperty().bind(root.widthProperty());
             background.heightProperty().bind(root.heightProperty());
 
-            // Layout positions inside root StackPane
             StackPane.setAlignment(videoView, Pos.CENTER);
             StackPane.setMargin(videoView, new Insets(10));
 
@@ -182,8 +181,7 @@ public class AudioVideoCall {
             StackPane.setAlignment(buttonContainer, Pos.BOTTOM_CENTER);
             StackPane.setMargin(buttonContainer, new Insets(10));
 
-            // Create scene and stage
-            Scene scene = new Scene(root, windowWidth + 20, windowHeight);
+            Scene scene = new Scene(root, windowWidth + 20, windowHeight + 20);
 
             videoStage = new Stage();
             videoStage.setTitle("Video Call");
@@ -195,10 +193,6 @@ public class AudioVideoCall {
 
             videoStage.show();
         });
-
-
-
-
 
         // Initiating video sender thread
 
@@ -303,8 +297,11 @@ public class AudioVideoCall {
                         Mat frame = Imgcodecs.imdecode(new MatOfByte(fullFrame), Imgcodecs.IMREAD_COLOR);
 
                         if (!frame.empty()) {
+                            Mat resizedMat = new Mat();
+                            Size newSize = new Size(windowWidth, windowHeight);
+                            Imgproc.resize(frame, resizedMat, newSize);
                             MatOfByte bufferMat = new MatOfByte();
-                            Imgcodecs.imencode(".jpg", frame, bufferMat);
+                            Imgcodecs.imencode(".jpg", resizedMat, bufferMat);
                             Image videoImage = new Image(new ByteArrayInputStream(bufferMat.toArray()));
 
                             Platform.runLater(() -> {
