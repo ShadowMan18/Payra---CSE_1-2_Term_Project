@@ -254,12 +254,12 @@ public class Client {
                         callerInfo = info;
                     }
 
-                    try {
-                        serverOutput.writeObject("done");
-                        serverOutput.flush();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+//                    try {
+//                        serverOutput.writeObject("done");
+//                        serverOutput.flush();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
                     if (latch != null) {
                         latch.countDown();

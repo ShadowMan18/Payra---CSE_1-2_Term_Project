@@ -361,13 +361,7 @@ public class ServerThread implements Runnable{
                 String receiverId = callInfo[1];
 
                 if (Server.currentClients.get(receiverId) != null) {
-                    latch = new CountDownLatch(1);
                     Server.currentClients.get(receiverId).sendToClient(getClientInfo(id));
-                    try {
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
                     Server.currentClients.get(receiverId).sendToClient("call:" + callType + "," + clientIPAddress);
                     sendToClient("receiverIP:" + Server.currentClients.get(receiverId).getClientIPAddress());
                 }
