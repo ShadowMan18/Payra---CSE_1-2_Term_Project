@@ -1,8 +1,23 @@
 package codes;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.Pair;
 
 import java.io.ByteArrayInputStream;
@@ -239,6 +254,13 @@ public class Client {
                         callerInfo = info;
                     }
 
+                    try {
+                        serverOutput.writeObject("done");
+                        serverOutput.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     if (latch != null) {
                         latch.countDown();
                         latch = null;
@@ -319,20 +341,25 @@ public class Client {
                     }
                 }
                 else if (fromServer instanceof String string && string.startsWith("call:")) {
+                    System.out.println(string);
                     String[] callInfo = string.substring("call:".length()).split(",");
 
                     String callType = callInfo[0];
-                    String callerId = callInfo[1];
-                    String callerIPAddress = callInfo[2];
+                    String callerIPAddress = callInfo[1];
 
-                    sendToServer("get_info:" + callerId);
+                    /// ////
 
-                    if (callType.equals("audio")) {
-                        new AudioVideoCall(info, callerInfo).startAudioCall(callerIPAddress);
+                    while (callerInfo == null || callerInfo.getProfilePicture() == null) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    else if (callType.equals("video")) {
-                        new AudioVideoCall(info, callerInfo).startVideoCall(callerIPAddress);
-                    }
+
+                    CallRinger.start(callerInfo, info, callType, callerIPAddress);
+                    
+                    /// /////
 
                     callerInfo = null;
 

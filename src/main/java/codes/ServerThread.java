@@ -26,6 +26,7 @@ public class ServerThread implements Runnable{
     private NewsFeedServer feedServer;
     private final Connection databaseConnection;
     private String id;
+    private CountDownLatch latch;
 
     // Creating server thread from the client
 
@@ -94,6 +95,13 @@ public class ServerThread implements Runnable{
 //            {
 //                System.out.println((String) fromClient);
 //            }
+
+            if (fromClient instanceof String string && string.equals("done:")) {
+                if (latch != null) {
+                    latch.countDown();
+                    latch = null;
+                }
+            }
 
             // Checking if a client is present
 
@@ -353,7 +361,14 @@ public class ServerThread implements Runnable{
                 String receiverId = callInfo[1];
 
                 if (Server.currentClients.get(receiverId) != null) {
-                    Server.currentClients.get(receiverId).sendToClient("call:" + callType + "," + id + "," + clientIPAddress);
+                    latch = new CountDownLatch(1);
+                    Server.currentClients.get(receiverId).sendToClient(getClientInfo(id));
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Server.currentClients.get(receiverId).sendToClient("call:" + callType + "," + clientIPAddress);
                     sendToClient("receiverIP:" + Server.currentClients.get(receiverId).getClientIPAddress());
                 }
                 else {
