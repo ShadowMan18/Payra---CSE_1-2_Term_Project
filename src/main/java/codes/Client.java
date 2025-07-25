@@ -335,6 +335,11 @@ public class Client {
                     }
 
                     callerInfo = null;
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
                 }
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
                     int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
