@@ -2,6 +2,7 @@ package codes;
 
 import javafx.application.Platform;
 import javafx.scene.image.Image;
+import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.io.ByteArrayInputStream;
@@ -38,6 +39,7 @@ public class Client {
 
     // Client pages
 
+    private Stage stage;
     private final IntroPage introPage;
     private final LoginPage loginPage;
     private final SignupPage signupPage;
@@ -51,7 +53,7 @@ public class Client {
 
     // Client server network
 
-    private final String ipAddress = "192.168.69.102";
+    private final String ipAddress = "192.168.70.228";
 //    private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
@@ -69,6 +71,7 @@ public class Client {
     public Map<String, Pair<String, String>> notification = new LinkedHashMap<>();
 
     private String receiverIPAddress;
+    private ClientInfo callerInfo;
 
     // NewsFeed server network
 
@@ -217,19 +220,24 @@ public class Client {
                     }
                 }
                 else if (fromServer instanceof ClientInfo info) {
-                    this.info = info;
-                    this.firstName = info.getFirstName();
-                    this.lastName = info.getLastName();
-                    this.id = info.getId();
-                    this.email  = id + "@gmail.com";
-                    this.password = info.getPassword();
-                    this.recoveryQuestion = info.getRecoveryQuestion();
-                    this.recoveryAnswer = info.getRecoveryAnswer();
-                    byte[] profilePictureByte = info.getProfilePicture();
+                    if (!active) {
+                        this.info = info;
+                        this.firstName = info.getFirstName();
+                        this.lastName = info.getLastName();
+                        this.id = info.getId();
+                        this.email  = id + "@gmail.com";
+                        this.password = info.getPassword();
+                        this.recoveryQuestion = info.getRecoveryQuestion();
+                        this.recoveryAnswer = info.getRecoveryAnswer();
+                        byte[] profilePictureByte = info.getProfilePicture();
 
-                    Platform.runLater(() -> {
-                        profilePicture = new Image(new ByteArrayInputStream(profilePictureByte));
-                    });
+                        Platform.runLater(() -> {
+                            profilePicture = new Image(new ByteArrayInputStream(profilePictureByte));
+                        });
+                    }
+                    else {
+                        callerInfo = info;
+                    }
 
                     if (latch != null) {
                         latch.countDown();
@@ -309,6 +317,24 @@ public class Client {
                         latch.countDown();
                         latch = null;
                     }
+                }
+                else if (fromServer instanceof String string && string.startsWith("call:")) {
+                    String[] callInfo = string.substring("call:".length()).split(",");
+
+                    String callType = callInfo[0];
+                    String callerId = callInfo[1];
+                    String callerIPAddress = callInfo[2];
+
+                    sendToServer("get_info:" + callerId);
+
+                    if (callType.equals("audio")) {
+                        new AudioVideoCall(info, callerInfo).startAudioCall(callerIPAddress);
+                    }
+                    else if (callType.equals("video")) {
+                        new AudioVideoCall(info, callerInfo).startVideoCall(callerIPAddress);
+                    }
+
+                    callerInfo = null;
                 }
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
                     int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
@@ -454,6 +480,10 @@ public class Client {
         return receiverIPAddress;
     }
 
+    public Stage getStage() {
+        return stage;
+    }
+
     public IntroPage getIntroPage() {
         return introPage;
     }
@@ -558,6 +588,10 @@ public class Client {
     public void setChatStatus(boolean status) { chatStatus = status; }
 
     public void resetNotificationStatus() { newNotification = false; }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
 
     public void setLatch(CountDownLatch latch) {
         this.latch = latch;

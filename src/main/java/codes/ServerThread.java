@@ -203,7 +203,7 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
                 String id = string.substring("get_info:".length());
-                this.id = id;
+//                this.id = id;
 
                 sendToClient(getClientInfo(id));
             }
@@ -347,9 +347,13 @@ public class ServerThread implements Runnable{
             }
 
             if (fromClient instanceof String string && string.startsWith("call:")) {
-                String receiverId = string.substring("call:".length());
+                String[] callInfo = string.substring("call:".length()).split(",");
+
+                String callType = callInfo[0];
+                String receiverId = callInfo[1];
 
                 if (Server.currentClients.get(receiverId) != null) {
+                    Server.currentClients.get(receiverId).sendToClient("call:" + callType + "," + id + "," + clientIPAddress);
                     sendToClient("receiverIP:" + Server.currentClients.get(receiverId).getClientIPAddress());
                 }
                 else {

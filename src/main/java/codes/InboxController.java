@@ -973,7 +973,7 @@ public class InboxController {
 
     public void onAudioCallButtonClicked(ActionEvent actionEvent) {
         if (client.getChatStatus()) {
-            client.sendToServer("call:" + receiverId);
+            client.sendToServer("call:audio," + receiverId);
 
             if (!client.getReceiverIPAddress().equals("n/a")) {
                 ClientInfo receiver = null;
@@ -1043,7 +1043,7 @@ public class InboxController {
 
     public void onVideoCallButtonClicked(ActionEvent actionEvent) {
         if (client.getChatStatus()) {
-            client.sendToServer("call:" + receiverId);
+            client.sendToServer("call:video," + receiverId);
 
             if (!client.getReceiverIPAddress().equals("n/a")) {
                 ClientInfo receiver = null;
