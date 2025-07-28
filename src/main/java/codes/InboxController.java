@@ -974,10 +974,114 @@ public class InboxController {
     }
 
     public void onAudioCallButtonClicked(ActionEvent actionEvent) {
-        if (client.getChatStatus()) {
+        if (client.getChatStatus() && !client.getCallStatus()) {
+            client.setCallStatus(true);
+
             client.sendToServer("call:audio," + receiverId);
 
-            if (!client.getReceiverIPAddress().equals("n/a")) {
+            if (client.getReceiverIPAddress().equals("n/a")) {
+                Platform.runLater(() -> {
+                    System.out.println("User is not active");
+
+                    Rectangle background = new Rectangle(200, 80);
+                    background.setArcWidth(20);
+                    background.setArcHeight(20);
+                    background.setFill(Color.web("#f4f4f4"));
+                    background.setStroke(Color.BLACK);
+                    background.setStrokeWidth(0);
+
+                    Label message = new Label("User is not active");
+                    message.setPrefWidth(background.getWidth());
+                    message.setPrefHeight(background.getHeight());
+                    message.setStyle("-fx-background-color: transparent; -fx-font-family: 'Open Sans'; -fx-font-size: 18; -fx-text-fill: black; -fx-font-weight: bold;");
+                    message.setAlignment(Pos.CENTER);
+
+                    StackPane popup = new StackPane(background, message);
+                    popup.setOpacity(0);
+                    popup.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+
+                    double centerX = (Screen.SCREENWIDTH - background.getWidth()) / 2;
+                    double centerY = (Screen.SCREENHEIGHT - background.getHeight()) / 2;
+                    popup.setLayoutX(centerX);
+                    popup.setLayoutY(centerY);
+
+                    FadeTransition fadeIn = new FadeTransition(Duration.millis(200), popup);
+                    fadeIn.setFromValue(0.0);
+                    fadeIn.setToValue(1.0);
+                    fadeIn.play();
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                    delay.setOnFinished(e -> {
+                        FadeTransition fadeOut = new FadeTransition(Duration.millis(500), popup);
+                        fadeOut.setFromValue(1.0);
+                        fadeOut.setToValue(0.0);
+                        fadeOut.setOnFinished(ev -> InboxView.getChildren().remove(popup));
+                        fadeOut.play();
+                    });
+                    delay.play();
+
+                    InboxView.getChildren().add(popup);
+
+                    stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                        Bounds bounds = popup.localToScene(popup.getBoundsInParent());
+                        if (!bounds.contains(event.getSceneX(), event.getSceneY())) {
+                            InboxView.getChildren().remove(popup);
+                        }
+                    });
+                });
+            }
+            else if (client.getReceiverIPAddress().equals("busy")) {
+                Platform.runLater(() -> {
+                    System.out.println("User is in another call");
+
+                    Rectangle background = new Rectangle(250, 80);
+                    background.setArcWidth(20);
+                    background.setArcHeight(20);
+                    background.setFill(Color.web("#f4f4f4"));
+                    background.setStroke(Color.BLACK);
+                    background.setStrokeWidth(0);
+
+                    Label message = new Label("User is in another call");
+                    message.setPrefWidth(background.getWidth());
+                    message.setPrefHeight(background.getHeight());
+                    message.setStyle("-fx-background-color: transparent; -fx-font-family: 'Open Sans'; -fx-font-size: 18; -fx-text-fill: black; -fx-font-weight: bold;");
+                    message.setAlignment(Pos.CENTER);
+
+                    StackPane popup = new StackPane(background, message);
+                    popup.setOpacity(0);
+                    popup.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+
+                    double centerX = (Screen.SCREENWIDTH - background.getWidth()) / 2;
+                    double centerY = (Screen.SCREENHEIGHT - background.getHeight()) / 2;
+                    popup.setLayoutX(centerX);
+                    popup.setLayoutY(centerY);
+
+                    FadeTransition fadeIn = new FadeTransition(Duration.millis(200), popup);
+                    fadeIn.setFromValue(0.0);
+                    fadeIn.setToValue(1.0);
+                    fadeIn.play();
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                    delay.setOnFinished(e -> {
+                        FadeTransition fadeOut = new FadeTransition(Duration.millis(500), popup);
+                        fadeOut.setFromValue(1.0);
+                        fadeOut.setToValue(0.0);
+                        fadeOut.setOnFinished(ev -> InboxView.getChildren().remove(popup));
+                        fadeOut.play();
+                    });
+                    delay.play();
+
+                    InboxView.getChildren().add(popup);
+
+                    stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                        Bounds bounds = popup.localToScene(popup.getBoundsInParent());
+                        if (!bounds.contains(event.getSceneX(), event.getSceneY())) {
+                            InboxView.getChildren().remove(popup);
+                        }
+                    });
+                });
+            }
+            else {
                 ClientInfo receiver = null;
 
                 for (ClientInfo c : client.getClients()) {
@@ -990,9 +1094,18 @@ public class InboxController {
                 client.resetCallAcceptanceStatus();
                 CallRinger.startCallerEndRinger(client, client.getInfo(), receiver, "audio", client.getReceiverIPAddress());
             }
-            else {
+        }
+    }
+
+    public void onVideoCallButtonClicked(ActionEvent actionEvent) {
+        if (client.getChatStatus() && !client.getCallStatus()) {
+            client.setCallStatus(true);
+
+            client.sendToServer("call:video," + receiverId);
+
+            if (client.getReceiverIPAddress().equals("n/a")) {
                 Platform.runLater(() -> {
-                    System.out.println("User not active");
+                    System.out.println("User is not active");
 
                     Rectangle background = new Rectangle(200, 80);
                     background.setArcWidth(20);
@@ -1041,14 +1154,58 @@ public class InboxController {
                     });
                 });
             }
-        }
-    }
+            else if (client.getReceiverIPAddress().equals("busy")) {
+                Platform.runLater(() -> {
+                    System.out.println("User is in another call");
 
-    public void onVideoCallButtonClicked(ActionEvent actionEvent) {
-        if (client.getChatStatus()) {
-            client.sendToServer("call:video," + receiverId);
+                    Rectangle background = new Rectangle(250, 80);
+                    background.setArcWidth(20);
+                    background.setArcHeight(20);
+                    background.setFill(Color.web("#f4f4f4"));
+                    background.setStroke(Color.BLACK);
+                    background.setStrokeWidth(0);
 
-            if (!client.getReceiverIPAddress().equals("n/a")) {
+                    Label message = new Label("User is not active.");
+                    message.setPrefWidth(background.getWidth());
+                    message.setPrefHeight(background.getHeight());
+                    message.setStyle("-fx-background-color: transparent; -fx-font-family: 'Open Sans'; -fx-font-size: 18; -fx-text-fill: black; -fx-font-weight: bold;");
+                    message.setAlignment(Pos.CENTER);
+
+                    StackPane popup = new StackPane(background, message);
+                    popup.setOpacity(0);
+                    popup.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+
+                    double centerX = (Screen.SCREENWIDTH - background.getWidth()) / 2;
+                    double centerY = (Screen.SCREENHEIGHT - background.getHeight()) / 2;
+                    popup.setLayoutX(centerX);
+                    popup.setLayoutY(centerY);
+
+                    FadeTransition fadeIn = new FadeTransition(Duration.millis(200), popup);
+                    fadeIn.setFromValue(0.0);
+                    fadeIn.setToValue(1.0);
+                    fadeIn.play();
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                    delay.setOnFinished(e -> {
+                        FadeTransition fadeOut = new FadeTransition(Duration.millis(500), popup);
+                        fadeOut.setFromValue(1.0);
+                        fadeOut.setToValue(0.0);
+                        fadeOut.setOnFinished(ev -> InboxView.getChildren().remove(popup));
+                        fadeOut.play();
+                    });
+                    delay.play();
+
+                    InboxView.getChildren().add(popup);
+
+                    stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                        Bounds bounds = popup.localToScene(popup.getBoundsInParent());
+                        if (!bounds.contains(event.getSceneX(), event.getSceneY())) {
+                            InboxView.getChildren().remove(popup);
+                        }
+                    });
+                });
+            }
+            else {
                 ClientInfo receiver = null;
 
                 for (ClientInfo c : client.getClients()) {
@@ -1060,57 +1217,6 @@ public class InboxController {
 
                 client.resetCallAcceptanceStatus();
                 CallRinger.startCallerEndRinger(client, client.getInfo(), receiver, "video", client.getReceiverIPAddress());
-            }
-            else {
-                Platform.runLater(() -> {
-                    System.out.println("User not active");
-
-                    Rectangle background = new Rectangle(200, 80);
-                    background.setArcWidth(20);
-                    background.setArcHeight(20);
-                    background.setFill(Color.web("#f4f4f4"));
-                    background.setStroke(Color.BLACK);
-                    background.setStrokeWidth(0);
-
-                    Label message = new Label("User is not active.");
-                    message.setPrefWidth(background.getWidth());
-                    message.setPrefHeight(background.getHeight());
-                    message.setStyle("-fx-background-color: transparent; -fx-font-family: 'Open Sans'; -fx-font-size: 18; -fx-text-fill: black; -fx-font-weight: bold;");
-                    message.setAlignment(Pos.CENTER);
-
-                    StackPane popup = new StackPane(background, message);
-                    popup.setOpacity(0);
-                    popup.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
-
-                    double centerX = (Screen.SCREENWIDTH - background.getWidth()) / 2;
-                    double centerY = (Screen.SCREENHEIGHT - background.getHeight()) / 2;
-                    popup.setLayoutX(centerX);
-                    popup.setLayoutY(centerY);
-
-                    FadeTransition fadeIn = new FadeTransition(Duration.millis(200), popup);
-                    fadeIn.setFromValue(0.0);
-                    fadeIn.setToValue(1.0);
-                    fadeIn.play();
-
-                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
-                    delay.setOnFinished(e -> {
-                        FadeTransition fadeOut = new FadeTransition(Duration.millis(500), popup);
-                        fadeOut.setFromValue(1.0);
-                        fadeOut.setToValue(0.0);
-                        fadeOut.setOnFinished(ev -> InboxView.getChildren().remove(popup));
-                        fadeOut.play();
-                    });
-                    delay.play();
-
-                    InboxView.getChildren().add(popup);
-
-                    stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                        Bounds bounds = popup.localToScene(popup.getBoundsInParent());
-                        if (!bounds.contains(event.getSceneX(), event.getSceneY())) {
-                            InboxView.getChildren().remove(popup);
-                        }
-                    });
-                });
             }
         }
     }

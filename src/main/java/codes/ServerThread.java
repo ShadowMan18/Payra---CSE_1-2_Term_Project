@@ -360,7 +360,13 @@ public class ServerThread implements Runnable{
                 String callType = callInfo[0];
                 String receiverId = callInfo[1];
 
-                if (Server.currentClients.get(receiverId) != null) {
+                if (Server.inCall.contains(receiverId)) {
+                    sendToClient("receiverIP:busy");
+                }
+                else if (Server.currentClients.get(receiverId) != null) {
+                    Server.inCall.add(id);
+                    Server.inCall.add(receiverId);
+
                     Server.currentClients.get(receiverId).sendToClient(getClientInfo(id));
                     Server.currentClients.get(receiverId).sendToClient("call:" + callType + "," + clientIPAddress);
                     sendToClient("receiverIP:" + Server.currentClients.get(receiverId).getClientIPAddress());
@@ -381,6 +387,9 @@ public class ServerThread implements Runnable{
             if (fromClient instanceof String string && string.startsWith("call_declined:")) {
                 String callerId = string.substring("call_declined:".length());
 
+                Server.inCall.remove(id);
+                Server.inCall.remove(callerId);
+
                 if (Server.currentClients.get(callerId) != null) {
                     Server.currentClients.get(callerId).sendToClient("call_response:declined");
                 }
@@ -388,6 +397,9 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("call_ended:")) {
                 String receiverID = string.substring("call_ended:".length());
+
+                Server.inCall.remove(id);
+                Server.inCall.remove(receiverID);
 
                 System.out.println("call ended " + receiverID);
 

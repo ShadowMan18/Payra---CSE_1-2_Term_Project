@@ -68,7 +68,7 @@ public class Client {
 
     // Client server network
 
-//    private final String ipAddress = "192.168.70.228";
+//    private final String ipAddress = "192.168.200.36";
     private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
@@ -90,6 +90,7 @@ public class Client {
     private String receiverIPAddress;
     private ClientInfo callerInfo;
     private String callAcceptanceStatus;
+    private boolean callStatus;
 
     // NewsFeed server network
 
@@ -358,6 +359,7 @@ public class Client {
                         }
                     }
 
+                    callAcceptanceStatus = null;
                     CallRinger.startReceiverEndRinger(this, callerInfo, info, callType, callerIPAddress);
 
                     callerInfo = null;
@@ -598,6 +600,8 @@ public class Client {
 
     public String  getCallAcceptanceStatus() { return callAcceptanceStatus; };
 
+    public boolean getCallStatus() { return callStatus; }
+
     // Setters
 
     public void setFirstName(String firstName) {
@@ -633,6 +637,8 @@ public class Client {
     public void setChatStatus(boolean status) { chatStatus = status; }
 
     public void resetCallAcceptanceStatus() { callAcceptanceStatus = null; }
+
+    public void setCallStatus(boolean status) { callStatus = status; }
 
     public void resetNotificationStatus() { newNotification = false; }
 
