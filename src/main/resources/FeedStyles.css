@@ -47,6 +47,10 @@
     -fx-font-size: 14px;
 }
 
+.post-body {
+    -fx-padding: 0 0 0 15; /* 20px left padding only */
+}
+
 /* Text styles inside post */
 .label.username {
     -fx-font-weight: bold;
@@ -79,3 +83,62 @@
 .reaction-button:hover {
     -fx-text-fill: #000;
 }
+
+
+.comment-section {
+    -fx-padding: 10;
+    -fx-background-color: #f9f9f9;
+    -fx-background-radius: 8;
+    -fx-border-color: #dddddd;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.comment-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #333;
+    -fx-padding: 4 0 4 0;
+}
+
+.comment-input {
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1;
+    -fx-padding: 6 12 6 12;
+    -fx-font-size: 13px;
+}
+
+.send-button {
+    -fx-background-color: #3897f0;
+    -fx-text-fill: white;
+    -fx-background-radius: 20;
+    -fx-font-size: 13px;
+    -fx-padding: 5 14 5 14;
+}
+
+.send-button:hover {
+    -fx-background-color: #317dc6;
+    -fx-effect: dropshadow(gaussian, rgba(56, 151, 240, 0.5), 6, 0.2, 0, 2);
+}
+
+.comment-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.comment-scroll-pane .scroll-bar:vertical {
+    -fx-opacity: 0;
+    -fx-background-color: transparent;
+}
+
+.comment-scroll-pane:hover .scroll-bar:vertical {
+    -fx-opacity: 1; /* appears only on hover */
+}
+
+
+.comment-section {
+    -fx-padding: 10;
+    -fx-spacing: 6;
+}
+

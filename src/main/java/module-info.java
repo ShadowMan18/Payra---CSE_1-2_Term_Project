@@ -16,6 +16,7 @@ module com.example.javafx_project {
     requires com.fasterxml.jackson.annotation;
     requires java.compiler;
     requires java.sql;
+    requires bridj;
 
     opens codes to javafx.fxml;
     exports codes;

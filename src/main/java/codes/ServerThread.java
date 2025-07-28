@@ -1,7 +1,5 @@
 package codes;
 
-import javafx.scene.image.Image;
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -11,10 +9,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.sql.*;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class ServerThread implements Runnable{
@@ -275,13 +271,13 @@ public class ServerThread implements Runnable{
                 Vector<ClientInfo> clientInfo = new Vector<>();
 
                 for (String id : Server.clients) {
-                    clientInfo.add(getClientInfo(id));
+                    clientInfo.add(getClientInfo(id));  //adding clients to the vector
                 }
 
                 System.out.println("Loading clients");
 
                 for (ClientInfo c : clientInfo) {
-                    System.out.println(c.getFirstName());
+                    System.out.println(c.getFirstName());   //printing the first name for debug ig
                 }
 
                 sendToClient(clientInfo);
@@ -434,6 +430,246 @@ public class ServerThread implements Runnable{
                     System.out.println("Received PostPacket but feed server is null for user: " + id);
                 }
             }
+
+
+
+            //Because my lonely user needs some fake friends
+
+
+            else if (fromClient instanceof String string && string.startsWith("friend_request:")) {
+                String receiverId = string.substring("friend_request:".length());
+                boolean sent = friendManager.sendFriendRequest(databaseConnection, id, receiverId);
+                sendToClient("friend_request_result:" + (sent ? "sent" : "failed"));
+            }
+
+
+            else if (fromClient instanceof String string && string.startsWith("friend_accept:")) {
+                String senderId = string.substring("friend_accept:".length());
+                boolean accepted = friendManager.acceptFriendRequest(databaseConnection, senderId, id);
+                sendToClient("friend_accept_result:" + (accepted ? "accepted" : "failed"));
+            }
+
+
+            else if (fromClient instanceof String string && string.startsWith("friend_reject:")) {
+                String senderId = string.substring("friend_reject:".length());
+                boolean rejected = friendManager.rejectFriendRequest(databaseConnection, senderId, id);
+                sendToClient("friend_reject_result:" + (rejected ? "rejected" : "failed"));
+            }
+
+
+            else if (fromClient instanceof String string && string.equals("get_friends")) {
+                List<String> myFriends  = friendManager.getFriendList(databaseConnection, id);
+                //System.out.println("Size of friend list: " + myFriends.size());
+                List <ClientInfo> myFriendInfos = new ArrayList<>();
+
+                for (String senderId : myFriends) {
+                    ClientInfo info = getClientInfo(senderId);
+                    if (info != null) {
+                        myFriendInfos.add(info);
+                        //System.out.println("Added my friend requester: " + senderId);
+                    }
+                }
+
+               // System.out.println("Size of the clientInfoList "+myFriendInfos.size());
+
+                sendToClient(myFriendInfos);
+            }
+
+
+            else if (fromClient instanceof String string && string.equals("get_requests")) {
+                //System.out.println("Got the request to send the requests for " + id);
+
+                List<String> pendingIds = friendManager.getPendingRequests(databaseConnection, id);
+                //System.out.println("Size of request list: " + pendingIds.size());
+
+                List <ClientInfo> pendingRequestInfos = new ArrayList<>();
+                for (String senderId : pendingIds) {
+                    ClientInfo info = getClientInfo(senderId);
+                    if (info != null) {
+                        pendingRequestInfos.add(info);
+                       // System.out.println("Added pending requester: " + senderId);
+                    }
+                }
+
+                //System.out.println("Size of the clientInfoList "+pendingRequestInfos.size());
+
+                sendToClient(pendingRequestInfos);
+            }
+
+
+
+            else if (fromClient instanceof String string && string.startsWith("unfriend:")) {
+                String friendId = string.substring("unfriend:".length());
+                boolean removed = friendManager.unfriend(databaseConnection, id, friendId);
+                sendToClient("unfriend_result:" + (removed ? "done" : "failed"));
+            }
+
+
+            else if (fromClient instanceof String string && string.equals("get_friend_status_map")) {
+                Map<String, String> statusMap = new HashMap<>();
+
+                for (String otherId : Server.clients) {
+                    if (otherId.equals(id)) continue;
+
+                    String query = """
+                    SELECT CASE
+                        WHEN EXISTS (
+                            SELECT 1 FROM Friends 
+                            WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?)
+                        ) THEN 'friends'
+                
+                        WHEN EXISTS (
+                            SELECT 1 FROM FriendRequests 
+                            WHERE sender = ? AND receiver = ? AND status = 'pending'
+                        ) THEN 'sent'
+                
+                        WHEN EXISTS (
+                            SELECT 1 FROM FriendRequests 
+                            WHERE sender = ? AND receiver = ? AND status = 'pending'
+                        ) THEN 'pending'
+                
+                        ELSE 'send'
+                    END AS status
+                """;
+
+
+
+
+                    try (PreparedStatement stmt = databaseConnection.prepareStatement(query)) {
+                        stmt.setString(1, id);                         // me -> other (Friends)
+                        stmt.setString(2, otherId);
+                        stmt.setString(3, otherId);                    // other -> me (Friends)
+                        stmt.setString(4, id);
+
+                        stmt.setString(5, id);                         // sent: I sent to them
+                        stmt.setString(6, id + ":" + otherId);
+
+                        stmt.setString(7, otherId);                    // pending: they sent to me
+                        stmt.setString(8, otherId + ":" + id);
+
+
+
+
+                        try (ResultSet rs = stmt.executeQuery()) {
+                            if (rs.next()) {
+                                String status = rs.getString("status");
+
+                               // System.out.println("In server Status for " + otherId + " is " + status);
+
+                                statusMap.put(otherId, status);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                sendToClient(statusMap);
+            }
+
+
+
+            else if (fromClient instanceof String string && string.startsWith("friend_status:")) {
+                String[] parts = string.split(":");
+                if (parts.length == 3) {
+                    String me = parts[1];
+                    String other = parts[2];
+
+                    String query = """
+                SELECT
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM Friends WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?)) THEN 'friends'
+                        WHEN EXISTS (SELECT 1 FROM FriendRequests WHERE sender = ? AND receiver = ? AND status = 'pending') THEN 'pending'
+                        WHEN EXISTS (SELECT 1 FROM FriendRequests WHERE sender = ? AND receiver = ? AND status = 'pending') THEN 'pending'
+                        ELSE 'send'
+                    END as status
+                """;
+
+                    try (PreparedStatement stmt = databaseConnection.prepareStatement(query)) {
+                        stmt.setString(1, me);
+                        stmt.setString(2, other);
+                        stmt.setString(3, other);
+                        stmt.setString(4, me);
+                        stmt.setString(5, me);
+                        stmt.setString(6, other);
+                        stmt.setString(7, other);
+                        stmt.setString(8, me);
+
+                        try (ResultSet rs = stmt.executeQuery()) {
+                            if (rs.next()) {
+                                sendToClient(rs.getString("status"));
+                            } else {
+                                sendToClient("send");
+                            }
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        sendToClient("send");
+                    }
+                } else {
+                    sendToClient("send");
+                }
+            }
+
+
+
+            else if (fromClient instanceof String str && str.startsWith("send_comment|")) {
+                String[] parts = str.split("\\|", 4);
+                if (parts.length == 4) {
+                    int postId = Integer.parseInt(parts[1]);
+                    String commenter = parts[2];
+                    String commentText = parts[3].replace("[PIPE]", "|");  // restore escaped pipes
+
+                    try (PreparedStatement stmt = databaseConnection.prepareStatement(
+                            "INSERT INTO Comments (postId, commenter, comment, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)")) {
+                        stmt.setInt(1, postId);
+                        stmt.setString(2, commenter);
+                        stmt.setString(3, commentText);
+                        stmt.executeUpdate();
+
+                        System.out.println("Comment saved on post " + postId + " by " + commenter);
+
+
+                        CommentPacket packet = new CommentPacket(
+                                postId,
+                                commenter,
+                                commentText,
+                                LocalDateTime.now()
+                        );
+
+                        Client.broadcast(packet);
+
+                        System.out.println("Look I am server and I did broadcast it, you gotta talk to Client.java");
+                        System.out.println("Broadcasted comment: " + commenter + " said " + commentText);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+
+            else if (fromClient instanceof String str && str.startsWith("get_comments|")) {
+                int postId = Integer.parseInt(str.split("\\|")[1]);
+
+                List<String> comments = new ArrayList<>();
+                try (PreparedStatement commentStmt = databaseConnection.prepareStatement(
+                        "SELECT commenter, comment FROM Comments WHERE postId = ? ORDER BY timestamp ASC")) {
+                    commentStmt.setInt(1, postId);
+                    try (ResultSet commentRs = commentStmt.executeQuery()) {
+                        while (commentRs.next()) {
+                            String commenter = commentRs.getString("commenter");
+                            String commentText = commentRs.getString("comment");
+                            comments.add(commenter + ": " + commentText);
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                sendToClient(comments); // objectOutputStream.writeObject(comments);
+            }
+
+
 
 
 

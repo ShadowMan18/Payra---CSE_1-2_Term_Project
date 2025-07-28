@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.control.Label?>
 <StackPane fx:id="NewsFeedLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.NewsFeedController">
 
    <stylesheets>
@@ -29,7 +30,7 @@
          <Button layoutX="698.0" layoutY="37.0" mnemonicParsing="false" onAction="#onHomeButtonClicked" opacity="0.0" prefHeight="53.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="821.0" layoutY="37.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" opacity="0.0" prefHeight="57.0" prefWidth="53.0" text="Button" textFill="TRANSPARENT" />
          <Button layoutX="1462.0" layoutY="17.0" mnemonicParsing="false" onAction="#onProfileButtonClick" opacity="0.0" prefHeight="83.0" prefWidth="61.0" text="Button" textFill="TRANSPARENT" />
-
+         <Button layoutX="1405.0" layoutY="58.0" mnemonicParsing="false" onAction="#onFindFriendsClick" prefHeight="50.0" prefWidth="93.0" text="FInd Friends" />
 
          <ScrollPane fx:id="feedScrollPane" fitToWidth="true" hbarPolicy="NEVER" layoutX="111.1" layoutY="127.4" prefHeight="736.1" prefWidth="1005.9" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
             <content>
@@ -49,6 +50,20 @@
          </Button>
          <Button layoutX="14.0" layoutY="462.0" mnemonicParsing="false" opacity="0.0" prefHeight="50.0" prefWidth="67.0" />
          <Button layoutX="14.0" layoutY="348.0" mnemonicParsing="false" opacity="0.0" prefHeight="52.0" prefWidth="67.0" />
+
+         <!-- Right Sidebar: Friends Section -->
+         <VBox fx:id="friendsSidebarBox" layoutX="1290.0" layoutY="130.0" spacing="15.0" prefWidth="250.0" prefHeight="700.0">
+            <Label text="Friends" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+            <Label text="Pending Requests" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+            <VBox fx:id="pendingRequestsBox" spacing="8" />
+
+            <Label text="Your Friends" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+            <VBox fx:id="currentFriendsBox" spacing="8" />
+         </VBox>
+
+
+
       </Group>
    </children>
 

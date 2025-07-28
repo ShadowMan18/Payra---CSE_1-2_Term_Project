@@ -143,9 +143,26 @@ public class NewsFeedServer implements Runnable {
                 //out.writeObject("Welcome to the very very very very best Payra newsfeed!");
                 out.flush();
 
+                //System.out.println("This is me trying to read the posts on start up from db");
                 List<PostPacket> posts = new ArrayList<>();
+
                 try (PreparedStatement getPosts = databaseConnection.prepareStatement(
-                        "SELECT * FROM Posts ORDER BY Timestamp DESC LIMIT 100")) {
+                        """
+                        SELECT * FROM Posts
+                        WHERE Author = ?
+                           OR Author IN (
+                               SELECT user2 FROM Friends WHERE user1 = ?
+                               UNION
+                               SELECT user1 FROM Friends WHERE user2 = ?
+                           )
+                        ORDER BY Timestamp DESC
+                        LIMIT 100
+                        """
+                )) {
+                    getPosts.setString(1, thisClientId); // own posts
+                    getPosts.setString(2, thisClientId); // friends (forward)
+                    getPosts.setString(3, thisClientId); // friends (reverse)
+
                     try (ResultSet rs = getPosts.executeQuery()) {
                         while (rs.next()) {
                             int postId = rs.getInt("id");
@@ -156,9 +173,9 @@ public class NewsFeedServer implements Runnable {
                             String fileName = rs.getString("FileName");
                             byte[] fileData = rs.getBytes("FileData");
 
-
                             Map<String, Integer> reactionMap = new HashMap<>();
                             String userReacted = "none";
+
 
                             try (PreparedStatement getReacts = databaseConnection.prepareStatement(
                                     "SELECT ReactType, COUNT(*) as count FROM Reacts WHERE PostId = ? GROUP BY ReactType")) {
@@ -183,6 +200,19 @@ public class NewsFeedServer implements Runnable {
                                 }
                             }
 
+                            List<String> comments = new ArrayList<>();
+                            try (PreparedStatement commentStmt = databaseConnection.prepareStatement(
+                                    "SELECT commenter, comment FROM Comments WHERE postId = ? ORDER BY timestamp ASC")) {
+                                commentStmt.setInt(1, postId);
+                                try (ResultSet commentRs = commentStmt.executeQuery()) {
+                                    while (commentRs.next()) {
+                                        String commenter = commentRs.getString("commenter");
+                                        String commentText = commentRs.getString("comment");
+                                        comments.add(commenter + ": " + commentText);
+                                    }
+                                }
+                            }
+
                             PostPacket packet = new PostPacket(
                                     postId,
                                     author,
@@ -191,22 +221,27 @@ public class NewsFeedServer implements Runnable {
                                     fileData,
                                     Timestamp.valueOf(time).toLocalDateTime(),
                                     reactionMap,
-                                    userReacted
+                                    userReacted,
+                                    comments
                             );
 
                             posts.add(packet);
+
+
+                           // System.out.println("Post packet has been created and added");
                         }
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
 
+
                 for (int i = posts.size() - 1; i >= 0; i--) {
                     out.writeObject(posts.get(i));
                 }
                 out.flush();
 
-
+                //System.out.println("We are done with loading the posts");
 
 
                 while (true) {
@@ -284,6 +319,21 @@ public class NewsFeedServer implements Runnable {
                         }
 
                     }
+                    if (incoming instanceof CommentPacket comment) {
+                        System.out.println("Yes I got it for the db");
+                        try (PreparedStatement stmt = databaseConnection.prepareStatement(
+                                "INSERT INTO Comments (postId, commenter, comment) VALUES (?, ?, ?)")) {
+                            stmt.setInt(1, comment.getPostId());
+                            stmt.setString(2, comment.getCommenter());
+                            stmt.setString(3, comment.getCommentText());
+                            stmt.executeUpdate();
+
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+
+
+                    }
 
 
                 }
@@ -346,10 +396,18 @@ public class NewsFeedServer implements Runnable {
             int postId = savePostToDB(packet);
 
             if (postId != -1) {
-                PostPacket broadcastPacket = new PostPacket(postId, packet.getAuthor(), packet.getContent(),
-                        packet.getFileName(), packet.getFileData(), LocalDateTime.now(),
-                        new HashMap<>(), "none"
+                PostPacket broadcastPacket = new PostPacket(
+                        postId,
+                        packet.getAuthor(),
+                        packet.getContent(),
+                        packet.getFileName(),
+                        packet.getFileData(),
+                        LocalDateTime.now(),
+                        new HashMap<>(),
+                        "none",
+                        new ArrayList<>()
                 );
+
                 broadcastPost(broadcastPacket);
                 System.out.println("Broadcasted post (with file): " + postId + " by " + packet.getAuthor());
             }
@@ -359,54 +417,7 @@ public class NewsFeedServer implements Runnable {
     }
 
 
-    private List<PostPacket> loadPostPacketsFromDB(String userId) {
-        List<PostPacket> packets = new ArrayList<>();
-        try (PreparedStatement stmt = databaseConnection.prepareStatement(
-                "SELECT * FROM Posts ORDER BY Timestamp DESC LIMIT 100")) {
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    int postId = rs.getInt("id");
-                    String author = rs.getString("Author");
-                    String content = rs.getString("Content");
-                    String filename = rs.getString("FileName");
-                    byte[] filedata = rs.getBytes("FileData");
-                    Timestamp timestamp = rs.getTimestamp("Timestamp");
 
-
-                    Map<String, Integer> reactionCounts = new HashMap<>();
-                    try (PreparedStatement reactStmt = databaseConnection.prepareStatement(
-                            "SELECT ReactType, COUNT(*) as count FROM Reacts WHERE PostId = ? GROUP BY ReactType")) {
-                        reactStmt.setInt(1, postId);
-                        try (ResultSet reactRs = reactStmt.executeQuery()) {
-                            while (reactRs.next()) {
-                                reactionCounts.put(reactRs.getString("ReactType"), reactRs.getInt("count"));
-                            }
-                        }
-                    }
-
-                    String userReaction = "none";
-                    try (PreparedStatement selfReactStmt = databaseConnection.prepareStatement(
-                            "SELECT ReactType FROM Reacts WHERE PostId = ? AND Reactor = ?")) {
-                        selfReactStmt.setInt(1, postId);
-                        selfReactStmt.setString(2, userId);
-                        try (ResultSet reactRs = selfReactStmt.executeQuery()) {
-                            if (reactRs.next()) {
-                                userReaction = reactRs.getString("ReactType");
-                            }
-                        }
-                    }
-
-                    packets.add(new PostPacket(postId, author, content, filename, filedata, timestamp.toLocalDateTime(),
-                            reactionCounts, userReaction
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return packets;
-    }
 
     private int savePostToDB(PostPacket packet) throws SQLException {
         int postId = -1;

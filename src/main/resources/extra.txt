@@ -1,0 +1,11 @@
+.comment-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-border-radius: 8;
+}
+
+.comment-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}

@@ -79,19 +79,6 @@ public class Server {
                     FileData BLOB,
                     Timestamp DATETIME DEFAULT (datetime('now', 'localtime')))
                     """);
-
-            statement.execute("""
-                    CREATE TABLE IF NOT EXISTS Comments (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    PostId INTEGER,
-                    Commenter TEXT,
-                    Comment TEXT,
-                    Timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
-                    FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
-                    )""");
-
-//            statement.execute("DROP TABLE IF EXISTS Reacts");
-
             statement.execute("""
             CREATE TABLE IF NOT EXISTS Reacts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,7 +89,44 @@ public class Server {
                 UNIQUE(PostId, Reactor),
                 FOREIGN KEY (PostId) REFERENCES Posts(id) ON DELETE CASCADE
             )
-        """);
+            """);
+
+            statement.execute("""
+            CREATE TABLE IF NOT EXISTS FriendRequests (
+                sender TEXT,
+                receiver TEXT,
+                status TEXT CHECK(status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (sender, receiver),
+                FOREIGN KEY (sender) REFERENCES Users(UserId) ON DELETE CASCADE,
+                FOREIGN KEY (receiver) REFERENCES Users(UserId) ON DELETE CASCADE
+                )
+                """);
+
+            statement.execute("""
+            CREATE TABLE IF NOT EXISTS Friends (
+                user1 TEXT,
+                user2 TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user1, user2),
+                FOREIGN KEY (user1) REFERENCES Users(UserId) ON DELETE CASCADE,
+                FOREIGN KEY (user2) REFERENCES Users(UserId) ON DELETE CASCADE
+                )
+                """);
+
+            statement.execute("""
+            CREATE TABLE IF NOT EXISTS Comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                postId INTEGER NOT NULL,
+                commenter TEXT NOT NULL,
+                comment TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (postId) REFERENCES Posts(id)
+            );
+            """);
+
+
+
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

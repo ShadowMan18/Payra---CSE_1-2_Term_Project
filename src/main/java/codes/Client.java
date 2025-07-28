@@ -9,16 +9,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Vector;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
+
 
 public class Client {
     // Client information
@@ -34,6 +30,8 @@ public class Client {
     private boolean registered;
     private boolean active;
     private CountDownLatch latch;
+    private CountDownLatch friendStatusLatch;
+    private String latestFriendStatusResponse;
 
     // Client pages
 
@@ -60,7 +58,7 @@ public class Client {
     private Socket chatSocket;
     private ObjectOutputStream chatOutput;
     private ObjectInputStream chatInput;
-    private Vector<ClientInfo> clients;
+    public Vector<ClientInfo> clients;
     private String receiverId;
     private boolean chatStatus;
     private boolean newNotification;
@@ -73,6 +71,16 @@ public class Client {
     private ObjectOutputStream feedOutput;
     private NewsFeedController newsFeedController;
     private boolean connectedToNewsFeed;
+    private final Map<Integer, Consumer<List<String>>> commentCallbacks = new HashMap<>();
+
+
+
+
+    private List<ClientInfo> friendList = new Vector<>();
+    private List<ClientInfo> pendingRequests = new Vector<>();
+
+    public static final Map<String, ObjectOutputStream> feedClients = new ConcurrentHashMap<>();
+
 
 
     public void setNewsFeedController(NewsFeedController controller) {
@@ -104,6 +112,7 @@ public class Client {
         }
     }
     public static void broadcast(PostPacket packet) {
+
         for (ObjectOutputStream out : allClientOutputs) {
             try {
                 out.writeObject(packet);
@@ -113,6 +122,19 @@ public class Client {
             }
         }
     }
+
+    public static void broadcast(Object obj) {
+        System.out.println("Hi, yes, you have reached broadcast for comments and co.");
+        for (ObjectOutputStream out : allClientOutputs) {
+            try {
+                out.writeObject(obj);
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     // Constructor
 
@@ -132,6 +154,9 @@ public class Client {
         this.newsFeed = new NewsFeed();
         this.profilePage = new ProfilePage();
         this.notificationPage = new NotificationPage();
+        this.gettingRequests=false;
+        this.gettingFriends=false;
+
 
         try {
             this.serverSocket = new Socket(ipAddress, 1024);
@@ -232,16 +257,116 @@ public class Client {
                     }
                 }
                 else if (fromServer instanceof Vector<?> v) {
-                    if (!v.isEmpty() && v.get(0) instanceof ClientInfo) {
-                        clients = (Vector<ClientInfo>) v;
-                        clients.sort(Comparator.comparing(ClientInfo::getFirstName));
-                    }
 
-                    if (latch != null) {
-                        latch.countDown();
-                        latch = null;
+                    if(friendsSentTheMessage){
+                        friendsSentTheMessage=false;
+                        System.out.println("Yes, I did come here for newsFeed");
+                        if (!v.isEmpty() && v.get(0) instanceof ClientInfo) {
+                            clients = (Vector<ClientInfo>) v;
+                            clients.sort(Comparator.comparing(ClientInfo::getFirstName));
+                            receiveClientList(clients);
+                        }
+                    }
+                    else{
+                        System.out.println("Yes, I did come here for Messenger");
+                        if (!v.isEmpty() && v.get(0) instanceof ClientInfo) {
+                            clients = (Vector<ClientInfo>) v;
+                            clients.sort(Comparator.comparing(ClientInfo::getFirstName));
+                        }
+
+                        if (latch != null) {
+                            latch.countDown();
+                            latch = null;
+                        }
                     }
                 }
+                else if (fromServer instanceof Map<?, ?> map) {
+
+                    if (!map.isEmpty() && map.keySet().iterator().next() instanceof String) {
+                        Map<String, String> statusMap = (Map<String, String>) map;
+                        setFriendStatusMap(statusMap);
+                        System.out.println("Received friend status map of size: " + statusMap.size());
+                    }
+                }
+                else if (fromServer instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof String str && str.startsWith("comment:")) {
+                    // It's a list of comments for a post
+                    int postId = Integer.parseInt(str.split(":")[1]); // Format: "comment:postId"
+                    List<String> comments = new ArrayList<>();
+                    for (Object obj : list) {
+                        if (obj instanceof String s) comments.add(s);
+                    }
+
+                    Consumer<List<String>> callback;
+                    synchronized (commentCallbacks) {
+                        callback = commentCallbacks.remove(postId);
+                    }
+
+                    if (callback != null) {
+                        List<String> finalComments = comments;
+                        Platform.runLater(() -> callback.accept(finalComments));
+                    }
+                }
+
+
+
+                else if (fromServer instanceof List<?> list) {
+
+                    //System.out.println("Client: I got the List of size: "+list.size());
+
+                    if (!list.isEmpty() && list.get(0) instanceof ClientInfo) {
+                        List<ClientInfo> incoming = (List<ClientInfo>) list;
+                        //System.out.println("Yep, is getting requests true: "+gettingRequests);
+
+                        if (friendsSentTheMessage) {
+                            System.out.println("No please");
+                            this.clients = new Vector<>(incoming);
+                            this.clients.sort(Comparator.comparing(ClientInfo::getFirstName));
+                            friendsSentTheMessage = false;
+
+                            if (clientListLatch != null) {
+                                clientListLatch.countDown();
+                                clientListLatch = null;
+                            }
+                        } else if (latch != null) {
+
+                            if (gettingRequests) {
+                               // System.out.println("Hi I am setting my pending requests");
+                                this.pendingRequests = incoming;
+                                //System.out.println("Hi this is client and pending request: "+pendingRequests.size());
+                                gettingRequests=false;
+                            } else if(gettingFriends) {
+                                //System.out.println("Hi I am setting my friend list");
+                                this.friendList = incoming;
+                                gettingFriends=false;
+                            }
+
+                            latch.countDown();
+                            latch = null;
+                        } else {
+
+                            this.clients = new Vector<>(incoming);
+                            this.clients.sort(Comparator.comparing(ClientInfo::getFirstName));
+                        }
+                    } else {
+                        System.out.println("Received empty list");
+                        if (friendsSentTheMessage) {
+                            this.clients = new Vector<>();
+                            if (clientListLatch != null) {
+                                clientListLatch.countDown();
+                                clientListLatch = null;
+                            }
+                        } else if (latch != null) {
+                            this.friendList = new Vector<>();
+                            this.pendingRequests = new Vector<>();
+                            latch.countDown();
+                            latch = null;
+                        }
+                    }
+                }
+
+
+
+
                 else if (fromServer instanceof String string && string.equals("login_successful")) {
                     this.active = true;
 
@@ -306,15 +431,28 @@ public class Client {
                         latch = null;
                     }
                 }
-                else {
-                    assert fromServer instanceof String;
-                    System.out.println("Received: " + (String) fromServer);
+                else if (fromServer instanceof String string && (string.equals("send") || string.equals("pending") || string.equals("friends"))) {
+                    if (friendStatusLatch != null) {
+                        latestFriendStatusResponse = string;
+                        friendStatusMap.put(latestFriendStatusQueryTarget, string);
+                        friendStatusLatch.countDown();
+                        friendStatusLatch = null;
+                    }
                 }
+
+                else if (fromServer instanceof String string) {
+                    System.out.println("Received: " + string);
+                }
+
+
+                else {
+                    System.out.println("Received unknown type: " + fromServer.getClass());
+                }
+
             }
         }).start();
 
-//        Writer.start();
-//        serverReader.start();
+
     }
 
     public void clientIsConnectedToNewsFeed(){
@@ -613,7 +751,7 @@ public class Client {
             while (true) {
                 try {
                     Object feedUpdate = feedInput.readObject();
-                    //System.out.println("Feed: " + (String)feedUpdate);
+                    System.out.println("I am here to add the posts to the UI really. This part seems to be fine");
 
                     Platform.runLater(() -> {
                         if (newsFeedController != null) {
@@ -629,7 +767,14 @@ public class Client {
                                     newsFeedController.addPostToFeed(stringUpdate); // This is now unambiguous
                                 }
                             } else if (feedUpdate instanceof PostPacket packet) {
+                                System.out.println("Add postToFeed called!!!!!");
                                 newsFeedController.addPostToFeed(packet); // Also unambiguous
+                            }
+                            else if (feedUpdate instanceof CommentPacket comment) {
+                                System.out.println("Yes, I did get the comment and I did send it, swear, " +
+                                        "controller needs to up it's game");
+                                newsFeedController.addLiveComment(comment);
+
                             }
 
                         }
@@ -655,14 +800,7 @@ public class Client {
     }
 
 
-//    public void sendPostToFeed(String content) {
-//        try {
-//            feedOutput.writeObject(content);
-//            feedOutput.flush();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+
 
     public void sendReaction(int postId, String reactionType) {
         System.out.println("Hi I am a pretty little reaction trying to reach server Thread");
@@ -675,6 +813,204 @@ public class Client {
         }
     }
 
+    public String getMyId() {
+        return this.id;
+    }
+
+    public Vector<ClientInfo> getAllClients() {
+        return this.clients;
+    }
+    private String latestFriendStatusQueryTarget;
+
+    public String getFriendStatus(String otherId) {
+        try {
+            friendStatusLatch = new CountDownLatch(1);
+            latestFriendStatusQueryTarget = otherId;
+            serverOutput.writeObject("friend_status:" + this.id + ":" + otherId);
+            serverOutput.flush();
+            friendStatusLatch.await();
+            return latestFriendStatusResponse != null ? latestFriendStatusResponse : "unknown";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "unknown";
+        }
+    }
+    public void setFriendStatusMapEntry(String userId, String status) {
+        friendStatusMap.put(userId, status);
+    }
+
+
+    boolean gettingRequests;
+    public void sendFriendRequest(String receiverId) {
+        try {
+            gettingRequests=true;
+            serverOutput.writeObject("friend_request:" + this.id + ":" + receiverId);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    boolean gettingFriends=false;
+    public List<ClientInfo> getFriendList() {
+        try {
+            CountDownLatch friendLatch = new CountDownLatch(1);
+            this.latch = friendLatch;
+
+            gettingFriends=true;
+            serverOutput.writeObject("get_friends");
+            serverOutput.flush();
+
+            friendLatch.await();
+
+            gettingFriends=false;
+            return friendList;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Vector<>();
+    }
+
+    public List<ClientInfo> getPendingRequests() {
+        //System.out.println("Requesting the server to send the pending requests");
+        try {
+            gettingRequests=true;
+            CountDownLatch requestLatch = new CountDownLatch(1);
+            this.latch = requestLatch;
+
+            serverOutput.writeObject("get_requests");
+            serverOutput.flush();
+
+            requestLatch.await();
+
+
+            gettingRequests=false;
+            return pendingRequests;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Vector<>();
+    }
+
+    public void acceptFriendRequest(String senderId) {
+        try {
+            serverOutput.writeObject("friend_accept:" + senderId);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void rejectFriendRequest(String senderId) {
+        try {
+            serverOutput.writeObject("friend_reject:" + senderId);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void unfriend(String friendId) {
+        try {
+            serverOutput.writeObject("unfriend:" + friendId);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private CountDownLatch clientListLatch;
+    boolean friendsSentTheMessage=false;
+
+
+    public void fetchClients() {
+        try {
+            clientListLatch = new CountDownLatch(1);
+            friendsSentTheMessage=true;
+            serverOutput.writeObject("load_clients");
+            serverOutput.flush();
+
+
+            clientListLatch.await();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void receiveClientList(Vector<ClientInfo> received) {
+        this.clients = received;
+        if (clientListLatch != null) {
+            clientListLatch.countDown();
+            clientListLatch = null;
+        }
+    }
+
+
+    public CountDownLatch fetchFriendStatusLatch;
+
+    public void fetchFriendStatusMap() {
+        try {
+            fetchFriendStatusLatch=new CountDownLatch(1);
+            serverOutput.writeObject("get_friend_status_map");
+            serverOutput.flush();
+            try {
+                fetchFriendStatusLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Map<String, String> friendStatusMap = new ConcurrentHashMap<>();
+
+
+    public void setFriendStatusMap(Map<String, String> map) {
+        friendStatusMap = map;
+        fetchFriendStatusLatch.countDown();
+    }
+
+    public String getCachedFriendStatus(String userId) {
+        return friendStatusMap.getOrDefault(userId, "send");
+    }
+
+
+    public static void addFeedClient(String id, ObjectOutputStream out) {
+        feedClients.put(id, out);
+    }
+
+    public static void removeFeedClient(String id) {
+        feedClients.remove(id);
+    }
+
+
+    public void sendComment(int postId, String commentText) {
+        try {
+            String safeComment = commentText.replace("|", "[PIPE]");
+
+            String message = "send_comment|" + postId + "|" + getId() + "|" + safeComment;
+            serverOutput.writeObject(message);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void fetchCommentsForPost(int postId, Consumer<List<String>> callback) {
+        synchronized (commentCallbacks) {
+            commentCallbacks.put(postId, callback);
+        }
+
+        try {
+            serverOutput.writeObject("get_comments|" + postId);
+            serverOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 

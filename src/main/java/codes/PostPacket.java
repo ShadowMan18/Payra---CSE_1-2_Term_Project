@@ -3,6 +3,7 @@ package codes;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 
@@ -16,12 +17,17 @@ public class PostPacket implements Serializable {
 
     private final Map<String, Integer> reactionCounts;
     private final String userReactionType;
+    private final List<String> comments;
+
+
     public PostPacket(String author, String content, String fileName, byte[] fileData) {
-        this(-1, author, content, fileName, fileData, null, null, "none");
+        this(-1, author, content, fileName, fileData, null, null, "none", null);
     }
 
+
     public PostPacket(int postId, String author, String content, String fileName, byte[] fileData,
-                      LocalDateTime timestamp, Map<String, Integer> reactionCounts, String userReactionType) {
+                      LocalDateTime timestamp, Map<String, Integer> reactionCounts,
+                      String userReactionType, List<String> comments) {
         this.postId = postId;
         this.author = author;
         this.content = content;
@@ -30,6 +36,7 @@ public class PostPacket implements Serializable {
         this.timestamp = timestamp;
         this.reactionCounts = reactionCounts;
         this.userReactionType = userReactionType;
+        this.comments = comments;
     }
 
     public String getUserReactedType() {
@@ -73,5 +80,9 @@ public class PostPacket implements Serializable {
 
     public String getUserReactionType() {
         return userReactionType;
+    }
+
+    public List<String> getComments() {
+        return comments;
     }
 }
