@@ -13,6 +13,6 @@
       </ImageView>
       <Button layoutX="770.0" layoutY="326.0" mnemonicParsing="false" onAction="#onNewsFeedButtonClick" opacity="0.0" prefHeight="249.0" prefWidth="250.0" />
       <Button layoutX="1190.0" layoutY="326.0" mnemonicParsing="false" onAction="#onChatButtonClick" opacity="0.0" prefHeight="249.0" prefWidth="250.0" />
-      <ImageView fx:id="userProfilePictureView" fitHeight="70.0" fitWidth="70.0" layoutX="1490.0" layoutY="40.0" pickOnBounds="true" preserveRatio="true" />
+      <ImageView fx:id="userProfilePictureView" fitHeight="70.0" fitWidth="70.0" layoutX="1490.0" layoutY="40.0" onMouseClicked="#onProfileButtonClick" pickOnBounds="true" preserveRatio="true" />
    </Group>
 </StackPane>

@@ -60,8 +60,8 @@ public class ProfilePicturePageController {
 
     @FXML
     public void onSubmitButtonClick(ActionEvent actionEvent) {
-        if (filePath.isEmpty()) {
-            UploadImageLabel.setText("Select a valid image file (png/jpg/jpeg/bmp)");
+        if (filePath == null) {
+            UploadImageLabel.setText("No image selected");
             return;
         }
 
@@ -82,6 +82,7 @@ public class ProfilePicturePageController {
         }
 
         filePath = null;
+        UploadImageLabel.setText("");
 
         // Loading login page
 

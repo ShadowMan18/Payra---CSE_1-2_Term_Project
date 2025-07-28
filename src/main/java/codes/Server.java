@@ -14,7 +14,7 @@ public class Server {
     static final Map<String, ServerThread> currentClients = new ConcurrentHashMap<>();
     static Vector<Integer> port = new Vector<>();
     static final Map<String, NewsFeedServer> feedServers = new ConcurrentHashMap<>();
-
+    static Vector<String> inCall = new Vector<>();
 
     public static void main(String[] args) {
         // Initializing port vector

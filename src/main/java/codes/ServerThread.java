@@ -17,10 +17,12 @@ public class ServerThread implements Runnable{
     private Thread serverThread;
     private final ObjectOutputStream output;
     private final ObjectInputStream input;
+    private final String clientIPAddress;
     private ChatServer chatServer;
     private NewsFeedServer feedServer;
     private final Connection databaseConnection;
     private String id;
+    private CountDownLatch latch;
 
     // Creating server thread from the client
 
@@ -31,12 +33,8 @@ public class ServerThread implements Runnable{
 
         try {
             this.output = new ObjectOutputStream(clientSocket.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
             this.input = new ObjectInputStream(clientSocket.getInputStream());
+            this.clientIPAddress = clientSocket.getInetAddress().getHostAddress();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -93,6 +91,13 @@ public class ServerThread implements Runnable{
 //            {
 //                System.out.println((String) fromClient);
 //            }
+
+            if (fromClient instanceof String string && string.equals("done:")) {
+                if (latch != null) {
+                    latch.countDown();
+                    latch = null;
+                }
+            }
 
             // Checking if a client is present
 
@@ -202,7 +207,7 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
                 String id = string.substring("get_info:".length());
-                this.id = id;
+//                this.id = id;
 
                 sendToClient(getClientInfo(id));
             }
@@ -342,6 +347,60 @@ public class ServerThread implements Runnable{
                     updateNotificationStatus.executeUpdate();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
+                }
+            }
+
+            if (fromClient instanceof String string && string.startsWith("call:")) {
+                String[] callInfo = string.substring("call:".length()).split(",");
+
+                String callType = callInfo[0];
+                String receiverId = callInfo[1];
+
+                if (Server.inCall.contains(receiverId)) {
+                    sendToClient("receiverIP:busy");
+                }
+                else if (Server.currentClients.get(receiverId) != null) {
+                    Server.inCall.add(id);
+                    Server.inCall.add(receiverId);
+
+                    Server.currentClients.get(receiverId).sendToClient(getClientInfo(id));
+                    Server.currentClients.get(receiverId).sendToClient("call:" + callType + "," + clientIPAddress);
+                    sendToClient("receiverIP:" + Server.currentClients.get(receiverId).getClientIPAddress());
+                }
+                else {
+                    sendToClient("receiverIP:n/a");
+                }
+            }
+
+            if (fromClient instanceof String string && string.startsWith("call_accepted:")) {
+                String callerId = string.substring("call_accepted:".length());
+
+                if (Server.currentClients.get(callerId) != null) {
+                    Server.currentClients.get(callerId).sendToClient("call_response:accepted");
+                }
+            }
+
+            if (fromClient instanceof String string && string.startsWith("call_declined:")) {
+                String callerId = string.substring("call_declined:".length());
+
+                Server.inCall.remove(id);
+                Server.inCall.remove(callerId);
+
+                if (Server.currentClients.get(callerId) != null) {
+                    Server.currentClients.get(callerId).sendToClient("call_response:declined");
+                }
+            }
+
+            if (fromClient instanceof String string && string.startsWith("call_ended:")) {
+                String receiverID = string.substring("call_ended:".length());
+
+                Server.inCall.remove(id);
+                Server.inCall.remove(receiverID);
+
+                System.out.println("call ended " + receiverID);
+
+                if (Server.currentClients.get(receiverID) != null) {
+                    Server.currentClients.get(receiverID).sendToClient("call_ended");
                 }
             }
 
@@ -704,5 +763,9 @@ public class ServerThread implements Runnable{
         }
 
         return new ClientInfo(firstName, lastName, id, password, recoveryQuestion, recoveryAnswer, profilePictureBytes);
+    }
+
+    public String getClientIPAddress() {
+        return clientIPAddress;
     }
 }

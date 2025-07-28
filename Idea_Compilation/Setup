@@ -1,5 +1,6 @@
 jdk: https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html -> Windows x64 msi Installer	163.06 MB
 sdk: https://jdk.java.net/javafx21/ -> Windows / x64	zip (sha256)	48050037 -> Store in jdk foler
+opencv: https://opencv.org/releases/ 4.12
 
 🔹 1. Clone the Repo
 After accepting invite:

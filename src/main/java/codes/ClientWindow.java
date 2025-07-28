@@ -10,6 +10,7 @@ public class ClientWindow extends Application{
 
     @Override
     public void start(Stage stage) throws Exception {
+        client.setStage(stage);
         client.getLoginPage().startLoginPageView(client, stage);
     }
 

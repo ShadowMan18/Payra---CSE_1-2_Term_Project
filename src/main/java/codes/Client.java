@@ -1,7 +1,23 @@
 package codes;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.Pair;
 
 import java.io.ByteArrayInputStream;
@@ -19,6 +35,7 @@ import java.util.function.Consumer;
 public class Client {
     // Client information
 
+    private ClientInfo info;
     private String firstName;
     private String lastName;
     private String email;
@@ -35,6 +52,7 @@ public class Client {
 
     // Client pages
 
+    private Stage stage;
     private final IntroPage introPage;
     private final LoginPage loginPage;
     private final SignupPage signupPage;
@@ -48,6 +66,7 @@ public class Client {
 
     // Client server network
 
+//    private final String ipAddress = "192.168.200.36";
     private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
@@ -63,6 +82,13 @@ public class Client {
     private boolean chatStatus;
     private boolean newNotification;
     public Map<String, Pair<String, String>> notification = new LinkedHashMap<>();
+
+    // Call network
+
+    private String receiverIPAddress;
+    private ClientInfo callerInfo;
+    private String callAcceptanceStatus;
+    private boolean callStatus;
 
     // NewsFeed server network
 
@@ -238,18 +264,31 @@ public class Client {
                     }
                 }
                 else if (fromServer instanceof ClientInfo info) {
-                    this.firstName = info.getFirstName();
-                    this.lastName = info.getLastName();
-                    this.id = info.getId();
-                    this.email  = id + "@gmail.com";
-                    this.password = info.getPassword();
-                    this.recoveryQuestion = info.getRecoveryQuestion();
-                    this.recoveryAnswer = info.getRecoveryAnswer();
-                    byte[] profilePictureByte = info.getProfilePicture();
+                    if (!active) {
+                        this.info = info;
+                        this.firstName = info.getFirstName();
+                        this.lastName = info.getLastName();
+                        this.id = info.getId();
+                        this.email  = id + "@gmail.com";
+                        this.password = info.getPassword();
+                        this.recoveryQuestion = info.getRecoveryQuestion();
+                        this.recoveryAnswer = info.getRecoveryAnswer();
+                        byte[] profilePictureByte = info.getProfilePicture();
 
-                    Platform.runLater(() -> {
-                        profilePicture = new Image(new ByteArrayInputStream(profilePictureByte));
-                    });
+                        Platform.runLater(() -> {
+                            profilePicture = new Image(new ByteArrayInputStream(profilePictureByte));
+                        });
+                    }
+                    else {
+                        callerInfo = info;
+                    }
+
+//                    try {
+//                        serverOutput.writeObject("done");
+//                        serverOutput.flush();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
                     if (latch != null) {
                         latch.countDown();
@@ -421,6 +460,51 @@ public class Client {
                         System.out.println(sender + " sent a " + notification.get(sender));
                     }
                 }
+                else if (fromServer instanceof String string && string.startsWith("receiverIP:")) {
+                    this.receiverIPAddress = string.substring("receiverIP:".length());
+                    System.out.println(receiverIPAddress);
+
+                    if (latch != null) {
+                        latch.countDown();
+                        latch = null;
+                    }
+                }
+                else if (fromServer instanceof String string && string.startsWith("call:")) {
+                    System.out.println(string);
+                    String[] callInfo = string.substring("call:".length()).split(",");
+
+                    String callType = callInfo[0];
+                    String callerIPAddress = callInfo[1];
+
+                    while (callerInfo == null || callerInfo.getProfilePicture() == null) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    callAcceptanceStatus = null;
+                    CallRinger.startReceiverEndRinger(this, callerInfo, info, callType, callerIPAddress);
+
+                    callerInfo = null;
+                }
+                else if (fromServer instanceof String string && string.startsWith("call_response:")) {
+                    String response = string.substring("call_response:".length());
+
+                    if (response.equals("accepted")) {
+                        callAcceptanceStatus = response;
+                        System.out.println("call accepted in " + firstName);
+                    }
+                    else {
+                        callAcceptanceStatus = response;
+                        System.out.println("call declined in " + firstName);
+                    }
+                }
+                else if (fromServer instanceof String string && string.equals("call_ended")) {
+                    callAcceptanceStatus = "ended";
+                    System.out.println("call ended in " + firstName);
+                }
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
                     int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
 
@@ -522,6 +606,10 @@ public class Client {
 
     // Getters
 
+    public ClientInfo getInfo() {
+        return info;
+    }
+
     public String getFirstName() {
         return firstName;
     }
@@ -568,6 +656,14 @@ public class Client {
 
     public boolean getChatStatus() {
         return chatStatus;
+    }
+
+    public String getReceiverIPAddress() {
+        return receiverIPAddress;
+    }
+
+    public Stage getStage() {
+        return stage;
     }
 
     public IntroPage getIntroPage() {
@@ -639,6 +735,11 @@ public class Client {
     }
 
     public boolean hasNewNotification() { return newNotification; }
+
+    public String  getCallAcceptanceStatus() { return callAcceptanceStatus; };
+
+    public boolean getCallStatus() { return callStatus; }
+
     // Setters
 
     public void setFirstName(String firstName) {
@@ -673,7 +774,15 @@ public class Client {
 
     public void setChatStatus(boolean status) { chatStatus = status; }
 
+    public void resetCallAcceptanceStatus() { callAcceptanceStatus = null; }
+
+    public void setCallStatus(boolean status) { callStatus = status; }
+
     public void resetNotificationStatus() { newNotification = false; }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
 
     public void setLatch(CountDownLatch latch) {
         this.latch = latch;
@@ -685,6 +794,19 @@ public class Client {
     }
 
     // Public methods
+
+    public synchronized void sendToServer(Object obj) {
+        try {
+            latch = new CountDownLatch(1);
+
+            serverOutput.writeObject(obj);
+            serverOutput.flush();
+
+            latch.await();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public void connectToChatServer(int port) {
         try {
