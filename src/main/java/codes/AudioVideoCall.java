@@ -4,7 +4,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.effect.DropShadow;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -13,7 +13,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import org.opencv.core.*;
-import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
@@ -30,10 +29,12 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class AudioVideoCall {
-    private ClientInfo sender;
+    private Client sender;
     private ClientInfo receiver;
     private Image senderImage;
     private Image receiverImage;
+    private String receiverIPAddress;
+    private volatile String callType;
 
     private TargetDataLine microphone;
     private SourceDataLine speaker;
@@ -46,6 +47,7 @@ public class AudioVideoCall {
     private boolean isAudioRunning;
     private boolean isVideoRunning;
     private volatile long lastFrameReceivedTime;
+    private volatile long lastAudioReceivedTime;
 
     private Stage videoStage;
     private ImageView videoView;
@@ -57,144 +59,55 @@ public class AudioVideoCall {
         System.load("C:/Program Files/opencv/build/java/x64/opencv_java4120.dll");
     }
 
-    public AudioVideoCall(ClientInfo sender, ClientInfo receiver) {
+    public AudioVideoCall(Client sender, ClientInfo receiver) {
         this.sender = sender;
         this.receiver = receiver;
 
-        senderImage = new Image(new ByteArrayInputStream(sender.getProfilePicture()));
+        senderImage = new Image(new ByteArrayInputStream(sender.getInfo().getProfilePicture()));
         receiverImage = new Image(new ByteArrayInputStream(receiver.getProfilePicture()));
 
-        isCallRunning = false;
-        isAudioRunning = false;
-        isVideoRunning = false;
+        isCallRunning = true;
+
+        new Thread(() -> {
+            while (isCallRunning) {
+                long currentTime = System.currentTimeMillis();
+
+                if ((currentTime - lastFrameReceivedTime > 1000) || (currentTime - lastAudioReceivedTime > 1000)) {
+                    if (sender.getCallAcceptanceStatus() != null && sender.getCallAcceptanceStatus().equals("ended")) {
+                        System.out.println("call ended");
+                        Platform.runLater(this::endCall);
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }).start();
     }
 
     public void startAudioCall(String receiverIPAddress) {
-        isCallRunning = true;
+        this.receiverIPAddress = receiverIPAddress;
+        callType = "audio";
         isAudioRunning = true;
 
-        startCall(receiverIPAddress);
+        loadCallSetup();
+        startAudioThread();
     }
 
     public void startVideoCall(String receiverIPAddress) {
-        isCallRunning = true;
+        this.receiverIPAddress = receiverIPAddress;
+        callType = "video";
         isAudioRunning = true;
         isVideoRunning = true;
 
-        startCall(receiverIPAddress);
+        loadCallSetup();
+        startAudioThread();
+        startVideoThread();
     }
 
-    private void startCall(String receiverIPAddress) {
-        // Initiating video preview
-
-        Platform.runLater(() -> {
-            videoView = new ImageView();
-            videoView.setFitWidth(windowWidth);
-            videoView.setFitHeight(windowHeight);
-            videoView.setPreserveRatio(true);
-            Rectangle clip1 = new Rectangle();
-            clip1.setArcWidth(20);
-            clip1.setArcHeight(20);
-            videoView.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
-                clip1.setWidth(newBounds.getWidth());
-                clip1.setHeight(newBounds.getHeight());
-            });
-            videoView.setClip(clip1);
-            videoView.setImage(receiverImage);
-
-            myVideoView = new ImageView();
-            myVideoView.setFitWidth(windowWidth * 0.2);
-            myVideoView.setFitHeight(windowHeight * 0.2);
-            myVideoView.setPreserveRatio(true);
-            Rectangle clip2 = new Rectangle();
-            clip2.setArcWidth(20);
-            clip2.setArcHeight(20);
-            myVideoView.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
-                clip2.setWidth(newBounds.getWidth());
-                clip2.setHeight(newBounds.getHeight());
-            });
-            myVideoView.setClip(clip2);
-
-            Rectangle background = new Rectangle();
-            background.setFill(Color.web("#092038"));
-
-            ImageView endCallButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/End_Call_Button.jpg"))));
-            ImageView muteButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Mute_Button.jpg"))));
-            ImageView stopVideoButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Video_Button.jpg"))));
-
-            for (ImageView button : new ImageView[]{endCallButton, muteButton, stopVideoButton}) {
-                button.setFitWidth(50);
-                button.setFitHeight(50);
-                Circle clip = new Circle(25, 25, 25);
-                button.setClip(clip);
-            }
-
-            endCallButton.setOnMouseClicked(event -> {
-                endCall();
-            });
-
-            muteButton.setOnMouseClicked(event -> {
-                if (isAudioRunning) {
-                    System.out.println("mic turned off");
-                    isAudioRunning = false;
-                }
-                else {
-                    System.out.println("mic turned on");
-                    isAudioRunning = true;
-                }
-            });
-
-            stopVideoButton.setOnMouseClicked(event -> {
-                if (isVideoRunning) {
-                    System.out.println("video turned off");
-                    isVideoRunning = false;
-                    Platform.runLater(() -> {
-                        myVideoView.setImage(new Image(new ByteArrayInputStream(sender.getProfilePicture())));
-                    });
-                }
-                else {
-                    System.out.println("video turned on");
-                    isVideoRunning = true;
-                }
-            });
-
-
-            HBox buttonContainer = new HBox(stopVideoButton, muteButton, endCallButton);
-            buttonContainer.setSpacing(15);
-            buttonContainer.setPadding(new Insets(8));
-            buttonContainer.setAlignment(Pos.CENTER);
-            buttonContainer.setMaxWidth(Region.USE_PREF_SIZE);
-            buttonContainer.setMaxHeight(66);
-
-            buttonContainer.setBackground(new Background(new BackgroundFill(Color.web("#000000", 0.6), new CornerRadii(20), Insets.EMPTY)));
-
-            StackPane root = new StackPane(background, videoView, myVideoView, buttonContainer);
-
-            background.widthProperty().bind(root.widthProperty());
-            background.heightProperty().bind(root.heightProperty());
-
-            StackPane.setAlignment(videoView, Pos.CENTER);
-            StackPane.setMargin(videoView, new Insets(10));
-
-            StackPane.setAlignment(myVideoView, Pos.BOTTOM_RIGHT);
-            StackPane.setMargin(myVideoView, new Insets(10));
-
-            StackPane.setAlignment(buttonContainer, Pos.BOTTOM_CENTER);
-            StackPane.setMargin(buttonContainer, new Insets(10));
-
-            Scene scene = new Scene(root, windowWidth + 20, windowHeight + 20);
-
-            videoStage = new Stage();
-            videoStage.setTitle("Video Call");
-            Image icon = new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Payra.png")));
-            videoStage.getIcons().add(icon);
-            videoStage.setAlwaysOnTop(true);
-            videoStage.setResizable(false);
-            videoStage.setScene(scene);
-
-            videoStage.show();
-        });
-
+    private void startAudioThread() {
         // Initiating audio sender thread
 
         new Thread(() -> {
@@ -250,13 +163,17 @@ public class AudioVideoCall {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     audioReceiverSocket.receive(packet);
                     speaker.write(packet.getData(), 0, packet.getLength());
+
+                    lastAudioReceivedTime = System.currentTimeMillis();
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
+    }
 
+    private void startVideoThread() {
         // Initiating video sender thread
 
         new Thread(() -> {
@@ -398,7 +315,7 @@ public class AudioVideoCall {
 
                 if (currentTime - lastFrameReceivedTime > 2000) {
                     Platform.runLater(() -> {
-                        videoView.setImage(new Image(new ByteArrayInputStream(receiver.getProfilePicture())));
+                        videoView.setImage(receiverImage);
                     });
                     try {
                         Thread.sleep(1000);
@@ -408,6 +325,224 @@ public class AudioVideoCall {
                 }
             }
         }).start();
+    }
+
+    private void loadCallSetup() {
+        // Initiating video preview
+
+        Platform.runLater(() -> {
+            videoView = new ImageView();
+
+            if (callType.equals("audio")) {
+                videoView.setFitWidth(windowHeight * 0.5);
+                videoView.setFitHeight(windowHeight * 0.5);
+            }
+            else {
+                videoView.setFitWidth(windowWidth);
+                videoView.setFitHeight(windowHeight);
+            }
+
+            videoView.setPreserveRatio(true);
+
+            if (callType.equals("audio")) {
+                Circle clip1 = new Circle(windowHeight * 0.25, windowHeight * 0.25, windowHeight * 0.25);
+                videoView.setClip(clip1);
+            }
+            else {
+                Rectangle clip1 = new Rectangle();
+                clip1.setArcWidth(20);
+                clip1.setArcHeight(20);
+                videoView.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
+                    clip1.setWidth(newBounds.getWidth());
+                    clip1.setHeight(newBounds.getHeight());
+                });
+                videoView.setClip(clip1);
+            }
+            
+            videoView.setImage(receiverImage);
+
+            if (callType.equals("video")) {
+                myVideoView = new ImageView();
+                myVideoView.setFitWidth(windowWidth * 0.2);
+                myVideoView.setFitHeight(windowHeight * 0.2);
+                myVideoView.setPreserveRatio(true);
+                Rectangle clip2 = new Rectangle();
+                clip2.setArcWidth(20);
+                clip2.setArcHeight(20);
+                myVideoView.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
+                    clip2.setWidth(newBounds.getWidth());
+                    clip2.setHeight(newBounds.getHeight());
+                });
+                myVideoView.setClip(clip2);
+            }
+
+            Rectangle background = new Rectangle();
+            background.setFill(Color.web("#092038"));
+
+            ImageView endCallButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/End_Call_Button.jpg"))));
+            ImageView microphoneButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Mute_Button.jpg"))));
+            ImageView videoButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Video_Button.jpg"))));
+
+            for (ImageView button : new ImageView[]{endCallButton, microphoneButton, videoButton}) {
+                button.setFitWidth(50);
+                button.setFitHeight(50);
+                Circle clip = new Circle(25, 25, 25);
+                button.setClip(clip);
+            }
+
+            endCallButton.setOnMouseClicked(event -> {
+                try {
+                    sender.getServerOutput().writeObject("call_ended:" + receiver.getId());
+                    sender.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                endCall();
+            });
+
+            microphoneButton.setOnMouseClicked(event -> {
+                if (isAudioRunning) {
+                    System.out.println("mic turned off");
+                    isAudioRunning = false;
+                }
+                else {
+                    System.out.println("mic turned on");
+                    isAudioRunning = true;
+                }
+            });
+
+            videoButton.setOnMouseClicked(event -> {
+                if (isVideoRunning) {
+                    System.out.println("video turned off");
+                    isVideoRunning = false;
+                    Platform.runLater(() -> {
+                        myVideoView.setImage(senderImage);
+                    });
+                }
+                else {
+                    System.out.println("video turned on");
+                    isVideoRunning = true;
+                    if (callType.equals("audio")) {
+                        callType = "video";
+                        videoStage.close();
+                        loadCallSetup();
+                        startVideoThread();
+                    }
+                }
+            });
+
+
+            HBox buttonContainer = new HBox(videoButton, microphoneButton, endCallButton);
+            buttonContainer.setSpacing(15);
+            buttonContainer.setPadding(new Insets(8));
+            buttonContainer.setAlignment(Pos.CENTER);
+            buttonContainer.setMaxWidth(Region.USE_PREF_SIZE);
+            buttonContainer.setMaxHeight(66);
+
+            buttonContainer.setBackground(new Background(new BackgroundFill(Color.web("#000000", 0.6), new CornerRadii(20), Insets.EMPTY)));
+
+            StackPane root;
+
+            if (callType.equals("audio")) {
+                Label receiverName = new Label(receiver.getFirstName() + " " + receiver.getLastName());
+                receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+                Label timeLabel = new Label();
+                timeLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+                new Thread(() -> {
+                    long hr = 0;
+                    long min = 0;
+                    long sec = 0;
+                    while (callType.equals("audio")) {
+                        StringBuilder time = new StringBuilder();
+                        if (hr > 0) {
+                            if (hr < 10) {
+                                time.append('0').append(hr);
+                            }
+                            else {
+                                time.append(hr);
+                            }
+                            time.append(':');
+                        }
+                        if (min < 10) {
+                            time.append('0').append(min);
+                        }
+                        else {
+                            time.append(min);
+                        }
+                        time.append(':');
+                        if (sec < 10) {
+                            time.append('0').append(sec);
+                        }
+                        else {
+                            time.append(sec);
+                        }
+
+                        Platform.runLater(() -> {
+                            timeLabel.setText(time.toString());
+                        });
+
+                        sec++;
+                        if (sec == 60) {
+                            min++;
+                            sec = 0;
+                        }
+
+                        if (min == 60) {
+                            hr++;
+                            min = 0;
+                        }
+
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }).start();
+
+
+                VBox labelHolder = new VBox(receiverName, timeLabel);
+                labelHolder.setSpacing(5);
+                labelHolder.setAlignment(Pos.TOP_CENTER);
+                
+                root = new StackPane(background, videoView, labelHolder, buttonContainer);
+
+                StackPane.setAlignment(labelHolder, Pos.TOP_CENTER);
+                labelHolder.setLayoutY(windowHeight * 0.2);
+            }
+            else {
+                root = new StackPane(background, videoView, myVideoView, buttonContainer);
+
+                StackPane.setAlignment(myVideoView, Pos.BOTTOM_RIGHT);
+                StackPane.setMargin(myVideoView, new Insets(10));
+            }
+
+            background.widthProperty().bind(root.widthProperty());
+            background.heightProperty().bind(root.heightProperty());
+
+            StackPane.setAlignment(videoView, Pos.CENTER);
+            StackPane.setMargin(videoView, new Insets(10));
+
+            StackPane.setAlignment(buttonContainer, Pos.BOTTOM_CENTER);
+            StackPane.setMargin(buttonContainer, new Insets(10));
+
+            Scene scene = new Scene(root, windowWidth + 20, windowHeight + 20);
+
+            videoStage = new Stage();
+            if (callType.equals("audio")) {
+                videoStage.setTitle("Audio Call");
+            }
+            else {
+                videoStage.setTitle("Video Call");
+            }
+            Image icon = new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Payra.png")));
+            videoStage.getIcons().add(icon);
+            videoStage.setAlwaysOnTop(true);
+            videoStage.setResizable(false);
+            videoStage.setScene(scene);
+
+            videoStage.show();
+        });
     }
 
     public void endCall() {

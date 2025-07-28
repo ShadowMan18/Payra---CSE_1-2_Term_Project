@@ -370,6 +370,32 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            if (fromClient instanceof String string && string.startsWith("call_accepted:")) {
+                String callerId = string.substring("call_accepted:".length());
+
+                if (Server.currentClients.get(callerId) != null) {
+                    Server.currentClients.get(callerId).sendToClient("call_response:accepted");
+                }
+            }
+
+            if (fromClient instanceof String string && string.startsWith("call_declined:")) {
+                String callerId = string.substring("call_declined:".length());
+
+                if (Server.currentClients.get(callerId) != null) {
+                    Server.currentClients.get(callerId).sendToClient("call_response:declined");
+                }
+            }
+
+            if (fromClient instanceof String string && string.startsWith("call_ended:")) {
+                String receiverID = string.substring("call_ended:".length());
+
+                System.out.println("call ended " + receiverID);
+
+                if (Server.currentClients.get(receiverID) != null) {
+                    Server.currentClients.get(receiverID).sendToClient("call_ended");
+                }
+            }
+
             if (fromClient instanceof String string && string.startsWith("NewsFeed: open")) {
 
                 int port = 0;

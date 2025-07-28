@@ -68,8 +68,8 @@ public class Client {
 
     // Client server network
 
-    private final String ipAddress = "192.168.70.228";
-//    private final String ipAddress = "127.0.0.1";
+//    private final String ipAddress = "192.168.70.228";
+    private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -85,8 +85,11 @@ public class Client {
     private boolean newNotification;
     public Map<String, Pair<String, String>> notification = new LinkedHashMap<>();
 
+    // Call network
+
     private String receiverIPAddress;
     private ClientInfo callerInfo;
+    private String callAcceptanceStatus;
 
     // NewsFeed server network
 
@@ -347,8 +350,6 @@ public class Client {
                     String callType = callInfo[0];
                     String callerIPAddress = callInfo[1];
 
-                    /// ////
-
                     while (callerInfo == null || callerInfo.getProfilePicture() == null) {
                         try {
                             Thread.sleep(100);
@@ -357,16 +358,25 @@ public class Client {
                         }
                     }
 
-                    CallRinger.start(callerInfo, info, callType, callerIPAddress);
-                    
-                    /// /////
+                    CallRinger.startReceiverEndRinger(this, callerInfo, info, callType, callerIPAddress);
 
                     callerInfo = null;
+                }
+                else if (fromServer instanceof String string && string.startsWith("call_response:")) {
+                    String response = string.substring("call_response:".length());
 
-                    if (latch != null) {
-                        latch.countDown();
-                        latch = null;
+                    if (response.equals("accepted")) {
+                        callAcceptanceStatus = response;
+                        System.out.println("call accepted in " + firstName);
                     }
+                    else {
+                        callAcceptanceStatus = response;
+                        System.out.println("call declined in " + firstName);
+                    }
+                }
+                else if (fromServer instanceof String string && string.equals("call_ended")) {
+                    callAcceptanceStatus = "ended";
+                    System.out.println("call ended in " + firstName);
                 }
                 else if (fromServer instanceof String string && string.startsWith("NewsFeed connection:")) {
                     int port = Integer.parseInt(string.substring("NewsFeed connection:".length()));
@@ -585,6 +595,9 @@ public class Client {
     }
 
     public boolean hasNewNotification() { return newNotification; }
+
+    public String  getCallAcceptanceStatus() { return callAcceptanceStatus; };
+
     // Setters
 
     public void setFirstName(String firstName) {
@@ -618,6 +631,8 @@ public class Client {
     public void setProfilePicture(String url) { this.profilePicture = new Image(String.valueOf(getClass().getResource(url))); }
 
     public void setChatStatus(boolean status) { chatStatus = status; }
+
+    public void resetCallAcceptanceStatus() { callAcceptanceStatus = null; }
 
     public void resetNotificationStatus() { newNotification = false; }
 

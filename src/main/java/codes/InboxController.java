@@ -965,8 +965,10 @@ public class InboxController {
         if (client.getChatStatus()) {
             filePath = FileExplorer.openFileExplorer(stage);
             System.out.println("File selected: " + filePath);
-            Message.setText(filePath);
-            Message.setEditable(false);
+            if (filePath != null) {
+                Message.setText(filePath);
+                Message.setEditable(false);
+            }
             Platform.runLater(() -> Message.requestFocus());
         }
     }
@@ -985,7 +987,8 @@ public class InboxController {
                     }
                 }
 
-                new AudioVideoCall(client.getInfo(), receiver).startAudioCall(client.getReceiverIPAddress());
+                client.resetCallAcceptanceStatus();
+                CallRinger.startCallerEndRinger(client, client.getInfo(), receiver, "audio", client.getReceiverIPAddress());
             }
             else {
                 Platform.runLater(() -> {
@@ -1055,7 +1058,8 @@ public class InboxController {
                     }
                 }
 
-                new AudioVideoCall(client.getInfo(), receiver).startVideoCall(client.getReceiverIPAddress());
+                client.resetCallAcceptanceStatus();
+                CallRinger.startCallerEndRinger(client, client.getInfo(), receiver, "video", client.getReceiverIPAddress());
             }
             else {
                 Platform.runLater(() -> {

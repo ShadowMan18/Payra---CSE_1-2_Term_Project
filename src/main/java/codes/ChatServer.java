@@ -166,7 +166,7 @@ class ChatServer implements Runnable {
             }
         }).start();
 
-        // Starting chat conveyor thread (reads chats from the chat file and sends it to the client)
+        // Starting chat conveyor thread (reads chats from the database and sends it to the client)
 
         new Thread(() -> {
             while (true) {
@@ -192,6 +192,17 @@ class ChatServer implements Runnable {
                             if (filename != null) {
                                 mediaFile = new File("src/Media Database", filename);
                                 fileBytes = Files.readAllBytes(mediaFile.toPath());
+
+                                if (!filename.endsWith("emoji.png")) {
+                                    int i;
+                                    for (i = 0; i < filename.length(); i++) {
+                                        if (filename.charAt(i) == '_') {
+                                            break;
+                                        }
+                                    }
+
+                                    filename = filename.substring(i + 1);
+                                }
                             }
 
                             output.writeObject(new MessagePacket(sender, receiver, content, filename, fileBytes, timestamp.toLocalDateTime()));
