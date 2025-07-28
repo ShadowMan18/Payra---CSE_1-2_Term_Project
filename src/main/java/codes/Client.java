@@ -770,7 +770,7 @@ public class Client {
         this.recoveryAnswer = recoveryAnswer;
     }
 
-    public void setProfilePicture(String url) { this.profilePicture = new Image(String.valueOf(getClass().getResource(url))); }
+    public void setProfilePicture(Image image) { this.profilePicture = image; }
 
     public void setChatStatus(boolean status) { chatStatus = status; }
 
@@ -818,36 +818,6 @@ public class Client {
         }
 
         System.out.println("Connected to: " + port);
-
-//        Thread chatWriter = new Thread(() -> {
-//            while (true) {
-//                String message = scanner.nextLine();
-//
-//                try {
-//                    chatOutput.writeObject(message);
-//                    chatOutput.flush();
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        });
-
-//        Thread chatReader = new Thread(() -> {
-//            while (true) {
-//                String message;
-//
-//                try {
-//                    message = (String) (input.readObject());
-//                } catch (IOException | ClassNotFoundException e) {
-//                    throw new RuntimeException(e);
-//                }
-//
-//                System.out.println("Received from client: " + message);
-//            }
-//        });
-//
-////        chatWriter.start();
-//        chatReader.start();
     }
 
     public void connectToFeedServer(int port) {

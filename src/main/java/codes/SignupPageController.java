@@ -246,16 +246,15 @@ public class SignupPageController {
             return false;
         }
         else {
-            for (int i = 0; i < firstName.length(); i++) {
-                if (!((firstName.charAt(i) >= 'A' && firstName.charAt(i) <= 'Z') || (firstName.charAt(i) >= 'a' && firstName.charAt(i) <= 'z') || firstName.charAt(i) == ' ' || firstName.charAt(i) == '.' || firstName.charAt(i) == '-')) {
-                    SignupPageFirstNameLabel.setText("Invalid name");
-                    return false;
-                }
+            String verdict = Validator.validateName(firstName);
+            SignupPageFirstNameLabel.setText(verdict);
+            if (verdict.isEmpty()) {
+                return true;
+            }
+            else {
+                return false;
             }
         }
-
-        SignupPageFirstNameLabel.setText("");
-        return true;
     }
 
     public boolean checkLastName() {
@@ -264,16 +263,15 @@ public class SignupPageController {
             return false;
         }
         else {
-            for (int i = 0; i < lastName.length(); i++) {
-                if (!((lastName.charAt(i) >= 'A' && lastName.charAt(i) <= 'Z') || (lastName.charAt(i) >= 'a' && lastName.charAt(i) <= 'z') || lastName.charAt(i) == ' ' || lastName.charAt(i) == '.' || lastName.charAt(i) == '-')) {
-                    SignupPageLastNameLabel.setText("Invalid name");
-                    return false;
-                }
+            String verdict = Validator.validateName(lastName);
+            SignupPageLastNameLabel.setText(verdict);
+            if (verdict.isEmpty()) {
+                return true;
+            }
+            else {
+                return false;
             }
         }
-
-        SignupPageLastNameLabel.setText("");
-        return true;
     }
 
     public boolean checkEmailAddress() {
@@ -281,82 +279,33 @@ public class SignupPageController {
             SignupPageEmailLabel.setText("This field can't be empty");
             return false;
         }
-        else if (!(email.length() > 10 && email.endsWith("@gmail.com"))) {
-            SignupPageEmailLabel.setText("Invalid email address");
-            return false;
-        }
         else {
-            String id = email.substring(0, email.length() - "@gmail.com".length());
-
-            if (id.length() < 6) {
-                SignupPageEmailLabel.setText("Username is too short");
-                return false;
-            }
-            else if (id.length() > 30) {
-                SignupPageEmailLabel.setText("Username is too long");
-                return false;
-            }
-            else if (!(id.charAt(0) >= 'a' && id.charAt(0) <= 'z')) {
-                SignupPageEmailLabel.setText("Email address must start with a letter");
-                return false;
+            String verdict = Validator.validateEmail(email);
+            SignupPageEmailLabel.setText(verdict);
+            if (verdict.isEmpty()) {
+                return true;
             }
             else {
-                for(int i = 0; i < id.length(); i++) {
-                    if (!((id.charAt(i) >= 'a' && id.charAt(i) <= 'z') || (id.charAt(i) >= '0' && id.charAt(i) <= '9') || id.charAt(i) == '.' || id.charAt(i) == '-' || id.charAt(i) == '_')) {
-                        SignupPageEmailLabel.setText("Characters must be a~z, 0~9, . _ -");
-                        return false;
-                    }
-                }
+                return false;
             }
         }
-
-        SignupPageEmailLabel.setText("");
-        return true;
     }
 
     public boolean checkPassword() {
-        int upperCase = 0;
-        int lowerCase = 0;
-        int specialCharacter = 0;
-        int digit = 0;
-        String specialCharacters = "!@#$%^&*_+-=(){}[]<>|\\/,.?:;\"'";
-
         if (password1.isEmpty()) {
             SignupPageSetPasswordLabel.setText("This field can't be empty");
             return false;
         }
-        else if (password1.length() < 8) {
-            SignupPageSetPasswordLabel.setText("Password must contain at least 8 characters");
-            return false;
-        }
         else {
-            for (int i = 0; i < password1.length(); i++){
-                if (password1.charAt(i) >= 'A' && password1.charAt(i) <= 'Z') {
-                    upperCase++;
-                }
-                else if (password1.charAt(i) >= 'a' && password1.charAt(i) <= 'z') {
-                    lowerCase++;
-                }
-                else if (specialCharacters.contains(String.valueOf(password1.charAt(i)))) {
-                    specialCharacter++;
-                }
-                else if (password1.charAt(i) >= '0' && password1.charAt(i) <= '9') {
-                    digit++;
-                }
-                else {
-                    SignupPageSetPasswordLabel.setText("Characters must be A~Z, a~z, 0~9, !@#$%^&*_+-=(){}[]<>|\\/,.?:;\"'");
-                    return false;
-                }
+            String verdict = Validator.validatePassword(password1);
+            SignupPageSetPasswordLabel.setText(verdict);
+            if (verdict.isEmpty()) {
+                return true;
             }
-
-            if (upperCase == 0 || lowerCase == 0 || specialCharacter == 0 || digit ==0) {
-                SignupPageSetPasswordLabel.setText("Password must contain uppercase, lowercase, special character and digit");
+            else {
                 return false;
             }
         }
-
-        SignupPageSetPasswordLabel.setText("");
-        return true;
     }
     
     public boolean confirmPassword() {

@@ -256,7 +256,18 @@ public class ServerThread implements Runnable{
             if (fromClient instanceof String string && string.startsWith("update:")) {
                 String[] updateInfo = string.substring("update:".length()).split(",");
 
-                if (updateInfo[0].equals("password")) {
+                if (updateInfo[0].equals("name")) {
+                    try (PreparedStatement updateName = databaseConnection.prepareStatement("UPDATE Users SET First_Name = ?, Last_Name = ? WHERE UserId = ?")) {
+                        updateName.setString(1, updateInfo[1]);
+                        updateName.setString(2, updateInfo[2]);
+                        updateName.setString(3, id);
+
+                        updateName.executeUpdate();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else if (updateInfo[0].equals("password")) {
                     try (PreparedStatement updatePassword = databaseConnection.prepareStatement("UPDATE Users SET Password = ? WHERE UserId = ?")) {
                         updatePassword.setString(1, updateInfo[1]);
                         updatePassword.setString(2, id);

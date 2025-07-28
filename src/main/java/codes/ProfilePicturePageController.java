@@ -103,6 +103,8 @@ public class ProfilePicturePageController {
 
         UploadImageLabel.setText("");
         File image = new File(filePath);
+        ProfilePictureView.setFitWidth(350);
+        ProfilePictureView.setFitHeight(350);
         ProfilePictureView.setImage(new Image(image.toURI().toString()));
         Circle clip = new Circle(175, 175, 175);
         ProfilePictureView.setClip(clip);
@@ -118,9 +120,5 @@ public class ProfilePicturePageController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @FXML
-    public void onBackButtonClick(ActionEvent actionEvent) {
     }
 }
