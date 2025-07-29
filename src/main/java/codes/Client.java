@@ -66,7 +66,7 @@ public class Client {
 
     // Client server network
 
-//    private final String ipAddress = "192.168.200.36";
+//  private final String ipAddress = "192.168.200.36";
     private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
@@ -325,6 +325,12 @@ public class Client {
                         Map<String, String> statusMap = (Map<String, String>) map;
                         setFriendStatusMap(statusMap);
                         System.out.println("Received friend status map of size: " + statusMap.size());
+                    }
+                    else{
+                        if(fetchFriendStatusLatch!=null){
+                            fetchFriendStatusLatch.countDown();
+                            fetchFriendStatusLatch=null;
+                        }
                     }
                 }
                 else if (fromServer instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof String str && str.startsWith("comment:")) {
@@ -608,6 +614,10 @@ public class Client {
 
     public ClientInfo getInfo() {
         return info;
+    }
+
+    public String getFullName(){
+        return firstName+" "+lastName;
     }
 
     public String getFirstName() {
@@ -1062,7 +1072,11 @@ public class Client {
 
     public void setFriendStatusMap(Map<String, String> map) {
         friendStatusMap = map;
-        fetchFriendStatusLatch.countDown();
+
+        if(fetchFriendStatusLatch!=null){
+            fetchFriendStatusLatch.countDown();
+            fetchFriendStatusLatch=null;
+        }
     }
 
     public String getCachedFriendStatus(String userId) {

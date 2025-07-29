@@ -736,7 +736,7 @@ public class ServerThread implements Runnable{
                     e.printStackTrace();
                 }
 
-                sendToClient(comments); // objectOutputStream.writeObject(comments);
+                sendToClient(comments);
             }
 
 

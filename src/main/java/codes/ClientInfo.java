@@ -48,4 +48,8 @@ public class ClientInfo implements Serializable {
     public byte[] getProfilePicture() {
         return profilePicture;
     }
+
+    public String getFullName(){
+        return firstName+" "+lastName;
+    }
 }

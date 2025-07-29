@@ -6,6 +6,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -13,18 +15,20 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.bridj.cpp.std.vector;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class NewsFeedController {
@@ -42,6 +46,8 @@ public class NewsFeedController {
     private VBox pendingRequestsBox;
     @FXML private
     VBox currentFriendsBox;
+    @FXML
+    private TextField friendSearchBar;
 
 
     private Client client;
@@ -50,8 +56,16 @@ public class NewsFeedController {
     private final Map<Integer, Map<String, Label>> reactionLabelsByPostId = new HashMap<>();
     private final Map<Integer, String> userReactionsByPostId = new HashMap<>();
     private final Map<Integer, Map<String, Button>> reactionButtonsByPostId = new HashMap<>();
+    private final Map<Integer, List<String>> allCommentsByPostId = new HashMap<>();
+    private final Map<Integer, StackPane> iconStackByPostId = new HashMap<>();
+    private final List<PostPacket> allPosts = new ArrayList<>();
+    private final Set<Integer> displayedPostIds = new HashSet<>();
+    private List<ClientInfo> allCurrentFriends = new ArrayList<>();
+
+
 
     Map<Integer, ScrollPane> commentScrollPaneByPostId = new HashMap<>();
+    Map<Integer, VBox> commentBoxByPostId = new HashMap<>();
 
 
     public void setNewsFeedController(Client client, Stage stage) {
@@ -69,6 +83,7 @@ public class NewsFeedController {
 
             this.client = client;
             this.stage = stage;
+            client.sendToServer("load_clients");
 
             System.out.println("I am trying to load friends stuff");
             loadFriendData();
@@ -80,6 +95,58 @@ public class NewsFeedController {
         userProfilePictureView.setImage(client.getProfilePicture());
         Circle clip = new Circle(35, 35, 35);
         userProfilePictureView.setClip(clip);
+
+        ImageView pfp = new ImageView(client.getProfilePicture());
+        pfp.setFitWidth(40);
+        pfp.setFitHeight(40);
+        pfp.setClip(new Circle(20, 20, 20));
+
+        Label nameLabel = new Label(client.getFullName());
+        nameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        HBox profileBox = new HBox(10, pfp, nameLabel);
+        profileBox.setPadding(new Insets(10));
+        profileBox.setAlignment(Pos.CENTER_LEFT);
+        profileBox.setStyle("-fx-cursor: hand; -fx-background-color: white; -fx-background-radius: 12;");
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(8);
+        shadow.setOffsetY(4);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.2)); // Darker shadow
+
+        profileBox.setEffect(shadow);
+        profileBox.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+
+        VBox.setMargin(profileBox, new Insets(10));
+
+        profileBox.setOnMouseEntered(e -> {
+            DropShadow hoverShadow = new DropShadow();
+            hoverShadow.setRadius(12);
+            hoverShadow.setOffsetY(4);
+            hoverShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+            profileBox.setEffect(hoverShadow);
+            profileBox.setStyle("-fx-background-color: #fafafa; -fx-background-radius: 12;");
+        });
+
+        profileBox.setOnMouseExited(e -> {
+            DropShadow normalShadow = new DropShadow();
+            normalShadow.setRadius(8);
+            normalShadow.setOffsetY(4);
+            normalShadow.setColor(Color.rgb(0, 0, 0, 0.2));
+            profileBox.setEffect(normalShadow);
+            profileBox.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+        });
+
+
+        profileBox.setOnMouseClicked(e -> showFilteredPosts(client.getMyId()));
+
+
+
+        friendsSidebarBox.setAlignment(Pos.TOP_LEFT);
+        friendsSidebarBox.setPadding(new Insets(10, 20, 10, 20));
+        friendsSidebarBox.getChildren().add(0, profileBox);
+
+
+
 
         NewsFeedLayout.setPrefWidth(Screen.SCREENWIDTH);
         NewsFeedLayout.setPrefHeight(Screen.SCREENHEIGHT);
@@ -152,19 +219,22 @@ public class NewsFeedController {
                 Platform.runLater(() -> {
                     try {
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("/codes/FriendFinderPopup.fxml"));
-                        Parent popupRoot = loader.load();
+                        Parent newPopupRoot = loader.load();
                         FriendFinderController controller = loader.getController();
                         controller.setClient(client);
 
+                        Scene newScene = new Scene(newPopupRoot);
+                        newScene.getStylesheets().add(getClass().getResource("/FeedStyles.css").toExternalForm());
+
                         Stage popupStage = new Stage();
                         popupStage.setTitle("Find Friends");
-                        popupStage.setScene(new Scene(popupRoot));
+                        popupStage.setScene(newScene);
                         popupStage.initModality(Modality.APPLICATION_MODAL);
                         popupStage.show();
                     } catch (IOException e) {
-                        System.out.println("FXML load failed:");
                         e.printStackTrace();
                     }
+
                 });
 
             } catch (Exception e) {
@@ -237,39 +307,69 @@ public class NewsFeedController {
 
     public void addPostToFeed(PostPacket packet) {
 
-        //System.out.println("I am in newsFeed Controller trying to add it");
+        System.out.println("I am in newsFeed Controller trying to add it");
 
-        //client.fetchFriendStatusMap();
+        client.fetchFriendStatusMap();
 
-        //System.out.println("I am in newsFeed Controller trying to add it");
+        System.out.println("I am in newsFeed Controller trying to add it");
 
-//        if (!packet.getAuthor().equals(client.getMyId()) && !"friends".equals(client.getCachedFriendStatus(packet.getAuthor()))) {
-//            System.out.println("rejecting "+packet.getAuthor()+"'s post for not being my friend "+ client.getCachedFriendStatus(packet.getAuthor()));
-//            return;
-//        }
+        if (!packet.getAuthor().equals(client.getMyId()) && !"friends".equals(client.getCachedFriendStatus(packet.getAuthor()))) {
+            System.out.println("rejecting "+packet.getAuthor()+"'s post for not being my friend "+ client.getCachedFriendStatus(packet.getAuthor()));
+            return;
+        }
 
-        //System.out.println("I am past the check up stuff");
+        System.out.println("I am past the check up stuff");
 
-        int postId = packet.getPostId();
-        userReactionsByPostId.put(postId, packet.getUserReactedType());
+        Vector<ClientInfo> myClients=client.getClients();
+
+        int postId = packet.getPostId();  // This was missing above
 
         VBox postBox = new VBox();
         postBox.setStyle("-fx-padding: 10; -fx-border-color: #ccc; -fx-border-width: 0 0 1px 0;");
         postBox.getStyleClass().add("post");
 
-        Label usernameLabel = new Label(packet.getAuthor());
-        usernameLabel.getStyleClass().add("username");
+
+        // 1. Get author info
+        ImageView profileView = null;
+        String fullName = packet.getAuthor(); // fallback
+
+        for (ClientInfo thisClient : client.getClients()) {
+            if (packet.getAuthor().equals(thisClient.getId())) {
+                fullName = thisClient.getFirstName() + " " + thisClient.getLastName();
+                Image pfp = new Image(new ByteArrayInputStream(thisClient.getProfilePicture()));
+                profileView = new ImageView(pfp);
+                profileView.setFitWidth(40);
+                profileView.setFitHeight(40);
+                profileView.setClip(new javafx.scene.shape.Circle(20, 20, 20));
+                break;
+            }
+        }
+
+
+        Label nameLabel = new Label(fullName);
+        nameLabel.getStyleClass().add("username");
 
         Label timestampLabel = new Label(packet.getFormattedTimestamp());
         timestampLabel.getStyleClass().add("timestamp");
+
+        VBox nameAndTime = new VBox(nameLabel, timestampLabel);
+        nameAndTime.setAlignment(Pos.CENTER_LEFT);
+
+
+        HBox header = new HBox(10, profileView, nameAndTime);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(0, 0, 10, 0));
+
 
         Label contentLabel = new Label(packet.getContent());
         contentLabel.getStyleClass().add("content");
         contentLabel.setWrapText(true);
 
-        VBox postBodyBox = new VBox(usernameLabel, timestampLabel, contentLabel);
+        VBox postBodyBox = new VBox(header, contentLabel);
         postBodyBox.getStyleClass().add("post-body");
+
         postBox.getChildren().add(postBodyBox);
+
 
 
         if (packet.getFileData() != null && packet.getFileData().length > 0) {
@@ -284,21 +384,39 @@ public class NewsFeedController {
             // need more handlers to support video or audio previews, that's just image for now
         }
 
+
+        //Reactions
+
+
         HBox reactionRow = new HBox(10);
         reactionRow.setStyle("-fx-alignment: center-left;");
 
-        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("/images/redHeart.png"), 24, 24, true, true));
+        ImageView baseIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/rose_gold_heart.png"), 24, 24, true, true));
+        StackPane iconStack = new StackPane(baseIcon);
+        iconStackByPostId.put(postId, iconStack);
+
+
+        if ("like".equals(packet.getUserReactedType())) {
+            ImageView overlay = new ImageView(new Image(getClass().getResourceAsStream("/images/redHeart.png"), 24, 24, true, true));
+            iconStack.getChildren().add(overlay);
+        }
+
         Label countLabel = new Label(String.valueOf(packet.getReactionCounts().getOrDefault("like", 0)));
 
-        VBox iconWithCount = new VBox(icon, countLabel);
-        iconWithCount.setStyle("-fx-alignment: center;");
+        HBox iconWithCount = new HBox(4);
+        iconWithCount.setAlignment(Pos.CENTER_LEFT);
+        iconWithCount.setPadding(new Insets(2));
+        iconWithCount.setMinWidth(60);
+        iconWithCount.getChildren().addAll(iconStack, countLabel);
 
         Button likeButton = new Button();
         likeButton.setGraphic(iconWithCount);
         likeButton.setStyle("-fx-background-color: transparent;");
-        if ("like".equals(packet.getUserReactedType())) {
-            likeButton.setStyle("-fx-background-color: #d0f0c0;");
-        }
+        likeButton.setMinHeight(36);
+        likeButton.setMinWidth(70);
+        likeButton.setPadding(new Insets(4));
+
+
 
         likeButton.setOnAction(e -> sendReactionToServer(String.valueOf(postId), "like"));
 
@@ -312,84 +430,166 @@ public class NewsFeedController {
         reactionRow.getChildren().add(likeButton);
         postBox.getChildren().add(reactionRow);
 
+        System.out.println("Everything is done except you know who");
 
-        //System.out.println("I got through the rest of it");
 
-        // === Comments Section ===
+        //Comments
+
+        ImageView commentIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/blue_comment.png")));
+        commentIcon.setFitWidth(24);
+        commentIcon.setFitHeight(24);
+
+        Button commentButton = new Button();
+        commentButton.setGraphic(commentIcon);
+        commentButton.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+
+        allCommentsByPostId.put(postId,packet.getComments());
+        commentButton.setOnAction(e -> openCommentPopup(postId,allCommentsByPostId.get(postId)));
+        reactionRow.getChildren().add(commentButton);
+
+
+        if (!displayedPostIds.contains(packet.getPostId())) {
+            allPosts.add(packet);
+            displayedPostIds.add(packet.getPostId());
+        }
+
+
+        feedContainer.getChildren().add(0, postBox);
+    }
+
+    private void openCommentPopup(int postId,List<String> pastComments) {
+        //client.fetchCommentsForPost(postId, comments -> Platform.runLater(() -> openCommentPopup(postId, comments)));
+
+
         VBox commentsBox = new VBox();
         commentsBox.getStyleClass().add("comment-section");
 
         ScrollPane commentScrollPane = new ScrollPane(commentsBox);
+        commentScrollPane.setPrefHeight(400);
+        commentScrollPane.setMaxHeight(400);
         commentScrollPane.setFitToWidth(true);
-
-        commentScrollPane.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        commentScrollPane.setMaxHeight(150); // scroll only after enough comments
-
-        commentScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        commentScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         commentScrollPane.getStyleClass().add("comment-scroll-pane");
 
+
         commentScrollPaneByPostId.put(postId, commentScrollPane);
+        commentBoxByPostId.put(postId, commentsBox);
 
 
-        for (String comment : packet.getComments()) {
-            Label commentLabel = new Label(comment);
-            commentLabel.getStyleClass().add("comment-label");
+        for (String comment : pastComments) {
+            String[] parts = comment.split(":", 2);
+            String sender = parts.length > 0 ? parts[0].trim() : "Unknown";
+            String message = parts.length > 1 ? parts[1].trim() : "";
 
-            commentsBox.getChildren().add(commentLabel);
+
+            Label senderLabel = new Label(sender);
+            senderLabel.getStyleClass().add("comment-sender");
+
+            Label messageLabel = new Label(message);
+            messageLabel.getStyleClass().add("comment-label");
+
+            VBox commentBlock = new VBox(2, senderLabel, messageLabel);
+            commentBlock.getStyleClass().add("comment-block");
+
+            commentsBox.getChildren().add(commentBlock);
+
+
+            //System.out.println("Comment: "+comment);
         }
 
-// Text field to add a new comment
-        HBox commentInputRow = new HBox(5);
-        commentInputRow.setPadding(new Insets(5, 0, 0, 10));
+
+        // Input row
+        HBox commentInputRow = new HBox(10);  // increased spacing between field and button
+        commentInputRow.setPadding(new Insets(15, 10, 10, 10));
+        commentInputRow.setAlignment(Pos.CENTER_LEFT);  // aligned better horizontally
+
+
 
         TextField commentField = new TextField();
         commentField.setPromptText("Write a comment...");
-        commentField.setPrefWidth(300);
-
-        Button postCommentButton = new Button("Send");
-
         commentField.getStyleClass().add("comment-input");
-        postCommentButton.getStyleClass().add("send-button");
+        HBox.setHgrow(commentField, Priority.ALWAYS);
+        commentField.setMaxWidth(Double.MAX_VALUE);
 
 
-        //commentInputRow.getChildren().addAll(commentField, postCommentButton);
+        Image sendImage = new Image(getClass().getResourceAsStream("/images/send_comment_button.png"));
+        ImageView sendIcon = new ImageView(sendImage);
+        sendIcon.setFitWidth(40);
+        sendIcon.setFitHeight(40);
+
+        Button postCommentButton = new Button();
+        postCommentButton.setGraphic(sendIcon);
+        postCommentButton.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+
+        commentInputRow.getChildren().addAll(commentField, postCommentButton);
+
         String currentUsername = client.getMyId();
-        postCommentButton.setOnAction(e -> {
+
+
+
+        Runnable postHandler = () -> {
             String text = commentField.getText().trim();
             if (!text.isEmpty()) {
                 client.sendComment(postId, text);
                 commentField.clear();
-            }
-        });
 
+            }
+        };
+
+        postCommentButton.setOnAction(e -> postHandler.run());
         commentField.setOnKeyPressed(e -> {
-            switch (e.getCode()) {
-                case ENTER -> {
-                    String text = commentField.getText().trim();
-                    if (!text.isEmpty()) {
-                        client.sendComment(postId, text);
-                        commentField.clear();
-                    }
-                }
-            }
+            if (e.getCode() == KeyCode.ENTER) postHandler.run();
         });
 
 
-
-        commentInputRow.getChildren().addAll(commentField, postCommentButton);
-
-        commentsBox.layout();  // ensure layout pass
-        commentsBox.setTranslateY(commentsBox.getHeight());  // scroll if wrapped in ScrollPane
+        VBox container = new VBox(15, commentScrollPane, commentInputRow);
+        container.setPadding(new Insets(20));
+        container.getStyleClass().add("popup-container");
 
 
-        postBox.getChildren().addAll(commentInputRow, commentScrollPane);
-
-
-        commentBoxByPostId.put(postId, commentsBox);
-        feedContainer.getChildren().add(0, postBox);
-        //System.out.println("Done");
+        Scene popupScene = new Scene(container, 500, 500);
+        popupScene.getStylesheets().add(getClass().getResource("/FeedStyles.css").toExternalForm());
+        Stage popupStage = new Stage();
+        popupStage.setTitle("Comments");
+        popupStage.setScene(popupScene);
+        popupStage.initModality(Modality.APPLICATION_MODAL);
+        popupStage.show();
     }
+
+    public void addLiveComment(CommentPacket comment) {
+        int postId = comment.getPostId();
+        String sender = comment.getCommenter();
+        String message = comment.getCommentText();
+        String formatted = sender + ": " + message;
+
+        allCommentsByPostId.putIfAbsent(postId, new ArrayList<>());
+        allCommentsByPostId.get(postId).add(formatted);
+
+        if (commentBoxByPostId.containsKey(postId)) {
+            VBox commentsBox = commentBoxByPostId.get(postId);
+
+            Label senderLabel = new Label(sender);
+            senderLabel.getStyleClass().add("comment-sender");
+
+            Label messageLabel = new Label(message);
+            messageLabel.getStyleClass().add("comment-label");
+
+            VBox commentBlock = new VBox(2, senderLabel, messageLabel);
+            commentBlock.getStyleClass().add("comment-block");
+
+            Platform.runLater(() -> {
+                commentsBox.getChildren().add(commentBlock);
+
+                ScrollPane scrollPane = commentScrollPaneByPostId.get(postId);
+                scrollPane.layout();
+                scrollPane.setVvalue(1.0);
+            });
+
+        } else {
+            System.out.println("No comment box found for postId: " + postId);
+        }
+    }
+
+
 
 
     private void sendReactionToServer(String postIdStr, String selectedType) {
@@ -433,12 +633,19 @@ public class NewsFeedController {
         if (labels == null || buttons == null) return;
 
         if (client.getId().equals(reactor)) {
+            StackPane iconStack = iconStackByPostId.get(postId);
+            if (iconStack != null) {
+                iconStack.getChildren().clear();
+                ImageView icon = new ImageView(new Image(getClass().getResourceAsStream(
+                        "like".equals(newType) ? "/images/redHeart.png" : "/images/rose_gold_heart.png"
+                ), 24, 24, true, true));
+                iconStack.getChildren().add(icon);
+            }
+
             if ("none".equals(newType)) {
                 userReactionsByPostId.remove(postId);
-                buttons.get("like").setStyle("-fx-background-color: transparent;");
             } else {
-                userReactionsByPostId.put(postId, "like");
-                buttons.get("like").setStyle("-fx-background-color: #d0f0c0;");
+                userReactionsByPostId.put(postId, newType);
             }
         }
 
@@ -457,49 +664,9 @@ public class NewsFeedController {
 
     //What are friends for really?
     private void loadFriendData() {
-        pendingRequestsBox.getChildren().clear();
-        currentFriendsBox.getChildren().clear();
 
-        //System.out.println("I want the requests I have, if any");
-
-        List<ClientInfo> pending=client.getPendingRequests();
-
-       //System.out.println("Received requests with a list of size: "+pending.size());
-        for (ClientInfo requester : pending) {
-            HBox row = createUserRow(requester, "pending");
-            Button accept = new Button("Accept");
-            Button reject = new Button("Reject");
-
-            accept.setOnAction(e -> {
-                client.acceptFriendRequest(requester.getId());
-                loadFriendData();
-            });
-
-            reject.setOnAction(e -> {
-                client.rejectFriendRequest(requester.getId());
-                loadFriendData();
-            });
-
-            row.getChildren().addAll(accept, reject);
-            pendingRequestsBox.getChildren().add(row);
-        }
-
-        //System.out.println("Now we'll try to get Friend list");
-
-        // Load Friend List
-        for (ClientInfo friend : client.getFriendList()) {
-            System.out.println("My friend: "+friend.getId());
-            HBox row = createUserRow(friend, "friend");
-            Button unfriend = new Button("Unfriend");
-            unfriend.setOnAction(e -> {
-                client.unfriend(friend.getId());
-                loadFriendData();
-            });
-
-            row.getChildren().add(unfriend);
-            currentFriendsBox.getChildren().add(row);
-        }
-
+        client.fetchFriendStatusMap();
+        loadCurrentFriends();
     }
 
     private HBox createUserRow(ClientInfo user, String type) {
@@ -519,6 +686,17 @@ public class NewsFeedController {
         return row;
     }
 
+    private void showFilteredPosts(String authorId) {
+        feedContainer.getChildren().clear();
+        List<PostPacket> copy = new ArrayList<>(allPosts);
+        for (PostPacket packet : copy) {
+            if (packet.getAuthor().equals(authorId)) {
+                addPostToFeed(packet);
+            }
+        }
+    }
+
+
 
     private void refreshCommentsForPost(VBox postBox, int postId, VBox commentsBox) {
         client.fetchCommentsForPost(postId, comments -> {
@@ -530,38 +708,178 @@ public class NewsFeedController {
             }
         });
     }
+    @FXML
+    private void onPendingRequestsClicked() {
+        List<ClientInfo> pending = client.getPendingRequests();
 
+        VBox container = new VBox(10);
+        container.setPadding(new Insets(20));
+        container.setAlignment(Pos.TOP_CENTER);
+        container.setStyle("-fx-background-color: white;");
 
-    Map<Integer, VBox> commentBoxByPostId = new HashMap<>();
+        Label title = new Label("Pending Friend Requests");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        container.getChildren().add(title);
 
-
-    public void addLiveComment(CommentPacket comment) {
-        int postId = comment.getPostId();
-        String commentText = comment.getCommenter() + ": " + comment.getCommentText();
-
-        if (commentBoxByPostId.containsKey(postId)) {
-            VBox commentsBox = commentBoxByPostId.get(postId);
-            Label newCommentLabel = new Label(commentText);
-            newCommentLabel.getStyleClass().add("comment-label");
-
-            Platform.runLater(() -> {
-                commentsBox.getChildren().add(newCommentLabel);
-
-                Platform.runLater(() -> {
-                    ScrollPane scrollPane = commentScrollPaneByPostId.get(postId);
-                    scrollPane.setVvalue(1.0); // Scroll to bottom after layout
-                });
-            });
-
+        if (pending == null || pending.isEmpty()) {
+            Label emptyLabel = new Label("You have no pending requests.");
+            emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
+            container.getChildren().add(emptyLabel);
         } else {
-            System.out.println("No comment box found for postId: " + postId);
+            for (ClientInfo requester : pending) {
+                HBox row = createUserRow(requester, "pending");
+
+                Button accept = new Button("Accept");
+                Button reject = new Button("Reject");
+
+                accept.setOnAction(e -> {
+                    client.acceptFriendRequest(requester.getId());
+                    loadFriendData();
+                    ((Stage) ((Button) e.getSource()).getScene().getWindow()).close();
+                });
+
+                reject.setOnAction(e -> {
+                    client.rejectFriendRequest(requester.getId());
+                    loadFriendData();
+                    ((Stage) ((Button) e.getSource()).getScene().getWindow()).close();
+                });
+
+                row.getChildren().addAll(accept, reject);
+                container.getChildren().add(row);
+            }
         }
+
+        ScrollPane scrollPane = new ScrollPane(container);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefSize(400, 500);
+        scrollPane.setStyle("-fx-background-color: white;");
+
+        Stage popupStage = new Stage();
+        popupStage.setTitle("Pending Requests");
+        popupStage.initModality(Modality.APPLICATION_MODAL);
+        popupStage.setScene(new Scene(scrollPane));
+        popupStage.show();
+    }
+
+    public void loadCurrentFriends() {
+        currentFriendsBox.getChildren().clear();
+        allCurrentFriends = client.getFriendList();  // store for search filtering
+
+        for (ClientInfo friend : allCurrentFriends) {
+            HBox friendRow = createFriendRow(friend);
+            currentFriendsBox.getChildren().add(friendRow);
+        }
+
+        // Set up search filter
+        friendSearchBar.textProperty().addListener((obs, oldVal, newVal) -> {
+            currentFriendsBox.getChildren().clear();
+            for (ClientInfo friend : allCurrentFriends) {
+                String search = newVal.toLowerCase();
+                if (friend.getFullName().toLowerCase().contains(search) || friend.getId().toLowerCase().contains(search)) {
+                    currentFriendsBox.getChildren().add(createFriendRow(friend));
+                }
+            }
+        });
+    }
+
+    private HBox createFriendRow(ClientInfo friend) {
+        HBox row = new HBox(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(5));
+        row.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+
+        DropShadow softShadow = new DropShadow(3, Color.rgb(0, 0, 0, 0.08));
+        row.setEffect(softShadow);
+
+        ImageView pfp = new ImageView(new Image(new ByteArrayInputStream(friend.getProfilePicture())));
+        pfp.setFitWidth(32);
+        pfp.setFitHeight(32);
+        pfp.setClip(new Circle(16, 16, 16));
+
+        Label name = new Label(friend.getFullName());
+        name.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+
+        row.getChildren().addAll(pfp, name);
+
+        row.setOnMouseClicked(e -> {
+            showFilteredPosts(friend.getId());
+            showFriendPopup(friend);
+        });
+
+        row.setOnMouseEntered(e -> {
+            DropShadow hoverShadow = new DropShadow(8, Color.rgb(0, 0, 0, 0.15));
+            row.setEffect(hoverShadow);
+            row.setCursor(Cursor.HAND);
+        });
+
+        row.setOnMouseExited(e -> {
+            row.setEffect(softShadow);
+            row.setCursor(Cursor.DEFAULT);
+        });
+
+        return row;
     }
 
 
+    private void showFriendPopup(ClientInfo friend) {
+        VBox popupContent = new VBox(10);
+        popupContent.setAlignment(Pos.CENTER);
+        popupContent.setPadding(new Insets(20));
+
+        ImageView pfp = new ImageView(new Image(new ByteArrayInputStream(friend.getProfilePicture())));
+        pfp.setFitWidth(80);
+        pfp.setFitHeight(80);
+        pfp.setClip(new Circle(40, 40, 40));
+
+        Label fullName = new Label(friend.getFullName());
+        fullName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        Label username = new Label("@" + friend.getId());
+        username.setStyle("-fx-text-fill: #888;");
+
+        Button unfriendBtn = new Button("Unfriend");
+        unfriendBtn.setStyle("-fx-background-color: #ffdddd; -fx-font-weight: bold;");
+        unfriendBtn.setOnAction(e -> {
+            client.unfriend(friend.getId());
+            loadFriendData();
+            ((Stage) unfriendBtn.getScene().getWindow()).close();
+        });
+
+        popupContent.getChildren().addAll(pfp, fullName, username, unfriendBtn);
+
+        Scene popupScene = new Scene(popupContent, 300, 250);
+        Stage popupStage = new Stage();
+        popupStage.initModality(Modality.APPLICATION_MODAL);
+        popupStage.setTitle("Friend Details");
+        popupStage.setScene(popupScene);
 
 
+        if (stage != null) {
+            popupStage.setX(stage.getX() + stage.getWidth() - 320); // 20px margin
+            popupStage.setY(stage.getY() + 150); // vertically down a bit
+        }
 
+        popupStage.setOnHidden(e -> {
+            feedContainer.getChildren().clear();
+            List<PostPacket> copy = new ArrayList<>(allPosts);
+            for (PostPacket packet : copy) {
+                addPostToFeed(packet);
+            }
+        });
+
+        popupStage.show();
+
+    }
+
+    @FXML
+    public void onShowAllClick(){
+        feedContainer.getChildren().clear();
+        List<PostPacket> copy = new ArrayList<>(allPosts);
+        for (PostPacket packet : copy) {
+            addPostToFeed(packet);
+
+        }
+    }
 
 
 

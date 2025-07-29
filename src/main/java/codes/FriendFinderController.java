@@ -1,6 +1,7 @@
 package codes;
 
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -47,18 +48,29 @@ public class FriendFinderController {
                 continue;
             }
 
-            HBox row = new HBox(10);
-            row.setStyle("-fx-padding: 8; -fx-border-color: lightgray; -fx-border-radius: 5;");
+            HBox row = new HBox(15);
+            row.setStyle("""
+                -fx-padding: 10;
+                -fx-background-color: #fdfdfd;
+                -fx-border-color: #e0e0e0;
+                -fx-border-radius: 10;
+                -fx-background-radius: 10;
+                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 2);
+            """);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
             ImageView imageView = new ImageView(new Image(new ByteArrayInputStream(user.getProfilePicture())));
             imageView.setFitHeight(50);
             imageView.setFitWidth(50);
             imageView.setPreserveRatio(true);
+            imageView.setClip(new javafx.scene.shape.Circle(25, 25, 25));
 
-            Label nameLabel = new Label(fullName + " (" + user.getId() + ")");
-            nameLabel.setStyle("-fx-font-size: 14px;");
+            Label nameLabel = new Label(fullName); // removed ID display
+            nameLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 
             Button statusButton = new Button("...");
+            statusButton.getStyleClass().add("friend-button");
+
             String status = client.getCachedFriendStatus(user.getId());
 
             if ("send".equals(status)) {
