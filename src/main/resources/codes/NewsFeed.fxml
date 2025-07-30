@@ -21,40 +21,44 @@
       <URL value="@../PageStyle.css" />
    </stylesheets>
 
-
-   <Group fx:id="NewsFeedView">
-      <ImageView pickOnBounds="true">
-         <Image url="@../images/NewsFeed-2.png" />
-      </ImageView>
-      <ImageView fx:id="userProfilePictureView" fitHeight="70.0" fitWidth="70.0" layoutX="12.0" layoutY="112.0" pickOnBounds="true" preserveRatio="true" />
-      <Button layoutX="13.0" layoutY="705.0" mnemonicParsing="false" onAction="#onChatButtonClicked" opacity="0.0" prefHeight="100.0" prefWidth="72.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="17.0" layoutY="345.0" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onHomeButtonClicked" prefHeight="56.0" prefWidth="56.0" styleClass="button3" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="17.0" layoutY="456.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" prefHeight="56.0" prefWidth="56.0" styleClass="button3" text="Button" textFill="TRANSPARENT" />
-      <Button layoutX="1405.0" layoutY="58.0" mnemonicParsing="false" onAction="#onFindFriendsClick" prefHeight="50.0" prefWidth="93.0" text="FInd Friends" />
-      <Circle fx:id="notificationDot" fill="#cc0b0b" layoutX="55.0" layoutY="467.0" radius="7.0" stroke="BLACK" strokeType="INSIDE" />
-      <ScrollPane fx:id="feedScrollPane" fitToWidth="true" hbarPolicy="NEVER" layoutX="111.1" layoutY="127.4" prefHeight="736.1" prefWidth="1005.9" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
-         <content>
-            <VBox id="feedContainer" fx:id="feedContainer" alignment="CENTER" spacing="10.0" style="-fx-background-color: transparent;" styleClass="vbox">
-               <padding>
-                  <Insets bottom="10" left="10" right="10" top="10" />
-               </padding>
-            </VBox>
-         </content>
-      </ScrollPane>
+   <children>
+      <Group fx:id="NewsFeedView">
+         <ImageView pickOnBounds="true">
+            <image>
+               <Image url="@../images/newsFeeed.png" />
+            </image>
+         </ImageView>
+         <ImageView fx:id="userProfilePictureView" fitHeight="70.0" fitWidth="70.0" layoutX="12.0" layoutY="112.0" pickOnBounds="true" preserveRatio="true" />
+         <Button layoutX="13.0" layoutY="711.0" mnemonicParsing="false" onAction="#onChatButtonClicked" opacity="0.0" prefHeight="100.0" prefWidth="72.0" style="-fx-background-radius: 0;" text="Button" textFill="TRANSPARENT" />
+         <Button layoutX="17.0" layoutY="345.0" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onHomeButtonClicked" prefHeight="56.0" prefWidth="56.0" styleClass="button3" text="Button" textFill="TRANSPARENT" />
+         <Button layoutX="17.0" layoutY="456.0" mnemonicParsing="false" onAction="#onNotificationButtonClick" prefHeight="56.0" prefWidth="56.0" styleClass="button3" text="Button" textFill="TRANSPARENT" />
+         <Circle fx:id="notificationDot" fill="#cc0b0b" layoutX="55.0" layoutY="467.0" radius="7.0" stroke="BLACK" strokeType="INSIDE" />
 
 
-      <Button layoutX="390.0" layoutY="58.4" mnemonicParsing="false" onAction="#onPostButtonClick" opacity="0.0" prefHeight="43.9" prefWidth="448.1">
-         <font>
-            <Font size="20.0" />
-         </font>
-      </Button>
+         <ScrollPane fx:id="feedScrollPane" fitToWidth="true" hbarPolicy="NEVER" layoutX="111.1" layoutY="127.4" prefHeight="736.1" prefWidth="1005.9" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
+            <content>
+               <VBox id="feedContainer" fx:id="feedContainer" alignment="CENTER" spacing="10.0" style="-fx-background-color: transparent;" styleClass="vbox">
+                  <padding>
+                     <Insets bottom="10" left="10" right="10" top="10" />
+                  </padding>
+               </VBox>
+            </content>
+         </ScrollPane>
 
-      <!-- Right Sidebar: Friends Section -->
-      <VBox fx:id="friendsSidebarBox" layoutX="1290.0" layoutY="130.0" prefHeight="700.0" prefWidth="250.0" spacing="15.0">
-         <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Friends" />
 
-         <Label style="-fx-font-size: 14px; -fx-font-weight: bold;" text="Pending Requests" />
-         <VBox fx:id="pendingRequestsBox" spacing="8" />
+         <Button layoutX="390.0" layoutY="58.4" mnemonicParsing="false" onAction="#onPostButtonClick"
+                 prefHeight="43.9" styleClass="post-button"
+                 prefWidth="448.1" text="What's on your mind?">
+            <font>
+               <Font size="20.0" />
+            </font>
+         </Button>
+
+
+         <VBox fx:id="friendsSidebarBox" layoutX="1168.0" layoutY="47.0" prefHeight="818.0" prefWidth="394.0"
+               spacing="15.0" styleClass="sidebar-box">
+
+            <VBox fx:id="pendingRequestsBox" spacing="8" />
 
             <Button fx:id="ShowAllButton" onAction="#onShowAllClick" styleClass="sidebar-button" text="Show All" />
 
@@ -62,20 +66,23 @@
 
             <Button fx:id="pendingRequestsButton" onAction="#onPendingRequestsClicked" styleClass="sidebar-button" text="Pending Requests" />
 
-            <Label styleClass="sidebar-section-label" text="My Friends" />
+            <Label minHeight="-Infinity" styleClass="sidebar-section-label" text="My Friends">
+               <font>
+                  <Font size="30.0" />
+               </font></Label>
 
             <TextField fx:id="friendSearchBar" promptText="Search your friends..." styleClass="sidebar-search" />
 
             <VBox fx:id="currentFriendsBox" spacing="8" />
          </VBox>
-<!--         <Button fx:id="refreshButton" layoutX="19.0" layoutY="567.0" mnemonicParsing="false"-->
-<!--                 onAction="#onRefreshClicked" text="Refresh" />-->
+         <!--         <Button fx:id="refreshButton" layoutX="19.0" layoutY="567.0" mnemonicParsing="false"-->
+         <!--                 onAction="#onRefreshClicked" text="Refresh" />-->
 
 
 
 
       </Group>
-
+   </children>
 
 
 </StackPane>

@@ -240,7 +240,8 @@
 }
 
 .sidebar-section-label {
-    -fx-font-size: 14px;
+    -fx-font-size: 20
+    px;
     -fx-font-weight: bold;
     -fx-text-fill: #555;
 }
@@ -257,4 +258,19 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0.1, 0, 1);
 }
 
+.post-button{
+    -fx-background-color: #e3f2fd;
+        -fx-border-color: #64b5f6;
+        -fx-text-fill: #1565c0;
+        -fx-font-size: 20px;
+        -fx-font-weight: 600;
+        -fx-padding: 4px 10px;
+        -fx-background-radius: 6px;
+        -fx-border-radius: 6px;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 2, 0, 0, 1);
+}
 
+.post-button:hover {
+    -fx-background-color: #f7f7f7;
+}

@@ -99,8 +99,6 @@ public class NewsFeedController {
             this.stage = stage;
             client.sendToServer("load_clients");
 
-            client.sendToServer("load_clients");
-
             System.out.println("I am trying to load friends stuff");
             loadFriendData();
 
@@ -472,16 +470,15 @@ public class NewsFeedController {
 
         Vector<ClientInfo> myClients=client.getClients();
 
-        int postId = packet.getPostId();  // This was missing above
+        int postId = packet.getPostId();
 
         VBox postBox = new VBox();
         postBox.setStyle("-fx-padding: 10; -fx-border-color: #ccc; -fx-border-width: 0 0 1px 0;");
         postBox.getStyleClass().add("post");
 
 
-        // 1. Get author info
         ImageView profileView = null;
-        String fullName = packet.getAuthor(); // fallback
+        String fullName = packet.getAuthor();
 
         for (ClientInfo thisClient : client.getClients()) {
             if (packet.getAuthor().equals(thisClient.getId())) {
@@ -531,7 +528,6 @@ public class NewsFeedController {
                 imageView.setPreserveRatio(true);
                 postBox.getChildren().add(imageView);
             }
-            // need more handlers to support video or audio previews, that's just image for now
         }
 
 
