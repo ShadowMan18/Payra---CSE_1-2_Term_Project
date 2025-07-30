@@ -408,6 +408,23 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            if (fromClient instanceof String string && string.startsWith("delete:")) {
+                String id = string.substring("delete:".length());
+
+                Server.currentClients.remove(id);
+                Server.inCall.remove(id);
+                Server.clients.remove(id);
+
+                try (PreparedStatement deleteUser = databaseConnection.prepareStatement("DELETE FROM Users WHERE UserId = ?")) {
+                    deleteUser.setString(1, id);
+
+                    deleteUser.executeUpdate();
+                }
+                catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
             if (fromClient instanceof String string && string.startsWith("NewsFeed: open")) {
 
                 int port = 0;
@@ -429,7 +446,7 @@ public class ServerThread implements Runnable{
                 sendToClient("NewsFeed connection:" + port);
             }
 
-            if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {
+            else if (fromClient instanceof String string && string.startsWith("NewsFeed: close")) {
                 Server.feedServers.remove(id);
                 if (feedServer != null) {
                     feedServer.shutdown();

@@ -447,7 +447,7 @@ public class HomePageController {
         profileBox.setPadding(new Insets(20));
 
         Button backButton = new Button("←");
-        backButton.setPrefSize(30, 30);
+        backButton.setPrefSize(50, 40);
         backButton.setFocusTraversable(false);
         backButton.setStyle(" -fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
@@ -553,7 +553,7 @@ public class HomePageController {
         profileBox.setPadding(new Insets(20));
 
         Button backButton = new Button("←");
-        backButton.setPrefSize(30, 30);
+        backButton.setPrefSize(50, 40);
         backButton.setFocusTraversable(false);
         backButton.setStyle("-fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
@@ -716,7 +716,7 @@ public class HomePageController {
         profileBox.setPadding(new Insets(20));
 
         Button backButton = new Button("←");
-        backButton.setPrefSize(30, 30);
+        backButton.setPrefSize(50, 40);
         backButton.setFocusTraversable(false);
         backButton.setStyle("-fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
@@ -852,7 +852,7 @@ public class HomePageController {
         profileBox.setPadding(new Insets(20));
 
         Button backButton = new Button("←");
-        backButton.setPrefSize(30, 30);
+        backButton.setPrefSize(50, 40);
         backButton.setFocusTraversable(false);
         backButton.setStyle("-fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
@@ -1047,7 +1047,7 @@ public class HomePageController {
         Label errorLabel = new Label();
         errorLabel.setPrefWidth(350);
         errorLabel.setPrefHeight(20);
-        errorLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: red; -fx-font-size: 12px; -fx-font-family: System Bold Italic; -fx-alignment: center; -fx-text-alignment = center;");
+        errorLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: red; -fx-font-size: 18px; -fx-font-family: System Bold Italic; -fx-alignment: center; -fx-text-alignment = center;");
 
         VBox verificationBox1 = new VBox(10, passwordBox, passwordField, errorLabel);
         verificationBox1.setAlignment(Pos.CENTER);
@@ -1077,10 +1077,23 @@ public class HomePageController {
             passwordField.clear();
 
             if (password.equals(client.getPassword())) {
-
+                errorLabel.setText("");
+                try {
+                    client.getServerOutput().writeObject("delete:" + client.getId());
+                    client.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                client = new Client();
+                try {
+                    client.getLoginPage().startLoginPageView(client, stage);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
             else {
                 errorLabel.setText("Password doesn't match");
+                passwordField.clear();
             }
         });
 
