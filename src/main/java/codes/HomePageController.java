@@ -25,12 +25,14 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.util.Pair;
 
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 
 public class HomePageController {
@@ -260,10 +262,79 @@ public class HomePageController {
         });
 
         deleteAccountLabel.setOnMouseClicked(mouseEvent -> {
+            Rectangle background2 = new Rectangle(350, 120);
+            background2.setArcWidth(28);
+            background2.setArcHeight(28);
+            background2.setFill(Color.web("#f4f4f4"));
+            background2.setStroke(Color.BLACK);
+            background2.setStrokeWidth(0);
 
+            Label confirmationMessageLabel = new Label("Are you sure to delete your account?");
+            confirmationMessageLabel.setStyle("-fx-background-color: transparent; -fx-font-family: 'Open Sans'; -fx-font-size: 18px; -fx-font-weight: bold;");
+            confirmationMessageLabel.setWrapText(true);
+            confirmationMessageLabel.setAlignment(Pos.CENTER);
+
+            HBox confirmationMessageBox = new HBox(confirmationMessageLabel);
+            confirmationMessageBox.setPrefWidth(350);
+            confirmationMessageBox.setAlignment(Pos.CENTER);
+
+            Button yesButton = new Button("Yes");
+            yesButton.setStyle("-fx-background-color: green; -fx-background-radius: 5px; -fx-font-family: 'Open Sans'; -fx-text-fill: white; -fx-font-size: 15px;");
+            yesButton.setOnMouseEntered(e -> yesButton.setStyle("-fx-background-color: #228B22; -fx-background-radius: 5px; -fx-font-family: 'Open Sans'; -fx-text-fill: white; -fx-font-size: 15px;"));
+            yesButton.setOnMouseExited(e -> yesButton.setStyle("-fx-background-color: green; -fx-background-radius: 5px; -fx-font-family: 'Open Sans'; -fx-text-fill: white; -fx-font-size: 15px;"));
+            yesButton.setPrefWidth(70);
+
+            Button noButton = new Button("No");
+            noButton.setStyle("-fx-background-color: red; -fx-background-radius: 5px; -fx-font-family: 'Open Sans'; -fx-text-fill: white; -fx-font-size: 15px;");
+            noButton.setOnMouseEntered(e -> noButton.setStyle("-fx-background-color: #fc3a3a; -fx-background-radius: 5px; -fx-font-family: 'Open Sans'; -fx-text-fill: white; -fx-font-size: 15px;"));
+            noButton.setOnMouseExited(e -> noButton.setStyle("-fx-background-color: red; -fx-background-radius: 5px; -fx-font-family: 'Open Sans'; -fx-text-fill: white; -fx-font-size: 15px;"));
+            noButton.setPrefWidth(70);
+
+            HBox buttonContainer = new HBox(20, yesButton, noButton);
+            buttonContainer.setAlignment(Pos.CENTER);
+
+            VBox confirmationBox = new VBox(20, confirmationMessageBox, buttonContainer);
+            confirmationBox.setAlignment(Pos.CENTER);
+            confirmationBox.setPrefSize(350, 120);
+            confirmationBox.setLayoutX(0);
+            confirmationBox.setLayoutY(0);
+
+            StackPane stack = new StackPane(background2, confirmationBox);
+            stack.setPrefSize(350, 120);
+            stack.setLayoutX(Screen.SCREENWIDTH / 2 - 175);
+            stack.setLayoutY(Screen.SCREENHEIGHT / 2 - 60);
+            stack.setOpacity(0);
+            stack.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+
+            FadeTransition confirmationBoxFadeIn = new FadeTransition(Duration.millis(200), stack);
+            confirmationBoxFadeIn.setFromValue(0.0);
+            confirmationBoxFadeIn.setToValue(1.0);
+            confirmationBoxFadeIn.play();
+
+            yesButton.setOnAction(actionEvent -> {
+                verifyDeletion();
+            });
+            noButton.setOnAction(actionEvent -> {
+                HomePageView.getChildren().remove(stack);
+            });
+
+            Platform.runLater(() -> {
+                stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                    Bounds boxBounds = stack.localToScene(stack.getBoundsInParent());
+                    double x = event.getSceneX();
+                    double y = event.getSceneY();
+
+                    if (!boxBounds.contains(x, y)) {
+                        HomePageView.getChildren().remove(stack);
+                    }
+                });
+            });
+
+            HomePageView.getChildren().add(stack);
         });
 
         HomePageView.getChildren().add(profileSettingsContainer);
+
     }
 
 
@@ -284,7 +355,7 @@ public class HomePageController {
         profileBox.setPadding(new Insets(20));
 
         Button backButton = new Button("←");
-        backButton.setPrefSize(35, 35);
+        backButton.setPrefSize(50, 40);
         backButton.setFocusTraversable(false);
         backButton.setStyle(" -fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888; ");
 
@@ -939,5 +1010,79 @@ public class HomePageController {
         });
 
         HomePageView.getChildren().add(profileSettingsContainer);
+    }
+
+    public void verifyDeletion() {
+        Rectangle background = new Rectangle(350, 250);
+        background.setArcWidth(28);
+        background.setArcHeight(28);
+        background.setFill(Color.web("#f4f4f4"));
+        background.setStroke(Color.BLACK);
+        background.setStrokeWidth(0);
+
+        Label passwordLabel = new Label("Enter your password");
+        passwordLabel.setStyle("-fx-background-color: transparent; -fx-font-family: 'Open Sans'; -fx-font-size: 18px; -fx-font-weight: bold;");
+        passwordLabel.setWrapText(true);
+        passwordLabel.setAlignment(Pos.CENTER);
+
+        HBox passwordBox = new HBox(passwordLabel);
+        passwordBox.setPrefWidth(350);
+        passwordBox.setAlignment(Pos.CENTER);
+
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPrefWidth(300);
+        passwordField.setMaxWidth(300);
+        passwordField.setStyle("-fx-font-family: 'Open Sans'; -fx-font-size: 16px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
+
+        Button submitButton = new Button("Submit");
+        submitButton.setPrefWidth(120);
+        submitButton.setPrefHeight(30);
+        submitButton.setStyle("-fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;");
+        submitButton.setOnMouseEntered(e -> submitButton.setStyle("-fx-background-color: #071e35; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
+        submitButton.setOnMouseExited(e -> submitButton.setStyle("-fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
+
+        HBox submitButtonBox = new HBox(submitButton);
+        submitButtonBox.setAlignment(Pos.CENTER);
+
+        Label errorLabel = new Label();
+        errorLabel.setPrefWidth(350);
+        errorLabel.setPrefHeight(20);
+        errorLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: red; -fx-font-size: 12px; -fx-font-family: System Bold Italic; -fx-alignment: center; -fx-text-alignment = center;");
+
+        VBox verificationBox1 = new VBox(10, passwordBox, passwordField, errorLabel);
+        verificationBox1.setAlignment(Pos.CENTER);
+        verificationBox1.setPrefWidth(350);
+
+        VBox verificationBox = new VBox(35, verificationBox1, submitButtonBox);
+        verificationBox.setAlignment(Pos.CENTER);
+        verificationBox.setPadding(new Insets(20, 20, 20, 20));
+        verificationBox.setPrefWidth(350);
+
+        StackPane stack = new StackPane(background, verificationBox);
+        stack.setPrefSize(350, 250);
+        stack.setLayoutX(Screen.SCREENWIDTH / 2 - 175);
+        stack.setLayoutY(Screen.SCREENHEIGHT / 2 - 125);
+        stack.setOpacity(0);
+        stack.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+
+        FadeTransition confirmationBoxFadeIn = new FadeTransition(Duration.millis(200), stack);
+        confirmationBoxFadeIn.setFromValue(0.0);
+        confirmationBoxFadeIn.setToValue(1.0);
+        confirmationBoxFadeIn.play();
+
+        HomePageView.getChildren().add(stack);
+
+        submitButton.setOnAction(actionEvent -> {
+            String password = passwordField.getText();
+            passwordField.clear();
+
+            if (password.equals(client.getPassword())) {
+
+            }
+            else {
+                errorLabel.setText("Password doesn't match");
+            }
+        });
+
     }
 }
