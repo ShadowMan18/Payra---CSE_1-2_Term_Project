@@ -259,18 +259,34 @@
 }
 
 .post-button{
-    -fx-background-color: #e3f2fd;
-        -fx-border-color: #64b5f6;
-        -fx-text-fill: #1565c0;
+    -fx-background-color: #b7d4f2;
+        -fx-text-fill: #0f2e4d;
         -fx-font-size: 20px;
         -fx-font-weight: 600;
         -fx-padding: 4px 10px;
         -fx-background-radius: 6px;
         -fx-border-radius: 6px;
         -fx-cursor: hand;
+        -fx-font-family: "Glacial Indifference";
         -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 2, 0, 0, 1);
 }
 
 .post-button:hover {
-    -fx-background-color: #f7f7f7;
+    -fx-background-color: #daecff;
+}
+
+.refresh-button{
+    -fx-background-color: #b7d4f2;
+            -fx-text-fill: #0f2e4d;
+            -fx-font-size: 20px;
+            -fx-font-weight: 600;
+            -fx-padding: 4px 10px;
+            -fx-background-radius: 6px;
+            -fx-border-radius: 6px;
+            -fx-cursor: hand;
+            -fx-font-family: "Glacial Indifference";
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 2, 0, 0, 1);
+}
+.refresh-button:hover{
+    -fx-background-color: #daecff;
 }

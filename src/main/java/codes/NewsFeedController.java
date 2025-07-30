@@ -132,6 +132,8 @@ public class NewsFeedController {
 
         VBox.setMargin(profileBox, new Insets(10));
 
+
+
         profileBox.setOnMouseEntered(e -> {
             DropShadow hoverShadow = new DropShadow();
             hoverShadow.setRadius(12);
@@ -201,6 +203,18 @@ public class NewsFeedController {
 
         try {
             client.getHomePage().startHomePageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @FXML
+    private void onRefreshButtonClick() {
+        System.out.println("Refresh button clicked!");
+        client.disconnectFromFeedServer();
+        inFeed = false;
+        try {
+            client.getNewsFeed().startNewsFeedView(client, stage);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
