@@ -44,14 +44,14 @@
     -fx-max-width: 600px;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0.2, 0, 2);
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
 }
 
 .post-body {
-    -fx-padding: 0 0 0 15; /* 20px left padding only */
+    -fx-padding: 0 0 0 15;
 }
 
-/* Text styles inside post */
+
 .label.username {
     -fx-font-weight: bold;
     -fx-text-fill: #333;
@@ -86,46 +86,42 @@
 
 
 .comment-section {
+    -fx-spacing: 8;
     -fx-padding: 10;
-    -fx-background-color: #f9f9f9;
-    -fx-background-radius: 8;
-    -fx-border-color: #dddddd;
-    -fx-border-radius: 8;
-    -fx-border-width: 1;
+    -fx-background-color: #ffffff;
 }
 
-.comment-label {
-    -fx-font-size: 13px;
-    -fx-text-fill: #333;
-    -fx-padding: 4 0 4 0;
+.comment-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1px 0;
 }
+
 
 .comment-input {
-    -fx-background-radius: 20;
-    -fx-border-radius: 20;
-    -fx-border-color: #ccc;
-    -fx-border-width: 1;
-    -fx-padding: 6 12 6 12;
     -fx-font-size: 13px;
+    -fx-background-radius: 15;
+    -fx-padding: 6 10 6 10;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 15;
 }
 
 .send-button {
     -fx-background-color: #3897f0;
     -fx-text-fill: white;
-    -fx-background-radius: 20;
+    -fx-background-radius: 15;
     -fx-font-size: 13px;
-    -fx-padding: 5 14 5 14;
+    -fx-padding: 6 12 6 12;
 }
+
 
 .send-button:hover {
     -fx-background-color: #317dc6;
     -fx-effect: dropshadow(gaussian, rgba(56, 151, 240, 0.5), 6, 0.2, 0, 2);
 }
 
-.comment-scroll-pane {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
-}
+
 
 .comment-scroll-pane .scroll-bar:vertical {
     -fx-opacity: 0;
@@ -137,8 +133,128 @@
 }
 
 
-.comment-section {
-    -fx-padding: 10;
-    -fx-spacing: 6;
+.popup-container {
+    -fx-min-width: 360px;
+    -fx-max-width: 500px;
+    -fx-background-color: white;
+    -fx-background-radius: 18px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 12, 0.25, 0, 4);
 }
+
+
+.comment-scroll-pane .scroll-bar .thumb {
+    -fx-background-color: #bbbbbb;
+    -fx-background-radius: 5;
+}
+
+.comment-scroll-pane .scroll-bar .track {
+    -fx-background-color: #f0f0f0;
+}
+
+.comment-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #333333;
+    -fx-background-color: #d1e0ff;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 10;
+    -fx-wrap-text: true;
+    -fx-max-width: 360px;
+}
+
+
+.comment-label:hover {
+    -fx-background-color: #cbdcff;
+}
+
+.comment-input {
+    -fx-alignment: center-left;
+}
+.comment-block {
+    -fx-padding: 4 0 8 0;
+}
+
+.comment-sender {
+    -fx-font-size: 10px;
+    -fx-text-fill: #777777;
+    -fx-padding: 0 0 2 5;
+}
+
+.friend-button {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #64b5f6;
+    -fx-text-fill: #1565c0;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 4px 10px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 2, 0, 0, 1);
+}
+
+.friend-button:hover {
+    -fx-background-color: #bbdefb;
+}
+.popup-container {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0.2, 0, 4);
+}
+.rounded-search {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1;
+    -fx-padding: 6 10;
+}
+
+.sidebar-box {
+    -fx-padding: 10 20 10 20;
+    -fx-background-color: transparent;
+    -fx-alignment: top-left;
+}
+
+.sidebar-button {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e0e0e0;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14;
+    -fx-text-fill: #333;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0.1, 0, 1);
+    -fx-alignment: center-left;
+    -fx-pref-width: 180;
+    -fx-max-width: Infinity;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: #f7f7f7;
+}
+
+.sidebar-section-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555;
+}
+
+.sidebar-search {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 12;
+    -fx-padding: 6 12;
+    -fx-font-size: 13px;
+    -fx-text-fill: #333;
+    -fx-pref-width: 180;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0.1, 0, 1);
+}
+
 

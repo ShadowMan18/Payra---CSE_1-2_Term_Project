@@ -20,6 +20,7 @@ module com.example.javafx_project {
     requires javafx.media;
     requires commons.email;
     requires javax.mail;
+    requires bridj;
 
     opens codes to javafx.fxml;
     exports codes;

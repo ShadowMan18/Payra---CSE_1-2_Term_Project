@@ -6,7 +6,6 @@
 
 <AnchorPane prefHeight="400" prefWidth="400" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.PostController">
     <children>
-
         <ImageView fitHeight="400" fitWidth="400" layoutX="0" layoutY="0" pickOnBounds="true" preserveRatio="false">
             <image>
                 <Image url="@../images/Popup.png" />
@@ -14,11 +13,7 @@
         </ImageView>
 
         <TextArea fx:id="postContent" layoutX="20" layoutY="20" prefHeight="300" prefWidth="360" promptText="What's on your mind?" wrapText="true" />
-        <Button layoutX="180.0" layoutY="345.0" onAction="#onPostClick" text="Post" textAlignment="CENTER"
-                style="-fx-background-color: #0b69c7; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;"
-        />
-        <Button fx:id="attachButton" layoutX="100.0" layoutY="345.0" onAction="#onAttachButtonClicked" text="Attach"
-                style="-fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 10;" />
-
+        <Button layoutX="232.0" layoutY="345.0" onAction="#onPostClick" style="-fx-background-color: #0b69c7; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;" text="Post" textAlignment="CENTER" />
+        <Button fx:id="attachButton" layoutX="122.0" layoutY="345.0" onAction="#onAttachButtonClicked" style="-fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 10;" text="Attach" />
     </children>
 </AnchorPane>

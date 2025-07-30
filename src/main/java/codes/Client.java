@@ -288,6 +288,12 @@ public class Client {
                         setFriendStatusMap(statusMap);
                         System.out.println("Received friend status map of size: " + statusMap.size());
                     }
+                    else{
+                        if(fetchFriendStatusLatch!=null){
+                            fetchFriendStatusLatch.countDown();
+                            fetchFriendStatusLatch=null;
+                        }
+                    }
                 }
                 else if (fromServer instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof String str && str.startsWith("comment:")) {
                     // It's a list of comments for a post
@@ -570,6 +576,10 @@ public class Client {
 
     public ClientInfo getInfo() {
         return info;
+    }
+
+    public String getFullName(){
+        return firstName+" "+lastName;
     }
 
     public String getFirstName() {
