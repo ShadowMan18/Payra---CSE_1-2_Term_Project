@@ -33,6 +33,11 @@ public class IntroPageController {
         this.client = client;
         this.stage = stage;
 
+        IntroPageLayout.setPrefWidth(Screen.SCREENWIDTH);
+        IntroPageLayout.setPrefHeight(Screen.SCREENHEIGHT);
+        IntroPageView.scaleXProperty().bind(IntroPageLayout.widthProperty().divide(1600));
+        IntroPageView.scaleYProperty().bind(IntroPageLayout.heightProperty().divide(900));
+
         typesound = new AudioClip(CallRinger.class.getResource("/sounds/TypewriterSound.mp3").toString());
         typesound.setCycleCount(AudioClip.INDEFINITE);
         typesound.play();
