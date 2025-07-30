@@ -6,13 +6,13 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
 
-<StackPane fx:id="HomePageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.HomePageController">
+<StackPane fx:id="HomePageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" stylesheets="@../PageStyle.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.HomePageController">
    <Group fx:id="HomePageView">
       <ImageView pickOnBounds="true">
          <Image url="@../images/HomePage.png" />
       </ImageView>
-      <Button layoutX="770.0" layoutY="326.0" mnemonicParsing="false" onAction="#onNewsFeedButtonClick" opacity="0.0" prefHeight="249.0" prefWidth="250.0" />
-      <Button layoutX="1190.0" layoutY="326.0" mnemonicParsing="false" onAction="#onChatButtonClick" opacity="0.0" prefHeight="249.0" prefWidth="250.0" />
+      <Button layoutX="770.0" layoutY="325.0" minHeight="-Infinity" mnemonicParsing="false" onAction="#onNewsFeedButtonClick" prefHeight="250.0" prefWidth="250.0" styleClass="text-button" />
+      <Button layoutX="1190.0" layoutY="325.0" mnemonicParsing="false" onAction="#onChatButtonClick" prefHeight="250.0" prefWidth="250.0" styleClass="text-button" />
       <ImageView fx:id="userProfilePictureView" fitHeight="70.0" fitWidth="70.0" layoutX="1490.0" layoutY="40.0" onMouseClicked="#onProfileButtonClick" pickOnBounds="true" preserveRatio="true" />
    </Group>
 </StackPane>

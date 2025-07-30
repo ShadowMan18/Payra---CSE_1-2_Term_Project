@@ -122,7 +122,7 @@ class ChatServer implements Runnable {
                 try (PreparedStatement addChat = databaseConnection.prepareStatement("INSERT INTO Chats (Sender, Receiver, Content, Media) VALUES (?, ?, ?, ?)")) {
                     addChat.setString(1, senderId);
                     addChat.setString(2, receiverId);
-                    addChat.setString(3, message.getMessage());
+                    addChat.setString(3, EncryptionProcessor.encrypt(message.getMessage()));
                     if (filename != null) {
                         addChat.setString(4, filename);
                     }
@@ -182,7 +182,7 @@ class ChatServer implements Runnable {
                             int id = chats.getInt("id");
                             String sender = chats.getString("Sender");
                             String receiver = chats.getString("Receiver");
-                            String content = chats.getString("Content");
+                            String content = EncryptionProcessor.decrypt(chats.getString("Content"));
                             String filename = chats.getString("Media");
                             Timestamp timestamp = chats.getTimestamp("Timestamp");
 

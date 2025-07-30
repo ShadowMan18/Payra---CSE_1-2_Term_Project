@@ -1,15 +1,15 @@
 package codes;
 
-public class Password {
+public class EncryptionProcessor {
     private static final int a = 5;
     private static final int b = 8;
     private static final int a_inv = 21;
 
-    public static String encrypt(String pass){
+    public static String encrypt(String text){
         StringBuilder result = new StringBuilder();
-        int l=pass.length();
+        int l=text.length();
         for(int i=0;i<l;i++){
-            char ch=pass.charAt(i);
+            char ch=text.charAt(i);
             if (Character.isLetter(ch)) {
                 char base = Character.isUpperCase(ch) ? 'A' : 'a';
                 int x = ch - base;
@@ -22,11 +22,11 @@ public class Password {
         return result.toString();
     }
 
-    public static String decrypt(String encrypted){
+    public static String decrypt(String encryptedText){
         StringBuilder result = new StringBuilder();
-        int l=encrypted.length();
+        int l=encryptedText.length();
         for(int i=0;i<l;i++){
-            char ch=encrypted.charAt(i);
+            char ch=encryptedText.charAt(i);
             if (Character.isLetter(ch)) {
                 char base = Character.isUpperCase(ch) ? 'A' : 'a';
                 int y = ch - base;

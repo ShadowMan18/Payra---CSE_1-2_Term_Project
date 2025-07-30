@@ -4,7 +4,9 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -28,9 +30,9 @@ public class SignupPageController {
     @FXML
     private TextField SignupPageEmailField;
     @FXML
-    private TextField SignupPageSetPasswordField;
+    private PasswordField SignupPageSetPasswordField;
     @FXML
-    private TextField SignupPageConfirmPasswordField;
+    private PasswordField SignupPageConfirmPasswordField;
     @FXML
     private TextField SignupPageQuestionField;
     @FXML
@@ -74,6 +76,18 @@ public class SignupPageController {
         SignupPageView.scaleYProperty().bind(SignupPageLayout.heightProperty().divide(900));
         SignupPageLayout.setFocusTraversable(true);
         SignupPageLayout.requestFocus();
+        SignupPageSetPasswordField.setContextMenu(new ContextMenu());
+        SignupPageSetPasswordField.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                event.consume();
+            }
+        });
+        SignupPageConfirmPasswordField.setContextMenu(new ContextMenu());
+        SignupPageConfirmPasswordField.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                event.consume();
+            }
+        });
     }
 
     @FXML

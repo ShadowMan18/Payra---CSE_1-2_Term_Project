@@ -14,7 +14,7 @@ public class Client1 extends Application{
     @Override
     public void start(Stage stage) throws Exception {
         client.setStage(stage);
-        client.getLoginPage().startLoginPageView(client, stage);
+        client.getIntroPage().startIntroPageView(client, stage);
     }
 
     public static void main(String[] args) {

@@ -14,9 +14,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -27,7 +25,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import javafx.scene.control.ToggleButton;
 
 
 import java.io.ByteArrayInputStream;
@@ -93,7 +90,7 @@ public class HomePageController {
             return;
         }
 
-        Rectangle background = new Rectangle(350, 400);
+        Rectangle background = new Rectangle(400, 400);
         background.setArcWidth(28);
         background.setArcHeight(28);
         background.setFill(Color.WHITE);
@@ -103,7 +100,7 @@ public class HomePageController {
         background.setLayoutY(0);
 
         VBox profileBox = new VBox();
-        profileBox.setPrefSize(322, 380);
+        profileBox.setPrefSize(380, 380);
         profileBox.setStyle("-fx-background-color: transparent;");
         profileBox.setSpacing(12);
         profileBox.setPadding(new Insets(20));
@@ -111,26 +108,11 @@ public class HomePageController {
         Button closeButton = new Button("×");
         closeButton.setPrefSize(30, 30);
         closeButton.setFocusTraversable(false);
-        closeButton.setStyle("""
-                -fx-font-size: 20px;
-                -fx-font-weight: bold;
-                -fx-background-color: transparent;
-                -fx-text-fill: #888;
-            """);
+        closeButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
-        closeButton.setOnMouseEntered(e -> closeButton.setStyle("""
-                -fx-font-size: 20px;
-                -fx-font-weight: bold;
-                -fx-background-color: transparent;
-                -fx-text-fill: #e74c3c;
-            """));
+        closeButton.setOnMouseEntered(e -> closeButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #e74c3c;"));
 
-        closeButton.setOnMouseExited(e -> closeButton.setStyle("""
-                -fx-font-size: 20px;
-                -fx-font-weight: bold;
-                -fx-background-color: transparent;
-                -fx-text-fill: #888;
-            """));
+        closeButton.setOnMouseExited(e -> closeButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;"));
 
         closeButton.setOnAction(e -> {
             HomePageView.getChildren().remove(profileSettingsContainer);
@@ -138,35 +120,26 @@ public class HomePageController {
         });
 
         Label titleLabel = new Label("Profile Settings");
-        titleLabel.setStyle("""
-                -fx-font-family: Open Sans;
-                -fx-font-size: 26px;
-                -fx-text-fill: #2c3e50;
-            """);
+        titleLabel.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 26px; -fx-text-fill: #2c3e50;");
 
         HBox titleBox = new HBox(titleLabel);
         titleBox.setAlignment(Pos.CENTER);
         VBox.setMargin(titleBox, new Insets(10, 0, 20, 0));
 
         Label myProfileLabel = new Label("My profile");
-        myProfileLabel.setPrefWidth(350);
-        myProfileLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #333;
-            """);
+        myProfileLabel.setPrefWidth(400);
+        myProfileLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;");
+        myProfileLabel.setOnMouseEntered(e -> myProfileLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        myProfileLabel.setOnMouseExited(e -> myProfileLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         Label updateAccountLabel = new Label("Update account");
-        updateAccountLabel.setPrefWidth(350);
-        updateAccountLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #333;
-            """);
+        updateAccountLabel.setPrefWidth(400);
+        updateAccountLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        updateAccountLabel.setOnMouseEntered(e -> updateAccountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        updateAccountLabel.setOnMouseExited(e -> updateAccountLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         Label notificationSoundLabel = new Label("Notification sound");
-        notificationSoundLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #333;
-            """);
+        notificationSoundLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
 
         Pane toggleSwitch = new Pane();
         double toggleWidth = 50;
@@ -218,18 +191,16 @@ public class HomePageController {
         notificationSoundBox.setAlignment(Pos.CENTER_LEFT);
 
         Label logoutLabel = new Label("Log out");
-        logoutLabel.setPrefWidth(350);
-        logoutLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #db0202;
-            """);
+        logoutLabel.setPrefWidth(400);
+        logoutLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #db0202;");
+        logoutLabel.setOnMouseEntered(e -> logoutLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #db0202;"));
+        logoutLabel.setOnMouseExited(e -> logoutLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #db0202;"));
 
         Label deleteAccountLabel = new Label("Delete account");
-        deleteAccountLabel.setPrefWidth(350);
-        deleteAccountLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #db0202;
-            """);
+        deleteAccountLabel.setPrefWidth(400);
+        deleteAccountLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #db0202;");
+        deleteAccountLabel.setOnMouseEntered(e -> deleteAccountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #db0202;"));
+        deleteAccountLabel.setOnMouseExited(e -> deleteAccountLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #db0202;"));
 
         VBox.setMargin(deleteAccountLabel, new Insets(30, 0, 0, 0));
 
@@ -249,7 +220,7 @@ public class HomePageController {
         AnchorPane.setLeftAnchor(profileBox, 14.0);
 
         profileSettingsContainer = new Pane(popup);
-        profileSettingsContainer.setLayoutX(1210);
+        profileSettingsContainer.setLayoutX(1160);
         profileSettingsContainer.setLayoutY(120);
         profileSettingsContainer.setOpacity(0);
         profileSettingsContainer.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));
@@ -280,6 +251,7 @@ public class HomePageController {
             try {
                 HomePageView.getChildren().remove(profileSettingsContainer);
                 profileSettingsContainer = null;
+                client.getServerOutput().writeObject("logout:" + client.getId());
                 client = new Client();
                 client.getLoginPage().startLoginPageView(client, stage);
             } catch (IOException e) {
@@ -296,7 +268,7 @@ public class HomePageController {
 
 
     public void startMyProfileView() {
-        Rectangle background = new Rectangle(350, 400);
+        Rectangle background = new Rectangle(400, 400);
         background.setArcWidth(28);
         background.setArcHeight(28);
         background.setFill(Color.WHITE);
@@ -306,35 +278,19 @@ public class HomePageController {
         background.setLayoutY(0);
 
         VBox profileBox = new VBox();
-        profileBox.setPrefSize(322, 380);
+        profileBox.setPrefSize(380, 380);
         profileBox.setStyle("-fx-background-color: transparent;");
         profileBox.setSpacing(12);
         profileBox.setPadding(new Insets(20));
 
         Button backButton = new Button("←");
-        backButton.setPrefSize(30, 30);
+        backButton.setPrefSize(35, 35);
         backButton.setFocusTraversable(false);
-        backButton.setStyle("""
-            -fx-font-family: Segoe UI Symbol;
-            -fx-font-size: 20px;
-            -fx-font-weight: bold;
-            -fx-background-color: transparent;
-            -fx-text-fill: #888;
-        """);
+        backButton.setStyle(" -fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888; ");
 
-        backButton.setOnMouseEntered(e -> backButton.setStyle("""
-            -fx-font-size: 20px;
-            -fx-font-weight: bold;
-            -fx-background-color: transparent;
-            -fx-text-fill: #e74c3c;
-        """));
+        backButton.setOnMouseEntered(e -> backButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #e74c3c;"));
 
-        backButton.setOnMouseExited(e -> backButton.setStyle("""
-            -fx-font-size: 20px;
-            -fx-font-weight: bold;
-            -fx-background-color: transparent;
-            -fx-text-fill: #888;
-        """));
+        backButton.setOnMouseExited(e -> backButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;"));
 
         backButton.setOnAction(e -> {
             HomePageView.getChildren().remove(profileSettingsContainer);
@@ -352,26 +308,23 @@ public class HomePageController {
         VBox.setMargin(profilePictureBox, new Insets(10, 0, 20, 0));
 
         Label firstNameLabel = new Label("Firstname: " + client.getFirstName());
-        firstNameLabel.setPrefWidth(350);
-        firstNameLabel.setStyle("""
-                -fx-font-size: 20px;
-                -fx-text-fill: #333;
-                """);
+        firstNameLabel.setPrefWidth(400);
+        firstNameLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        firstNameLabel.setOnMouseEntered(e -> firstNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        firstNameLabel.setOnMouseExited(e -> firstNameLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         Label lastNameLabel = new Label("Lastname: " + client.getLastName());
-        lastNameLabel.setPrefWidth(350);
-        lastNameLabel.setStyle("""
-                -fx-font-size: 20px;
-                -fx-text-fill: #333;
-                """);
+        lastNameLabel.setPrefWidth(400);
+        lastNameLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        lastNameLabel.setOnMouseEntered(e -> lastNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        lastNameLabel.setOnMouseExited(e -> lastNameLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         Label emailLabel = new Label("Email: " + client.getEmail());
-        emailLabel.setPrefWidth(350);
+        emailLabel.setPrefWidth(400);
         emailLabel.setWrapText(true);
-        emailLabel.setStyle("""
-                -fx-font-size: 20px;
-                -fx-text-fill: #333;
-                """);
+        emailLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        emailLabel.setOnMouseEntered(e -> emailLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        emailLabel.setOnMouseExited(e -> emailLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         profileBox.getChildren().addAll(
                 profilePictureBox,
@@ -387,7 +340,7 @@ public class HomePageController {
         AnchorPane.setLeftAnchor(profileBox, 14.0);
 
         profileSettingsContainer = new Pane(popup);
-        profileSettingsContainer.setLayoutX(1210);
+        profileSettingsContainer.setLayoutX(1160);
         profileSettingsContainer.setLayoutY(120);
         profileSettingsContainer.setOpacity(0);
         profileSettingsContainer.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));
@@ -407,7 +360,7 @@ public class HomePageController {
     }
 
     public void startUpdateAccountView() {
-        Rectangle background = new Rectangle(350, 400);
+        Rectangle background = new Rectangle(400, 400);
         background.setArcWidth(28);
         background.setArcHeight(28);
         background.setFill(Color.WHITE);
@@ -417,7 +370,7 @@ public class HomePageController {
         background.setLayoutY(0);
 
         VBox profileBox = new VBox();
-        profileBox.setPrefSize(322, 380);
+        profileBox.setPrefSize(380, 380);
         profileBox.setStyle("-fx-background-color: transparent;");
         profileBox.setSpacing(12);
         profileBox.setPadding(new Insets(20));
@@ -425,27 +378,11 @@ public class HomePageController {
         Button backButton = new Button("←");
         backButton.setPrefSize(30, 30);
         backButton.setFocusTraversable(false);
-        backButton.setStyle("""
-            -fx-font-family: Segoe UI Symbol;
-            -fx-font-size: 20px;
-            -fx-font-weight: bold;
-            -fx-background-color: transparent;
-            -fx-text-fill: #888;
-        """);
+        backButton.setStyle(" -fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
-        backButton.setOnMouseEntered(e -> backButton.setStyle("""
-            -fx-font-size: 20px;
-            -fx-font-weight: bold;
-            -fx-background-color: transparent;
-            -fx-text-fill: #e74c3c;
-        """));
+        backButton.setOnMouseEntered(e -> backButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #e74c3c;"));
 
-        backButton.setOnMouseExited(e -> backButton.setStyle("""
-            -fx-font-size: 20px;
-            -fx-font-weight: bold;
-            -fx-background-color: transparent;
-            -fx-text-fill: #888;
-        """));
+        backButton.setOnMouseExited(e -> backButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;"));
 
         backButton.setOnAction(e -> {
             HomePageView.getChildren().remove(profileSettingsContainer);
@@ -454,35 +391,28 @@ public class HomePageController {
         });
 
         Label titleLabel = new Label("Update Account");
-        titleLabel.setStyle("""
-                -fx-font-family: Open Sans;
-                -fx-font-size: 26px;
-                -fx-text-fill: #2c3e50;
-            """);
+        titleLabel.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 26px; -fx-text-fill: #2c3e50;");
 
         HBox titleBox = new HBox(titleLabel);
         titleBox.setAlignment(Pos.CENTER);
         VBox.setMargin(titleBox, new Insets(10, 0, 20, 0));
 
         Label changeNameLabel = new Label("Change name");
-        changeNameLabel.setPrefWidth(350);
-        changeNameLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #333;
-            """);
+        changeNameLabel.setPrefWidth(400);
+        changeNameLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        changeNameLabel.setOnMouseEntered(e -> changeNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        changeNameLabel.setOnMouseExited(e -> changeNameLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         Label changeProfilePictureLabel = new Label("Change profile picture");
-        changeProfilePictureLabel.setPrefWidth(350);
-        changeProfilePictureLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #333;
-            """);
+        changeProfilePictureLabel.setPrefWidth(400);
+        changeProfilePictureLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        changeProfilePictureLabel.setOnMouseEntered(e -> changeProfilePictureLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        changeProfilePictureLabel.setOnMouseExited(e -> changeProfilePictureLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         Label changePasswordLabel = new Label("Change password");
-        changePasswordLabel.setStyle("""
-            -fx-font-size: 20px;
-            -fx-text-fill: #333;
-            """);
+        changePasswordLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333;");
+        changePasswordLabel.setOnMouseEntered(e -> changePasswordLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;"));
+        changePasswordLabel.setOnMouseExited(e -> changePasswordLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #333;"));
 
         profileBox.getChildren().addAll(
                 titleBox,
@@ -498,7 +428,7 @@ public class HomePageController {
         AnchorPane.setLeftAnchor(profileBox, 14.0);
 
         profileSettingsContainer = new Pane(popup);
-        profileSettingsContainer.setLayoutX(1210);
+        profileSettingsContainer.setLayoutX(1160);
         profileSettingsContainer.setLayoutY(120);
         profileSettingsContainer.setOpacity(0);
         profileSettingsContainer.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));
@@ -536,7 +466,7 @@ public class HomePageController {
     }
 
     public void startChangeNameView() {
-        Rectangle background = new Rectangle(350, 400);
+        Rectangle background = new Rectangle(400, 400);
         background.setArcWidth(28);
         background.setArcHeight(28);
         background.setFill(Color.WHITE);
@@ -546,7 +476,7 @@ public class HomePageController {
         background.setLayoutY(0);
 
         VBox profileBox = new VBox();
-        profileBox.setPrefSize(322, 380);
+        profileBox.setPrefSize(380, 380);
         profileBox.setStyle("-fx-background-color: transparent;");
         profileBox.setSpacing(12);
         profileBox.setPadding(new Insets(20));
@@ -566,11 +496,11 @@ public class HomePageController {
         });
 
         Label firstNameLabel = new Label("Firstname:");
-        firstNameLabel.setPrefWidth(350);
+        firstNameLabel.setPrefWidth(400);
         firstNameLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333; -fx-font-family: Open Sans;");
 
         TextField firstNameField = new TextField();
-        firstNameField.setPrefWidth(350);
+        firstNameField.setPrefWidth(400);
         firstNameField.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 18px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
 
         firstNameField.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -578,15 +508,15 @@ public class HomePageController {
         });
 
         Label firstNameFieldLabel = new Label();
-        firstNameFieldLabel.setPrefWidth(350);
+        firstNameFieldLabel.setPrefWidth(400);
         firstNameFieldLabel.setStyle(" -fx-font-size: 15px; -fx-text-fill: red; -fx-font-weight: bold; -fx-font-style: italic; -fx-font-family: Open Sans;");
 
         Label lastNameLabel = new Label("Lastname:");
-        lastNameLabel.setPrefWidth(350);
+        lastNameLabel.setPrefWidth(400);
         lastNameLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333; -fx-font-family: Open Sans;");
 
         TextField lastNameField = new TextField();
-        lastNameField.setPrefWidth(350);
+        lastNameField.setPrefWidth(400);
         lastNameField.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 18px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
 
         lastNameField.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -594,7 +524,7 @@ public class HomePageController {
         });
 
         Label lastNameFieldLabel = new Label();
-        lastNameFieldLabel.setPrefWidth(350);
+        lastNameFieldLabel.setPrefWidth(400);
         lastNameFieldLabel.setStyle(" -fx-font-size: 15px; -fx-text-fill: red; -fx-font-weight: bold; -fx-font-style: italic; -fx-font-family: Open Sans;");
 
         Button submitButton = new Button("Submit");
@@ -602,7 +532,7 @@ public class HomePageController {
         submitButton.setPrefHeight(25);
         submitButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: Open Sans; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;");
 
-        submitButton.setOnMouseEntered(e -> submitButton.setStyle(" -fx-background-color: #133a5e; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
+        submitButton.setOnMouseEntered(e -> submitButton.setStyle(" -fx-background-color: #071e35; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
         submitButton.setOnMouseExited(e -> submitButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
@@ -629,7 +559,7 @@ public class HomePageController {
         AnchorPane.setLeftAnchor(profileBox, 14.0);
 
         profileSettingsContainer = new Pane(popup);
-        profileSettingsContainer.setLayoutX(1210);
+        profileSettingsContainer.setLayoutX(1160);
         profileSettingsContainer.setLayoutY(120);
         profileSettingsContainer.setOpacity(0);
         profileSettingsContainer.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));
@@ -699,7 +629,7 @@ public class HomePageController {
     }
 
     public void startChangeProfilePictureView() {
-        Rectangle background = new Rectangle(350, 400);
+        Rectangle background = new Rectangle(400, 400);
         background.setArcWidth(28);
         background.setArcHeight(28);
         background.setFill(Color.WHITE);
@@ -709,7 +639,7 @@ public class HomePageController {
         background.setLayoutY(0);
 
         VBox profileBox = new VBox();
-        profileBox.setPrefSize(322, 380);
+        profileBox.setPrefSize(380, 380);
         profileBox.setStyle("-fx-background-color: transparent;");
         profileBox.setSpacing(12);
         profileBox.setPadding(new Insets(20));
@@ -734,8 +664,11 @@ public class HomePageController {
         Circle clip = new Circle(100, 100, 100);
         profilePictureView.setClip(clip);
 
+        HBox profilePictureBox = new HBox(profilePictureView);
+        profilePictureBox.setAlignment(Pos.CENTER);
+
         Label uploadImageLabel = new Label();
-        uploadImageLabel.setPrefWidth(350);
+        uploadImageLabel.setPrefWidth(400);
         uploadImageLabel.setWrapText(true);
         uploadImageLabel.setStyle(" -fx-font-size: 15px; -fx-text-fill: red; -fx-font-weight: bold; -fx-font-style: italic; -fx-font-family: Open Sans;");
 
@@ -744,7 +677,7 @@ public class HomePageController {
         uploadButton.setPrefHeight(25);
         uploadButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: Open Sans; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;");
 
-        uploadButton.setOnMouseEntered(e -> uploadButton.setStyle(" -fx-background-color: #133a5e; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
+        uploadButton.setOnMouseEntered(e -> uploadButton.setStyle(" -fx-background-color: #071e35; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
         uploadButton.setOnMouseExited(e -> uploadButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
@@ -753,7 +686,7 @@ public class HomePageController {
         submitButton.setPrefHeight(25);
         submitButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: Open Sans; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;");
 
-        submitButton.setOnMouseEntered(e -> submitButton.setStyle(" -fx-background-color: #133a5e; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
+        submitButton.setOnMouseEntered(e -> submitButton.setStyle(" -fx-background-color: #071e35; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
         submitButton.setOnMouseExited(e -> submitButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
@@ -762,12 +695,12 @@ public class HomePageController {
         buttonBox.setSpacing(10);
 
         profileBox.getChildren().addAll(
-                profilePictureView,
+                profilePictureBox,
                 uploadImageLabel,
                 buttonBox
         );
 
-        VBox.setMargin(profilePictureView, new Insets(20, 0, 0, 0));
+        VBox.setMargin(profilePictureView, new Insets(30, 0, 0, 0));
         VBox.setMargin(buttonBox, new Insets(5, 0, 0, 0));
 
         AnchorPane popup = new AnchorPane(background, profileBox, backButton);
@@ -777,7 +710,7 @@ public class HomePageController {
         AnchorPane.setLeftAnchor(profileBox, 14.0);
 
         profileSettingsContainer = new Pane(popup);
-        profileSettingsContainer.setLayoutX(1210);
+        profileSettingsContainer.setLayoutX(1160);
         profileSettingsContainer.setLayoutY(120);
         profileSettingsContainer.setOpacity(0);
         profileSettingsContainer.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));
@@ -832,7 +765,7 @@ public class HomePageController {
     }
 
     public void startChangePasswordView() {
-        Rectangle background = new Rectangle(350, 400);
+        Rectangle background = new Rectangle(400, 400);
         background.setArcWidth(28);
         background.setArcHeight(28);
         background.setFill(Color.WHITE);
@@ -842,7 +775,7 @@ public class HomePageController {
         background.setLayoutY(0);
 
         VBox profileBox = new VBox();
-        profileBox.setPrefSize(322, 380);
+        profileBox.setPrefSize(380, 380);
         profileBox.setStyle("-fx-background-color: transparent;");
         profileBox.setSpacing(12);
         profileBox.setPadding(new Insets(20));
@@ -853,6 +786,7 @@ public class HomePageController {
         backButton.setStyle("-fx-font-family: Segoe UI Symbol; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;");
 
         backButton.setOnMouseEntered(e -> backButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #e74c3c;"));
+
         backButton.setOnMouseExited(e -> backButton.setStyle(" -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: transparent; -fx-text-fill: #888;"));
 
         backButton.setOnAction(e -> {
@@ -862,36 +796,50 @@ public class HomePageController {
         });
 
         Label newPasswordLabel = new Label("New password:");
-        newPasswordLabel.setPrefWidth(350);
+        newPasswordLabel.setPrefWidth(400);
         newPasswordLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333; -fx-font-family: Open Sans;");
 
-        TextField newPasswordField = new TextField();
-        newPasswordField.setPrefWidth(350);
+        PasswordField newPasswordField = new PasswordField();
+        newPasswordField.setPrefWidth(400);
         newPasswordField.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 18px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
 
         newPasswordField.focusedProperty().addListener((obs, oldVal, newVal) -> {
             newPasswordField.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 18px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
         });
 
+        newPasswordField.setContextMenu(new ContextMenu());
+        newPasswordField.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                event.consume();
+            }
+        });
+
         Label newPasswordFieldLabel = new Label();
-        newPasswordFieldLabel.setPrefWidth(350);
+        newPasswordFieldLabel.setPrefWidth(400);
         newPasswordFieldLabel.setWrapText(true);
         newPasswordFieldLabel.setStyle(" -fx-font-size: 15px; -fx-text-fill: red; -fx-font-weight: bold; -fx-font-style: italic; -fx-font-family: Open Sans;");
 
         Label confirmPasswordLabel = new Label("Confirm new password:");
-        confirmPasswordLabel.setPrefWidth(350);
+        confirmPasswordLabel.setPrefWidth(400);
         confirmPasswordLabel.setStyle(" -fx-font-size: 20px; -fx-text-fill: #333; -fx-font-family: Open Sans;");
 
-        TextField confirmPasswordField = new TextField();
-        confirmPasswordField.setPrefWidth(350);
+        PasswordField confirmPasswordField = new PasswordField();
+        confirmPasswordField.setPrefWidth(400);
         confirmPasswordField.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 18px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
 
         confirmPasswordField.focusedProperty().addListener((obs, oldVal, newVal) -> {
             confirmPasswordField.setStyle(" -fx-font-family: Open Sans; -fx-font-size: 18px; -fx-text-fill: #333; -fx-background-color: white; -fx-border-color: #0f2e4d; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 8 14;");
         });
 
+        confirmPasswordField.setContextMenu(new ContextMenu());
+        confirmPasswordField.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                event.consume();
+            }
+        });
+
         Label confirmPasswordFieldLabel = new Label();
-        confirmPasswordFieldLabel.setPrefWidth(350);
+        confirmPasswordFieldLabel.setPrefWidth(400);
         confirmPasswordFieldLabel.setStyle(" -fx-font-size: 15px; -fx-text-fill: red; -fx-font-weight: bold; -fx-font-style: italic; -fx-font-family: Open Sans;");
 
         Button submitButton = new Button("Submit");
@@ -899,7 +847,7 @@ public class HomePageController {
         submitButton.setPrefHeight(25);
         submitButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: Open Sans; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;");
 
-        submitButton.setOnMouseEntered(e -> submitButton.setStyle(" -fx-background-color: #133a5e; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
+        submitButton.setOnMouseEntered(e -> submitButton.setStyle(" -fx-background-color: #071e35; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
         submitButton.setOnMouseExited(e -> submitButton.setStyle(" -fx-background-color: #0f2e4d; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Open Sans'; -fx-background-radius: 12px; -fx-cursor: hand; -fx-border-color: transparent;"));
 
@@ -926,7 +874,7 @@ public class HomePageController {
         AnchorPane.setLeftAnchor(profileBox, 14.0);
 
         profileSettingsContainer = new Pane(popup);
-        profileSettingsContainer.setLayoutX(1210);
+        profileSettingsContainer.setLayoutX(1160);
         profileSettingsContainer.setLayoutY(120);
         profileSettingsContainer.setOpacity(0);
         profileSettingsContainer.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));

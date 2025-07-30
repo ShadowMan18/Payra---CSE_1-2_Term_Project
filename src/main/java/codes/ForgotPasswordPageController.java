@@ -3,7 +3,9 @@ package codes;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -19,9 +21,9 @@ public class ForgotPasswordPageController {
     @FXML
     public TextField RecoveryAnswerField;
     @FXML
-    public TextField SetNewPasswordField;
+    public PasswordField SetNewPasswordField;
     @FXML
-    public TextField ConfirmNewPasswordField;
+    public PasswordField ConfirmNewPasswordField;
     @FXML
     public Label ConfirmNewPasswordLabel;
     @FXML
@@ -46,6 +48,18 @@ public class ForgotPasswordPageController {
         ForgotPasswordPageLayout.setPrefHeight(Screen.SCREENHEIGHT);
         ForgotPasswordPageLayout.scaleXProperty().bind(ForgotPasswordPageLayout.widthProperty().divide(1600));
         ForgotPasswordPageLayout.scaleYProperty().bind(ForgotPasswordPageLayout.heightProperty().divide(900));
+        SetNewPasswordField.setContextMenu(new ContextMenu());
+        SetNewPasswordField.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                event.consume();
+            }
+        });
+        ConfirmNewPasswordField.setContextMenu(new ContextMenu());
+        ConfirmNewPasswordField.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                event.consume();
+            }
+        });
     }
 
     @FXML

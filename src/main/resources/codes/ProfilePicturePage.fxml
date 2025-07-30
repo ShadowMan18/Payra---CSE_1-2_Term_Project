@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Point3D?>
 <?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -9,14 +10,17 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="ProfilePicturePageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.ProfilePicturePageController">
+<StackPane fx:id="ProfilePicturePageLayout" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" stylesheets="@../PageStyle.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.ProfilePicturePageController">
     <Group fx:id="ProfilePicturePageView">
         <ImageView pickOnBounds="true">
             <Image url="@../images/ProfilePicturePage.png" />
         </ImageView>
-        <Button layoutX="992.0" layoutY="680.0" mnemonicParsing="false" onAction="#onSubmitButtonClick" opacity="0.0" prefHeight="50.0" prefWidth="222.0" />
-        <Button layoutX="996.0" layoutY="473.0" mnemonicParsing="false" onAction="#onUploadButtonClick" opacity="0.0" prefHeight="44.0" prefWidth="217.0" />
-      <Button layoutX="1383.0" layoutY="799.0" mnemonicParsing="false" onAction="#onSkipButtonClick" opacity="0.0" prefHeight="25.0" prefWidth="134.0" />
+        <Button layoutX="992.0" layoutY="680.0" mnemonicParsing="false" onAction="#onSubmitButtonClick" prefHeight="50.0" prefWidth="222.0" styleClass="button1" text="Submit" />
+        <Button layoutX="996.0" layoutY="473.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onUploadButtonClick" prefHeight="44.0" prefWidth="217.0" styleClass="button2" text="Upload">
+         <rotationAxis>
+            <Point3D />
+         </rotationAxis></Button>
+      <Button layoutX="1383.0" layoutY="799.0" minHeight="-Infinity" mnemonicParsing="false" onAction="#onSkipButtonClick" prefHeight="25.0" prefWidth="134.0" styleClass="text-button" />
       <ImageView fx:id="ProfilePictureView" fitHeight="350.0" fitWidth="350.0" layoutX="930.0" layoutY="93.0" pickOnBounds="true" preserveRatio="true" />
       <Circle fill="#1f93ff00" layoutX="1105.0" layoutY="268.0" radius="175.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="4.0" />
       <Label fx:id="UploadImageLabel" layoutX="1223.0" layoutY="473.0" prefHeight="44.0" prefWidth="372.0" textFill="RED" wrapText="true">

@@ -1,17 +1,24 @@
 package codes;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -53,6 +60,8 @@ public class AudioVideoCall {
     private StackPane root;
     private ImageView videoView;
     private ImageView myVideoView;
+    private Rectangle background;
+    private Label receiverName;
     private Label timeLabel;
     private VBox labelHolder;
     private HBox buttonContainer;
@@ -88,10 +97,16 @@ public class AudioVideoCall {
                         videoView.setImage(receiverImage);
                         Circle clip = new Circle(windowHeight * 0.25, windowHeight * 0.25, windowHeight * 0.25);
                         videoView.setClip(clip);
+                        videoView.setClip(clip);
+                        background.setStyle("-fx-fill: #ffffff");
+                        receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #0f2e4d;");
                         labelHolder.getChildren().remove(timeLabel);
                         Label endingMessage = new Label("Call ended");
                         endingMessage.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #db0202;");
                         labelHolder.getChildren().add(endingMessage);
+                        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+                        delay.setOnFinished(event -> videoStage.close());
+                        delay.play();
                     });
                     break;
                 }
@@ -348,8 +363,7 @@ public class AudioVideoCall {
             if (callType.equals("audio")) {
                 videoView.setFitWidth(windowHeight * 0.5);
                 videoView.setFitHeight(windowHeight * 0.5);
-            }
-            else {
+            } else {
                 videoView.setFitWidth(windowWidth);
                 videoView.setFitHeight(windowHeight);
             }
@@ -359,6 +373,13 @@ public class AudioVideoCall {
             if (callType.equals("audio")) {
                 Circle clip1 = new Circle(windowHeight * 0.25, windowHeight * 0.25, windowHeight * 0.25);
                 videoView.setClip(clip1);
+
+                DropShadow shadow = new DropShadow();
+                shadow.setRadius(15);
+                shadow.setOffsetX(0);
+                shadow.setOffsetY(5);
+                shadow.setColor(Color.rgb(0, 0, 0, 0.3));
+                videoView.setEffect(shadow);
             }
             else {
                 Rectangle clip1 = new Rectangle();
@@ -369,8 +390,9 @@ public class AudioVideoCall {
                     clip1.setHeight(newBounds.getHeight());
                 });
                 videoView.setClip(clip1);
+                videoView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 20, 0, 0, 0);");
             }
-            
+
             videoView.setImage(receiverImage);
 
             if (callType.equals("video")) {
@@ -386,18 +408,22 @@ public class AudioVideoCall {
                     clip2.setHeight(newBounds.getHeight());
                 });
                 myVideoView.setClip(clip2);
+                myVideoView.setStyle("-fx-border-color: black; -fx-border-width: 2px; -fx-background-radius: 10px; -fx-border-radius: 10px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 10, 0.5, 0, 0);");
             }
 
-            Rectangle background = new Rectangle();
-            background.setFill(Color.web("#092038"));
+            background = new Rectangle();
+            if (callType.equals("audio")) {
+                background.setFill(Color.web("#ffffff"));
+            } else {
+                background.setFill(Color.web("#000000"));
+            }
 
             ImageView endCallButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/End_Call.png"))));
             ImageView microphoneButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Unmute_Button.png"))));
             ImageView videoButton = new ImageView();
             if (callType.equals("audio")) {
                 videoButton.setImage(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Stop_Video.png"))));
-            }
-            else {
+            } else {
                 videoButton.setImage(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Resume_Video.png"))));
             }
 
@@ -406,11 +432,19 @@ public class AudioVideoCall {
                 button.setFitHeight(50);
                 Circle clip = new Circle(25, 25, 25);
                 button.setClip(clip);
+                button.setStyle("-fx-effect: dropshadow(gaussian, rgba(255,255,255,0.2), 10, 0.5, 0, 0);");
+                button.setOnMouseEntered(e -> {
+                    button.setScaleX(1.1);
+                    button.setScaleY(1.1);
+                });
+                button.setOnMouseExited(e -> {
+                    button.setScaleX(1.0);
+                    button.setScaleY(1.0);
+                });
             }
 
             endCallButton.setOnMouseClicked(event -> {
                 sender.setCallStatus(false);
-
                 try {
                     sender.getServerOutput().writeObject("call_ended:" + receiver.getId());
                     sender.getServerOutput().flush();
@@ -425,8 +459,7 @@ public class AudioVideoCall {
                     System.out.println("mic turned off");
                     microphoneButton.setImage(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Mute_Button.png"))));
                     isAudioRunning = false;
-                }
-                else {
+                } else {
                     System.out.println("mic turned on");
                     microphoneButton.setImage(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Unmute_Button.png"))));
                     isAudioRunning = true;
@@ -439,8 +472,7 @@ public class AudioVideoCall {
                     isVideoRunning = false;
                     videoButton.setImage(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Stop_Video.png"))));
                     myVideoView.setImage(senderImage);
-                }
-                else {
+                } else {
                     System.out.println("video turned on");
                     videoButton.setImage(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Resume_Video.png"))));
                     isVideoRunning = true;
@@ -459,13 +491,20 @@ public class AudioVideoCall {
             buttonContainer.setAlignment(Pos.CENTER);
             buttonContainer.setMaxWidth(Region.USE_PREF_SIZE);
             buttonContainer.setMaxHeight(66);
-
             buttonContainer.setBackground(new Background(new BackgroundFill(Color.web("#000000", 0.6), new CornerRadii(20), Insets.EMPTY)));
 
-            Label receiverName = new Label(receiver.getFirstName() + " " + receiver.getLastName());
-            receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
-            timeLabel = new Label();
-            timeLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+            if (callType.equals("audio")) {
+                receiverName = new Label(receiver.getFirstName() + " " + receiver.getLastName());
+                receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #0f2e4d;");
+                timeLabel = new Label();
+                timeLabel.setStyle("-fx-background-color: rgba(15, 46, 77, 0.15); -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f2e4d; -fx-padding: 4 10; -fx-background-radius: 20;");
+            } else {
+                receiverName = new Label(receiver.getFirstName() + " " + receiver.getLastName());
+                receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+                timeLabel = new Label();
+                timeLabel.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 20; -fx-font-size: 14;");
+            }
+
             new Thread(() -> {
                 long hr = 0;
                 long min = 0;
@@ -475,23 +514,20 @@ public class AudioVideoCall {
                     if (hr > 0) {
                         if (hr < 10) {
                             time.append('0').append(hr);
-                        }
-                        else {
+                        } else {
                             time.append(hr);
                         }
                         time.append(':');
                     }
                     if (min < 10) {
                         time.append('0').append(min);
-                    }
-                    else {
+                    } else {
                         time.append(min);
                     }
                     time.append(':');
                     if (sec < 10) {
                         time.append('0').append(sec);
-                    }
-                    else {
+                    } else {
                         time.append(sec);
                     }
 
@@ -518,15 +554,13 @@ public class AudioVideoCall {
                 }
             }).start();
 
-
             labelHolder = new VBox(receiverName, timeLabel);
             labelHolder.setSpacing(5);
             labelHolder.setAlignment(Pos.TOP_CENTER);
 
             if (callType.equals("audio")) {
                 root = new StackPane(background, videoView, labelHolder, buttonContainer);
-            }
-            else {
+            } else {
                 root = new StackPane(background, videoView, myVideoView, labelHolder, buttonContainer);
 
                 StackPane.setAlignment(myVideoView, Pos.BOTTOM_RIGHT);
@@ -547,14 +581,10 @@ public class AudioVideoCall {
 
             Scene scene = new Scene(root, windowWidth + 20, windowHeight + 20);
 
-            if (videoStage != null) {
-                videoStage.close();
-            }
             videoStage = new Stage();
             if (callType.equals("audio")) {
                 videoStage.setTitle("Audio Call");
-            }
-            else {
+            } else {
                 videoStage.setTitle("Video Call");
             }
             Image icon = new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Payra.png")));
@@ -563,7 +593,23 @@ public class AudioVideoCall {
             videoStage.setResizable(false);
             videoStage.setScene(scene);
 
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(1000), scene.getRoot());
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+
             videoStage.show();
+
+            videoStage.setOnCloseRequest(windowEvent -> {
+                sender.setCallStatus(false);
+                try {
+                    sender.getServerOutput().writeObject("call_ended:" + receiver.getId());
+                    sender.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                endCall();
+            });
         });
     }
 

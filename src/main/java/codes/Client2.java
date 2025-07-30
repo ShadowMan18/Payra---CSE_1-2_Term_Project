@@ -1,9 +1,12 @@
 package codes;
 
 import javafx.application.Application;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 
 public class Client2 extends Application{
     static Client client;
@@ -11,7 +14,7 @@ public class Client2 extends Application{
     @Override
     public void start(Stage stage) throws Exception {
         client.setStage(stage);
-        client.getLoginPage().startLoginPageView(client, stage);
+        client.getIntroPage().startIntroPageView(client, stage);
     }
 
     public static void main(String[] args) {

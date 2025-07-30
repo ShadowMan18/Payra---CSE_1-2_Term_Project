@@ -1,10 +1,12 @@
 package codes;
 
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 
@@ -20,6 +22,11 @@ public class ProfilePicturePage {
         stage.getIcons().add(icon);
         stage.setTitle("Profile Picture");
         stage.setScene(scene);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(1000), scene.getRoot());
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
 
         stage.setOnCloseRequest(event ->{
             Platform.exit();

@@ -1,11 +1,14 @@
 package codes;
 
 
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -13,18 +16,25 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import javafx.util.Pair;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 
 public class NewsFeedController {
@@ -35,6 +45,8 @@ public class NewsFeedController {
     @FXML
     public ImageView userProfilePictureView;
     @FXML
+    public Circle notificationDot;
+    @FXML
     private VBox feedContainer;
     @FXML
     private VBox friendsSidebarBox;
@@ -44,6 +56,7 @@ public class NewsFeedController {
     VBox currentFriendsBox;
 
 
+    private boolean inFeed;
     private Client client;
     private Stage stage;
     private CountDownLatch latch;
@@ -70,6 +83,8 @@ public class NewsFeedController {
             this.client = client;
             this.stage = stage;
 
+            client.sendToServer("load_clients");
+
             System.out.println("I am trying to load friends stuff");
             loadFriendData();
 
@@ -85,6 +100,19 @@ public class NewsFeedController {
         NewsFeedLayout.setPrefHeight(Screen.SCREENHEIGHT);
         NewsFeedView.scaleXProperty().bind(NewsFeedLayout.widthProperty().divide(1600));
         NewsFeedView.scaleYProperty().bind(NewsFeedLayout.heightProperty().divide(900));
+
+        inFeed = true;
+
+        new Thread(() -> {
+            while (inFeed) {
+                if (client.hasNewNotification()) {
+                    notificationDot.setOpacity(1);
+                }
+                else {
+                    notificationDot.setOpacity(0);
+                }
+            }
+        }).start();
     }
 
     @FXML
@@ -92,30 +120,151 @@ public class NewsFeedController {
         // Loading inbox page
         System.out.println("Chat button clicked!");
         client.disconnectFromFeedServer();
+        inFeed = false;
+
         client.getInbox().startInboxView(client, stage);
         //client.
     }
 
     @FXML
-    public void onHomeButtonClicked(ActionEvent mouseEvent) throws IOException {
+    public void onHomeButtonClicked(ActionEvent mouseEvent) {
         // Loading home page
         System.out.println("Home button clicked!");
         client.disconnectFromFeedServer();
-        client.getHomePage().startHomePageView(client, stage);
+        inFeed = false;
+
+        try {
+            client.getHomePage().startHomePageView(client, stage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
-    public void onNotificationButtonClick(ActionEvent actionEvent) throws IOException {
-        // Loading notification page
-        client.disconnectFromFeedServer();
-        client.getNotificationPage().startNotificationPageView(client, stage);
+    public void onNotificationButtonClick(ActionEvent actionEvent) {
+        client.resetNotificationStatus();
+
+        Rectangle background = new Rectangle(350, 350);
+        background.setArcWidth(28);
+        background.setArcHeight(28);
+        background.setFill(Color.web("#f4f4f4"));
+        background.setStroke(Color.BLACK);
+        background.setStrokeWidth(0);
+        background.setLayoutX(0);
+        background.setLayoutY(0);
+
+        Label notificationLabel = new Label("Notifications");
+        notificationLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 20; -fx-font-weight: bold;");
+        notificationLabel.setAlignment(Pos.CENTER);
+
+        HBox notificationLabelBox = new HBox(notificationLabel);
+        notificationLabelBox.setAlignment(Pos.CENTER);
+
+        VBox notificationBox = new VBox(3);
+        notificationBox.setPrefSize(321, 334);
+        notificationBox.setStyle("-fx-background-color: transparent;");
+
+        ScrollPane notificationScroller = new ScrollPane(new VBox(notificationLabelBox, notificationBox));
+        notificationScroller.setLayoutX(14);
+        notificationScroller.setLayoutY(0);
+        notificationScroller.setPrefSize(321, 334);
+        notificationScroller.setStyle("-fx-background-color: transparent;");
+        notificationScroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        notificationScroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        Pane boxContainer = new Pane(background, notificationScroller);
+        boxContainer.setLayoutX(99);
+        boxContainer.setLayoutY(460);
+
+        boxContainer.setOpacity(0);
+        boxContainer.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.15)));
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), boxContainer);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+
+        Vector<ClientInfo> users = client.getClients();
+
+        for (String sender : client.notification.keySet()) {
+            ClientInfo clientInfo = null;
+
+            for (int j = 0; j < users.size(); j++) {
+                if (users.get(j).getId().equals(sender)) {
+                    clientInfo = users.get(j);
+                }
+            }
+
+            Image profilePicture = new Image(new ByteArrayInputStream(clientInfo.getProfilePicture()));
+            ImageView profilePictureView = new ImageView(profilePicture);
+            profilePictureView.setFitWidth(24);
+            profilePictureView.setFitHeight(24);
+            Circle clip = new Circle(12, 12, 12);
+            profilePictureView.setClip(clip);
+            String text;
+            if (client.notification.get(sender).getKey().equals("message")) {
+                text = "sent a message.";
+            }
+            else {
+                text = "called you.";
+            }
+            Label textLabel = new Label(clientInfo.getFirstName() + " " + clientInfo.getLastName() + " " + text);
+            if (client.notification.get(sender).getValue().equals("unseen")) {
+                textLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #000000");
+                client.notification.put(sender, new Pair<>(client.notification.get(sender).getKey(), "seen"));
+                try {
+                    client.getServerOutput().writeObject("seen:" + sender + "," + client.getId());
+                    client.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            else {
+                textLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 16; -fx-text-fill: #000000");
+            }
+            textLabel.setWrapText(true);
+            textLabel.setAlignment(Pos.CENTER);
+            HBox notificationInfo = new HBox(profilePictureView, textLabel);
+            notificationInfo.setSpacing(5);
+            notificationInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+
+            notificationInfo.setOnMouseEntered(event -> {
+                notificationInfo.setStyle("-fx-background-color: #d5d7db; -fx-background-radius: 10; -fx-padding: 5px;");
+            });
+
+            notificationInfo.setOnMouseExited(event -> {
+                notificationInfo.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 5px;");
+            });
+
+            notificationInfo.setOnMouseClicked(event -> {
+                client.disconnectFromFeedServer();
+
+                try {
+                    client.getInbox().startInboxView(client, stage);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                client.getInbox().getInboxController().startChat(sender);
+            });
+
+            notificationBox.getChildren().add(0, notificationInfo);
+        }
+
+        Platform.runLater(() -> {
+            stage.getScene().addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                Bounds boxBounds = boxContainer.localToScene(boxContainer.getBoundsInParent());
+                double x = event.getSceneX();
+                double y = event.getSceneY();
+
+                if (!boxBounds.contains(x, y)) {
+                    NewsFeedView.getChildren().remove(boxContainer);
+                }
+            });
+        });
+
+        NewsFeedView.getChildren().add(boxContainer);
     }
 
-    public void onProfileButtonClick(ActionEvent actionEvent) throws IOException {
-        // Loading profile page
-        client.disconnectFromFeedServer();
-        client.getProfilePage().startProfilePageView(client, stage);
-    }
     @FXML
     public void onPostButtonClick(ActionEvent event) {
         try {
@@ -237,18 +386,18 @@ public class NewsFeedController {
 
     public void addPostToFeed(PostPacket packet) {
 
-        //System.out.println("I am in newsFeed Controller trying to add it");
+        System.out.println("I am in newsFeed Controller trying to add it");
 
-        //client.fetchFriendStatusMap();
+        client.fetchFriendStatusMap();
 
-        //System.out.println("I am in newsFeed Controller trying to add it");
+        System.out.println("I am in newsFeed Controller trying to add it");
 
-//        if (!packet.getAuthor().equals(client.getMyId()) && !"friends".equals(client.getCachedFriendStatus(packet.getAuthor()))) {
-//            System.out.println("rejecting "+packet.getAuthor()+"'s post for not being my friend "+ client.getCachedFriendStatus(packet.getAuthor()));
-//            return;
-//        }
+        if (!packet.getAuthor().equals(client.getMyId()) && !"friends".equals(client.getCachedFriendStatus(packet.getAuthor()))) {
+            System.out.println("rejecting "+packet.getAuthor()+"'s post for not being my friend "+ client.getCachedFriendStatus(packet.getAuthor()));
+            return;
+        }
 
-        //System.out.println("I am past the check up stuff");
+        System.out.println("I am past the check up stuff");
 
         int postId = packet.getPostId();
         userReactionsByPostId.put(postId, packet.getUserReactedType());

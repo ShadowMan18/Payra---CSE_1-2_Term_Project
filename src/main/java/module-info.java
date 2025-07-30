@@ -18,6 +18,8 @@ module com.example.javafx_project {
     requires java.sql;
     requires opencv;
     requires javafx.media;
+    requires commons.email;
+    requires javax.mail;
 
     opens codes to javafx.fxml;
     exports codes;

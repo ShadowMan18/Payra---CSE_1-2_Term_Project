@@ -1,5 +1,7 @@
 package codes;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -14,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,9 +34,9 @@ public class CallRinger {
             double windowWidth = Screen.SCREENWIDTH * 0.5;
             double windowHeight = Screen.SCREENHEIGHT * 0.5;
             Label receiverName = new Label(receiver.getFirstName() + " " + receiver.getLastName());
-            receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+            receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #0f2e4d;");
             Label ringingMessageLabel = new Label("Ringing...");
-            ringingMessageLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+            ringingMessageLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f2e4d;");
             VBox labelHolder = new VBox(receiverName, ringingMessageLabel);
             labelHolder.setSpacing(5);
             labelHolder.setAlignment(Pos.TOP_CENTER);
@@ -47,7 +50,7 @@ public class CallRinger {
             callerImageView.setClip(clip1);
 
             Rectangle background = new Rectangle();
-            background.setFill(Color.web("#092038"));
+            background.setFill(Color.web("#ffffff"));
 
             ImageView declineButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/End_Call.png"))));
 
@@ -113,6 +116,20 @@ public class CallRinger {
                 }
             });
 
+            ringerStage.setOnCloseRequest(windowEvent -> {
+                client.setCallStatus(false);
+
+                calltone.stop();
+                ringerStage.close();
+
+                try {
+                    client.getServerOutput().writeObject("call_declined:" + receiver.getId());
+                    client.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
             new Thread(() -> {
                 long startTime = System.currentTimeMillis();
                 long timeout = 60000;
@@ -142,17 +159,25 @@ public class CallRinger {
                                 ringingMessageLabel.setText("Call declined");
                                 ringingMessageLabel.setTextFill(Color.web("#db0202"));
                                 calltone.stop();
+                                PauseTransition delay = new PauseTransition(Duration.seconds(3));
+                                delay.setOnFinished(event -> ringerStage.close());
+                                delay.play();
                             });
                             break;
                         }
                     }
 
                     if (System.currentTimeMillis() - startTime > timeout) {
+                        client.setCallStatus(false);
+
                         Platform.runLater(() -> {
                             root.getChildren().remove(buttonContainer);
                             ringingMessageLabel.setText("No response");
                             ringingMessageLabel.setTextFill(Color.web("#db0202"));
                             calltone.stop();
+                            PauseTransition delay = new PauseTransition(Duration.seconds(3));
+                            delay.setOnFinished(event -> ringerStage.close());
+                            delay.play();
                         });
                         break;
                     }
@@ -172,18 +197,18 @@ public class CallRinger {
         isRinging = true;
 
         Platform.runLater(() -> {
-
             Stage ringerStage = new Stage();
             double windowWidth = Screen.SCREENWIDTH * 0.5;
             double windowHeight = Screen.SCREENHEIGHT * 0.5;
             Label receiverName = new Label(caller.getFirstName() + " " + caller.getLastName());
+            receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #0f2e4d;");
             Label ringingMessageLabel = new Label();
-            ringingMessageLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+            ringingMessageLabel.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f2e4d;");
             if (callType.equals("audio")) {
-                ringingMessageLabel.setText("started audio call...");
+                ringingMessageLabel.setText("Started audio call...");
             }
             else {
-                ringingMessageLabel.setText("started video call...");
+                ringingMessageLabel.setText("Started video call...");
             }
             VBox labelHolder = new VBox(receiverName, ringingMessageLabel);
             labelHolder.setSpacing(5);
@@ -198,7 +223,7 @@ public class CallRinger {
             callerImageView.setClip(clip1);
 
             Rectangle background = new Rectangle();
-            background.setFill(Color.web("#092038"));
+            background.setFill(Color.web("#ffffff"));
 
             ImageView acceptButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Call_Accept.png"))));
             ImageView declineButton = new ImageView(new Image(String.valueOf(AudioVideoCall.class.getResource("/images/Call_Reject.png"))));
@@ -211,15 +236,13 @@ public class CallRinger {
             }
 
             HBox buttonContainer = new HBox(acceptButton, declineButton);
-            buttonContainer.setSpacing(15);
+            buttonContainer.setSpacing(30);
             buttonContainer.setPadding(new Insets(8));
             buttonContainer.setAlignment(Pos.CENTER);
             buttonContainer.setMaxWidth(Region.USE_PREF_SIZE);
             buttonContainer.setMaxHeight(66);
 
-            buttonContainer.setBackground(new Background(new BackgroundFill(Color.web("#000000", 0.6), new CornerRadii(20), Insets.EMPTY)));
-
-            receiverName.setStyle("-fx-background-color: transparent; -fx-font-family: Open Sans; -fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+//            buttonContainer.setBackground(new Background(new BackgroundFill(Color.web("#e1ebf5"), new CornerRadii(20), Insets.EMPTY)));
 
             StackPane root = new StackPane(background, callerImageView, labelHolder, buttonContainer);
 
@@ -248,6 +271,11 @@ public class CallRinger {
             ringerStage.setAlwaysOnTop(true);
             ringerStage.setResizable(false);
             ringerStage.setScene(scene);
+
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(1000), scene.getRoot());
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
 
             ringerStage.show();
 
@@ -278,6 +306,21 @@ public class CallRinger {
             });
 
             declineButton.setOnMouseClicked(event -> {
+                client.setCallStatus(false);
+
+                ringtone.stop();
+                ringerStage.close();
+                isRinging = false;
+
+                try {
+                    client.getServerOutput().writeObject("call_declined:" + caller.getId());
+                    client.getServerOutput().flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            ringerStage.setOnCloseRequest(windowEvent -> {
                 client.setCallStatus(false);
 
                 ringtone.stop();

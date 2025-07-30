@@ -79,7 +79,7 @@ public class InboxController {
     @FXML
     public Circle notificationDot;
 
-
+    private boolean inChat;
     private Client client;
     private Stage stage;
     private String receiverId;
@@ -109,17 +109,7 @@ public class InboxController {
         this.client = client;
         this.stage = stage;
 
-        try {
-            latch = new CountDownLatch(1);
-            client.setLatch(latch);
-
-            client.getServerOutput().writeObject("load_clients");
-            client.getServerOutput().flush();
-
-            latch.await();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        client.sendToServer("load_clients");
 
         userProfilePictureView.setImage(client.getProfilePicture());
         Circle clip = new Circle(35, 35, 35);
@@ -149,8 +139,10 @@ public class InboxController {
             System.out.println(c.getFirstName());
         }
 
+        inChat = true;
+
         new Thread(() -> {
-            while (true) {
+            while (inChat) {
                 if (client.hasNewNotification()) {
                     notificationDot.setOpacity(1);
                 }
@@ -171,11 +163,14 @@ public class InboxController {
 
             client.getServerOutput().writeObject("close_chat");
             client.getServerOutput().flush();
+            client.resetReceiverId();
 
             latch.await();
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
+
+        inChat = false;
 
         try {
             client.getNewsFeed().startNewsFeedView(client, stage);
@@ -194,11 +189,14 @@ public class InboxController {
 
             client.getServerOutput().writeObject("close_chat");
             client.getServerOutput().flush();
+            client.resetReceiverId();
 
             latch.await();
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
+
+        inChat = false;
 
         try {
             client.getHomePage().startHomePageView(client, stage);
@@ -410,6 +408,7 @@ public class InboxController {
 
                 client.getServerOutput().writeObject("close_chat");
                 client.getServerOutput().flush();
+                client.resetReceiverId();
 
                 latch.await();
             } catch (IOException | InterruptedException e) {
@@ -974,12 +973,14 @@ public class InboxController {
     }
 
     public void onAudioCallButtonClicked(ActionEvent actionEvent) {
-        if (client.getChatStatus() && !client.getCallStatus()) {
+        if (client.getChatStatus() && !client.getCallStatus() && !receiverId.equals(client.getId())) {
             client.setCallStatus(true);
 
             client.sendToServer("call:audio," + receiverId);
 
             if (client.getReceiverIPAddress().equals("n/a")) {
+                client.setCallStatus(false);
+
                 Platform.runLater(() -> {
                     System.out.println("User is not active");
 
@@ -1031,6 +1032,8 @@ public class InboxController {
                 });
             }
             else if (client.getReceiverIPAddress().equals("busy")) {
+                client.setCallStatus(false);
+
                 Platform.runLater(() -> {
                     System.out.println("User is in another call");
 
@@ -1098,12 +1101,14 @@ public class InboxController {
     }
 
     public void onVideoCallButtonClicked(ActionEvent actionEvent) {
-        if (client.getChatStatus() && !client.getCallStatus()) {
+        if (client.getChatStatus() && !client.getCallStatus() && !receiverId.equals(client.getId())) {
             client.setCallStatus(true);
 
             client.sendToServer("call:video," + receiverId);
 
             if (client.getReceiverIPAddress().equals("n/a")) {
+                client.setCallStatus(false);
+
                 Platform.runLater(() -> {
                     System.out.println("User is not active");
 
@@ -1155,6 +1160,8 @@ public class InboxController {
                 });
             }
             else if (client.getReceiverIPAddress().equals("busy")) {
+                client.setCallStatus(false);
+
                 Platform.runLater(() -> {
                     System.out.println("User is in another call");
 

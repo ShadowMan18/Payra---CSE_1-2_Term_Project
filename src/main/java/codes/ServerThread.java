@@ -119,9 +119,9 @@ public class ServerThread implements Runnable{
                     addUser.setString(1, clientInfo.getId());
                     addUser.setString(2, clientInfo.getFirstName());
                     addUser.setString(3, clientInfo.getLastName());
-                    addUser.setString(4, clientInfo.getPassword());
-                    addUser.setString(5, clientInfo.getRecoveryQuestion());
-                    addUser.setString(6, clientInfo.getRecoveryAnswer());
+                    addUser.setString(4, EncryptionProcessor.encrypt(clientInfo.getPassword()));
+                    addUser.setString(5, EncryptionProcessor.encrypt(clientInfo.getRecoveryQuestion()));
+                    addUser.setString(6, EncryptionProcessor.encrypt(clientInfo.getRecoveryAnswer()));
                     addUser.setString(7, "DefaultProfilePicture.png");
 
                     addUser.executeUpdate();
@@ -207,7 +207,6 @@ public class ServerThread implements Runnable{
 
             if (fromClient instanceof String string && string.startsWith("get_info:")) {
                 String id = string.substring("get_info:".length());
-//                this.id = id;
 
                 sendToClient(getClientInfo(id));
             }
@@ -251,6 +250,14 @@ public class ServerThread implements Runnable{
                 }
             }
 
+            // Logging out a client
+
+            if (fromClient instanceof String string && string.startsWith("logout:")) {
+                this.id = string.substring("logout:".length());
+                Server.currentClients.remove(id);
+                Server.inCall.remove(id);
+            }
+
             // Updating client's information
 
             if (fromClient instanceof String string && string.startsWith("update:")) {
@@ -269,7 +276,7 @@ public class ServerThread implements Runnable{
                 }
                 else if (updateInfo[0].equals("password")) {
                     try (PreparedStatement updatePassword = databaseConnection.prepareStatement("UPDATE Users SET Password = ? WHERE UserId = ?")) {
-                        updatePassword.setString(1, updateInfo[1]);
+                        updatePassword.setString(1, EncryptionProcessor.encrypt(updateInfo[1]));
                         updatePassword.setString(2, id);
 
                         updatePassword.executeUpdate();
@@ -320,20 +327,6 @@ public class ServerThread implements Runnable{
                 }
 
                 chatServer = new ChatServer(port, id, receiverId);
-
-                String receiverName;
-                String receiverFirstName;
-
-                try (PreparedStatement getReceiverName = databaseConnection.prepareStatement("SELECT * FROM Users WHERE UserId = ?")) {
-                    getReceiverName.setString(1, receiverId);
-
-                    try (ResultSet queryResult = getReceiverName.executeQuery()) {
-                        receiverName = queryResult.getString("First_Name") + " " + queryResult.getString("Last_Name");
-                        receiverFirstName = queryResult.getString("First_Name");
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
 
                 sendToClient("connect_to:" + port + "," + receiverId);
             }
@@ -738,11 +731,6 @@ public class ServerThread implements Runnable{
 
                 sendToClient(comments); // objectOutputStream.writeObject(comments);
             }
-
-
-
-
-
         }
     }
 
@@ -761,9 +749,9 @@ public class ServerThread implements Runnable{
                 if (queryResult.next()) {
                     firstName = queryResult.getString("First_Name");
                     lastName = queryResult.getString("Last_Name");
-                    password = queryResult.getString("Password");
-                    recoveryQuestion = queryResult.getString("Question");
-                    recoveryAnswer = queryResult.getString("Answer");
+                    password = EncryptionProcessor.decrypt(queryResult.getString("Password"));
+                    recoveryQuestion = EncryptionProcessor.decrypt(queryResult.getString("Question"));
+                    recoveryAnswer = EncryptionProcessor.decrypt(queryResult.getString("Answer"));
                     String imageFile = queryResult.getString("Profile_Picture");
                     File file = new File("src/Media Database", imageFile);
                     profilePictureBytes = Files.readAllBytes(file.toPath());

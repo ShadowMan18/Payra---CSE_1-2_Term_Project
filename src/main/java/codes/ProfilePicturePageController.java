@@ -105,6 +105,7 @@ public class ProfilePicturePageController {
         File image = new File(filePath);
         ProfilePictureView.setFitWidth(350);
         ProfilePictureView.setFitHeight(350);
+        ProfilePictureView.setPreserveRatio(true);
         ProfilePictureView.setImage(new Image(image.toURI().toString()));
         Circle clip = new Circle(175, 175, 175);
         ProfilePictureView.setClip(clip);

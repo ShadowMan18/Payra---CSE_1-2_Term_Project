@@ -61,13 +61,11 @@ public class Client {
     private final HomePage homePage;
     private final Inbox inbox;
     private final NewsFeed newsFeed;
-    private final ProfilePage profilePage;
-    private final NotificationPage notificationPage;
 
     // Client server network
 
-//    private final String ipAddress = "192.168.200.36";
-    private final String ipAddress = "127.0.0.1";
+    private final String ipAddress = "192.168.1.101";
+    //    private final String ipAddress = "127.0.0.1";
     private final Socket serverSocket;
     private final ObjectOutputStream serverOutput;
     private final ObjectInputStream serverInput;
@@ -178,11 +176,8 @@ public class Client {
         this.homePage = new HomePage();
         this.inbox = new Inbox();
         this.newsFeed = new NewsFeed();
-        this.profilePage = new ProfilePage();
-        this.notificationPage = new NotificationPage();
         this.gettingRequests=false;
         this.gettingFriends=false;
-
 
         try {
             this.serverSocket = new Socket(ipAddress, 1024);
@@ -203,32 +198,6 @@ public class Client {
         }
 
         clients = new Vector<>();
-
-//        Thread Writer = new Thread(() -> {
-//            Scanner scanner = new Scanner(System.in);
-//            while (true) {
-//                String message = scanner.nextLine();
-//
-//                if (inChat) {
-//                    try {
-//                        String[] splittedMessage = message.split(",");
-//                        int clientIndex = Integer.parseInt(splittedMessage[0]);
-//                        chatOutput.writeObject(message);
-//                        chatOutput.flush();
-//                    } catch (IOException e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                }
-//                else {
-//                    try {
-//                        serverOutput.writeObject(message);
-//                        serverOutput.flush();
-//                    } catch (IOException e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                }
-//            }
-//        });
 
         new Thread(() -> {
             while (true) {
@@ -282,13 +251,6 @@ public class Client {
                     else {
                         callerInfo = info;
                     }
-
-//                    try {
-//                        serverOutput.writeObject("done");
-//                        serverOutput.flush();
-//                    } catch (IOException e) {
-//                        throw new RuntimeException(e);
-//                    }
 
                     if (latch != null) {
                         latch.countDown();
@@ -369,7 +331,7 @@ public class Client {
                         } else if (latch != null) {
 
                             if (gettingRequests) {
-                               // System.out.println("Hi I am setting my pending requests");
+                                // System.out.println("Hi I am setting my pending requests");
                                 this.pendingRequests = incoming;
                                 //System.out.println("Hi this is client and pending request: "+pendingRequests.size());
                                 gettingRequests=false;
@@ -698,14 +660,6 @@ public class Client {
         return newsFeed;
     }
 
-    public ProfilePage getProfilePage() {
-        return profilePage;
-    }
-
-    public NotificationPage getNotificationPage() {
-        return notificationPage;
-    }
-
     public ObjectOutputStream getServerOutput() {
         return serverOutput;
     }
@@ -773,6 +727,8 @@ public class Client {
     public void setProfilePicture(Image image) { this.profilePicture = image; }
 
     public void setChatStatus(boolean status) { chatStatus = status; }
+
+    public void resetReceiverId() { receiverId = null; }
 
     public void resetCallAcceptanceStatus() { callAcceptanceStatus = null; }
 
@@ -1062,7 +1018,10 @@ public class Client {
 
     public void setFriendStatusMap(Map<String, String> map) {
         friendStatusMap = map;
-        fetchFriendStatusLatch.countDown();
+        if (fetchFriendStatusLatch != null) {
+            fetchFriendStatusLatch.countDown();
+            fetchFriendStatusLatch = null;
+        }
     }
 
     public String getCachedFriendStatus(String userId) {
@@ -1103,7 +1062,4 @@ public class Client {
             e.printStackTrace();
         }
     }
-
-
-
 }
