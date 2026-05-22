@@ -1,0 +1,92 @@
+.text-field1 {
+    -fx-font-family: "Open Sans";
+    -fx-font-size: 25px;
+    -fx-background-color: rgba(11, 105, 199, 0.4);
+    -fx-background-radius: 10px;
+    -fx-text-fill: black;
+
+    -fx-padding: 4 8 4 8;
+
+    -fx-border-width: 2px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10px;
+    -fx-border-insets: -2px;
+    -fx-prompt-text-fill: #0f2e4d;
+}
+
+.text-field1:hover {
+    -fx-border-color: #0f2e4d;
+}
+
+.text-field1:focused {
+    -fx-prompt-text-fill: transparent;
+}
+
+
+.password-field {
+    -fx-font-family: "Times New Roman";
+    -fx-font-size: 20px;
+    -fx-background-color: rgba(11, 105, 199, 0.4);
+    -fx-background-radius: 10px;
+    -fx-text-fill: black;
+
+    -fx-padding: 4 8 4 8;
+
+    -fx-border-width: 2px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10px;
+    -fx-border-insets: -2px;
+}
+
+.password-field:hover {
+    -fx-border-color: #0f2e4d;
+}
+
+.button1 {
+    -fx-font-family: "Glacial Indifference";
+    -fx-font-size: 25px;
+    -fx-background-color: #085aac;
+    -fx-background-radius: 20px;
+    -fx-text-fill: white;
+}
+
+.button1:hover {
+    -fx-background-color: #004e9c;
+}
+
+.button2 {
+    -fx-font-family: "Glacial Indifference";
+    -fx-font-size: 25px;
+    -fx-background-color: #0f2e4d;
+    -fx-background-radius: 20px;
+    -fx-text-fill: white;
+}
+
+.button2:hover {
+    -fx-background-color: #071e35;
+}
+
+.button3 {
+    -fx-background-color: transparent;
+}
+
+.button3:hover {
+    -fx-background-color: transparent;
+    -fx-border-width: 2px;
+    -fx-border-color: white;
+    -fx-border-radius: 10px;
+}
+
+.text-button {
+    -fx-background-color: white;
+    -fx-background-radius: 0px;
+    -fx-opacity: 0;
+}
+
+.text-button:hover {
+    -fx-background-color: white;
+    -fx-background-radius: 5px;
+    -fx-opacity: 0.2;
+}
+
+

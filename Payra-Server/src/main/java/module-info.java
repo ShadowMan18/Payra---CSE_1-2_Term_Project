@@ -1,0 +1,29 @@
+module com.example.javafx_project {
+    requires javafx.controls;
+    requires javafx.fxml;
+    requires javafx.web;
+
+    requires org.controlsfx.controls;
+    requires com.dlsc.formsfx;
+    requires net.synedra.validatorfx;
+    requires org.kordamp.ikonli.javafx;
+    requires org.kordamp.bootstrapfx.core;
+    requires eu.hansolo.tilesfx;
+    requires com.almasb.fxgl.all;
+    requires javafx.swing;
+    requires webcam.capture;
+    requires java.desktop;
+    requires com.fasterxml.jackson.annotation;
+    requires java.compiler;
+    requires java.sql;
+    requires opencv;
+    requires javafx.media;
+    requires commons.email;
+    requires javax.mail;
+    requires bridj;
+
+    exports codes.Wrappers;
+    opens codes.Wrappers to javafx.fxml;
+    exports codes.Server;
+    opens codes.Server to javafx.fxml;
+}

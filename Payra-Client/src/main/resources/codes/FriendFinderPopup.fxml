@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="codes.Client.FriendFinderController"
+            fx:id="popupRoot"
+            styleClass="popup-container"
+            prefWidth="500" prefHeight="600">
+
+
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <Label text="Find Friends" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+            <TextField fx:id="searchField"
+                       promptText="Search by name or ID..."
+                       onKeyReleased="#onSearch"
+                       styleClass="rounded-search"/>
+
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true">
+            <content>
+                <VBox fx:id="userListVBox" spacing="10">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10"/>
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>
