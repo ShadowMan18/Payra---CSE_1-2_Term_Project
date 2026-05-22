@@ -22,6 +22,10 @@ module com.example.javafx_project {
     requires javax.mail;
     requires bridj;
 
-    opens codes to javafx.fxml;
-    exports codes;
+    exports codes.Client;
+    opens codes.Client to javafx.fxml;
+    exports codes.Wrappers;
+    opens codes.Wrappers to javafx.fxml;
+    exports codes.Server;
+    opens codes.Server to javafx.fxml;
 }

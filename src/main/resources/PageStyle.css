@@ -1,5 +1,5 @@
 .text-field1 {
-    -fx-font-family: "Glacial Indifference";
+    -fx-font-family: "Open Sans";
     -fx-font-size: 25px;
     -fx-background-color: rgba(11, 105, 199, 0.4);
     -fx-background-radius: 10px;
@@ -11,11 +11,17 @@
     -fx-border-color: transparent;
     -fx-border-radius: 10px;
     -fx-border-insets: -2px;
+    -fx-prompt-text-fill: #0f2e4d;
 }
 
 .text-field1:hover {
     -fx-border-color: #0f2e4d;
 }
+
+.text-field1:focused {
+    -fx-prompt-text-fill: transparent;
+}
+
 
 .password-field {
     -fx-font-family: "Times New Roman";

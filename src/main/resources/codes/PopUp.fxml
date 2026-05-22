@@ -4,7 +4,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="400" prefWidth="400" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.PostController">
+<AnchorPane prefHeight="400" prefWidth="400" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="codes.Client.PostController">
     <children>
         <ImageView fitHeight="400" fitWidth="400" layoutX="0" layoutY="0" pickOnBounds="true" preserveRatio="false">
             <image>
